@@ -373,6 +373,7 @@ CREATE TABLE reporter_candidatures (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     full_name TEXT NOT NULL,
+    username TEXT NOT NULL,
     class TEXT NOT NULL,
     motivation TEXT NOT NULL,
     experience TEXT,
@@ -380,6 +381,7 @@ CREATE TABLE reporter_candidatures (
     reviewed_by UUID,
     reviewed_at TIMESTAMP WITH TIME ZONE,
     rejection_reason TEXT,
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

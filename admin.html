@@ -363,30 +363,64 @@
             }
         }
 
-        // Change user role
+        // Change user role with dropdown
         async function changeUserRole(userId, currentRole) {
-            const roles = ['utente', 'reporter', 'docente', 'caporedattore'];
-            const newRole = prompt(`Nuovo ruolo (${roles.join(', ')}):`, currentRole);
-
-            if (!newRole || !roles.includes(newRole)) {
-                alert('Ruolo non valido');
+            // Get current user to prevent self-role-change
+            const currentUser = JSON.parse(localStorage.getItem('userId'));
+            
+            if (userId === currentUser) {
+                alert('❌ Non puoi cambiare il tuo stesso ruolo!');
                 return;
             }
 
-            try {
-                const { error } = await supabase
-                    .from('profili_utenti')
-                    .update({ ruolo: newRole })
-                    .eq('id', userId);
+            const roles = ['utente', 'reporter', 'docente', 'caporedattore'];
+            
+            // Create modal dialog with dropdown
+            const roleOptions = roles.map(role => 
+                `<option value="${role}" ${role === currentRole ? 'selected' : ''}>${role.charAt(0).toUpperCase() + role.slice(1)}</option>`
+            ).join('');
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000';
+            modal.innerHTML = `
+                <div style="background:white;padding:2rem;border-radius:12px;max-width:400px;width:90%">
+                    <h3 style="margin:0 0 1rem 0">Cambia Ruolo Utente</h3>
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:600">Seleziona nuovo ruolo:</label>
+                    <select id="roleSelect" style="width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:8px;font-size:1rem;margin-bottom:1rem">
+                        ${roleOptions}
+                    </select>
+                    <div style="display:flex;gap:0.5rem;justify-content:flex-end">
+                        <button onclick="this.closest('div').parentElement.remove()" style="padding:0.75rem 1.5rem;border:1px solid #ddd;background:white;border-radius:8px;cursor:pointer">Annulla</button>
+                        <button id="confirmRole" style="padding:0.75rem 1.5rem;border:none;background:var(--primary);color:white;border-radius:8px;cursor:pointer;font-weight:600">Conferma</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            document.getElementById('confirmRole').onclick = async () => {
+                const newRole = document.getElementById('roleSelect').value;
+                
+                if (!newRole || !roles.includes(newRole)) {
+                    alert('Ruolo non valido');
+                    return;
+                }
 
-                if (error) throw error;
+                try {
+                    const { error } = await supabase
+                        .from('profili_utenti')
+                        .update({ ruolo: newRole })
+                        .eq('id', userId);
 
-                alert('✅ Ruolo aggiornato con successo');
-                loadAllUsers();
-            } catch (error) {
-                console.error('Error updating role:', error);
-                alert('❌ Errore nell\'aggiornamento del ruolo');
-            }
+                    if (error) throw error;
+
+                    alert('✅ Ruolo aggiornato con successo');
+                    modal.remove();
+                    loadAllUsers();
+                } catch (error) {
+                    console.error('Error updating role:', error);
+                    alert('❌ Errore nell\'aggiornamento del ruolo');
+                }
+            };
         }
 
         // Show tab

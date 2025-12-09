@@ -2,12 +2,8 @@
 // Complete Supabase API Wrapper
 // ================================================
 
-// API Keys for external services
-// ⚠️ SECURITY NOTE: These are duplicated from supabase-config.js
-// In production, these should be called via Supabase Edge Functions only
-const GOOGLE_AI_API_KEY = 'AIzaSyDXwkvfGymYKD5pN3cV0f8ofC54j9IcS90';
-const RESEND_API_KEY = 're_TdwD1rg2_33toySQdNwgiCuNEwCEXQbWY';
-const CANDIDACY_EMAIL = 'mohamed.mashaal@cesaris.edu.it';
+// ⚠️ SECURITY NOTE: API keys are loaded from supabase-config.js
+// Access via window.GOOGLE_AI_API_KEY and window.RESEND_API_KEY
 
 // ================================================
 // Article Operations

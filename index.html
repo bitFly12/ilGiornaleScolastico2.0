@@ -155,5 +155,91 @@
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/articles.js"></script>
+    
+    <!-- Persistent Login Handler -->
+    <script>
+        // Check and update navigation based on authentication state
+        function updateNavigation() {
+            const userId = localStorage.getItem('userId');
+            const userEmail = localStorage.getItem('userEmail');
+            const userRole = localStorage.getItem('userRole');
+            const username = localStorage.getItem('username');
+            
+            const navMenu = document.getElementById('navMenu');
+            if (!navMenu) return;
+            
+            // Remove existing login/logout buttons
+            const existingAuthBtns = navMenu.querySelectorAll('.auth-btn');
+            existingAuthBtns.forEach(btn => btn.remove());
+            
+            if (userId && userEmail) {
+                // User is logged in - show logout and dashboard links
+                const userLi = document.createElement('li');
+                userLi.className = 'nav-item auth-btn';
+                userLi.innerHTML = `<span style="color: var(--primary); font-weight: 600;">👤 ${username || userEmail.split('@')[0]}</span>`;
+                navMenu.appendChild(userLi);
+                
+                // Add dashboard link based on role
+                if (userRole === 'reporter' || userRole === 'docente' || userRole === 'caporedattore') {
+                    const dashboardLi = document.createElement('li');
+                    dashboardLi.className = 'nav-item auth-btn';
+                    
+                    if (userRole === 'docente' || userRole === 'caporedattore') {
+                        dashboardLi.innerHTML = `<a href="admin.html" class="nav-link">⚙️ Admin</a>`;
+                    } else {
+                        dashboardLi.innerHTML = `<a href="dashboard.html" class="nav-link">✍️ Dashboard</a>`;
+                    }
+                    navMenu.appendChild(dashboardLi);
+                }
+                
+                // Add logout button
+                const logoutLi = document.createElement('li');
+                logoutLi.className = 'nav-item auth-btn';
+                logoutLi.innerHTML = `<a href="#" class="btn btn-secondary btn-sm" onclick="handleLogout(event)">Logout</a>`;
+                navMenu.appendChild(logoutLi);
+            } else {
+                // User is not logged in - show login button
+                const loginLi = document.createElement('li');
+                loginLi.className = 'nav-item auth-btn';
+                loginLi.innerHTML = `<a href="login.html" class="btn btn-primary btn-sm">Login</a>`;
+                navMenu.appendChild(loginLi);
+                
+                // Add register button
+                const registerLi = document.createElement('li');
+                registerLi.className = 'nav-item auth-btn';
+                registerLi.innerHTML = `<a href="register.html" class="nav-link">Registrati</a>`;
+                navMenu.appendChild(registerLi);
+            }
+        }
+        
+        // Handle logout
+        async function handleLogout(event) {
+            event.preventDefault();
+            
+            if (!confirm('Sei sicuro di voler uscire?')) {
+                return;
+            }
+            
+            try {
+                // Sign out from Supabase
+                await supabase.auth.signOut();
+                
+                // Clear localStorage
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('username');
+                
+                // Redirect to home
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Errore durante il logout');
+            }
+        }
+        
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', updateNavigation);
+    </script>
 </body>
 </html>
