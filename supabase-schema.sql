@@ -1176,12 +1176,14 @@ ON CONFLICT DO NOTHING;
 -- This ensures profili_utenti is always in sync with auth.users
 -- Automatically creates profile when user signs up
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+-- Function to create user profile (called from application after signup)
+-- This function is called explicitly after user registration
+CREATE OR REPLACE FUNCTION public.create_user_profile(user_id UUID, user_email TEXT)
+RETURNS void AS $$
 BEGIN
     -- Insert new profile entry
     INSERT INTO public.profili_utenti (id, email)
-    VALUES (NEW.id, NEW.email)
+    VALUES (user_id, user_email)
     ON CONFLICT (id) DO NOTHING;
     
     -- The set_user_role_and_username trigger will handle:
@@ -1191,18 +1193,13 @@ BEGIN
     
     -- Create default preferences
     INSERT INTO public.preferenze_utente (user_id)
-    VALUES (NEW.id)
+    VALUES (user_id)
     ON CONFLICT (user_id) DO NOTHING;
-    
-    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create trigger on auth.users table
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION public.create_user_profile(UUID, TEXT) TO authenticated;
 
 -- ============================================
 -- COMPLETION

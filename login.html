@@ -150,13 +150,18 @@
                 if (profileError) {
                     console.error('Profile error:', profileError);
                     // Profile might not exist yet if registration just happened
-                    // Create it now
-                    const { error: insertError } = await supabaseClient
-                        .from('profili_utenti')
-                        .insert([{ id: authData.user.id, email: email }]);
-                    
-                    if (insertError) {
-                        console.error('Profile creation error:', insertError);
+                    // Create it now using RPC function
+                    try {
+                        const { error: createError } = await supabaseClient.rpc('create_user_profile', {
+                            user_id: authData.user.id,
+                            user_email: email
+                        });
+                        
+                        if (createError) {
+                            console.error('Profile creation error:', createError);
+                        }
+                    } catch (err) {
+                        console.error('RPC call failed:', err);
                     }
                     
                     // Retry getting profile

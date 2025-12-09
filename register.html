@@ -127,9 +127,23 @@
                 }
                 
                 if (data.user) {
-                    showAlert('✅ Registrazione completata! Controlla la tua email per confermare l\'account. Il tuo username sarà: ' + username, 'success');
+                    // Create user profile via RPC call
+                    try {
+                        const { error: profileError } = await supabaseClient.rpc('create_user_profile', {
+                            user_id: data.user.id,
+                            user_email: data.user.email
+                        });
+                        
+                        if (profileError) {
+                            console.error('Profile creation error:', profileError);
+                            // Don't fail registration, profile can be created on first login
+                        }
+                    } catch (profileErr) {
+                        console.error('Profile creation failed:', profileErr);
+                        // Don't fail registration
+                    }
                     
-                    // Note: Profile will be created automatically by trigger when user is inserted into auth.users
+                    showAlert('✅ Registrazione completata! Controlla la tua email per confermare l\'account. Il tuo username sarà: ' + username, 'success');
                     
                     setTimeout(() => {
                         showAlert('📧 Ti abbiamo inviato un\'email di conferma. Dopo la conferma, torna qui per effettuare il login.', 'success');
