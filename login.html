@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-box {
+            background: var(--bg-card);
+            padding: 3rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-header h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header p {
+            color: var(--neutral);
+            margin-bottom: 0;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+        
+        .alert-error {
+            background-color: #FEE2E2;
+            color: var(--error);
+            border-left: 4px solid var(--error);
+        }
+        
+        .alert-success {
+            background-color: #D1FAE5;
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🎓 Giornale Cesaris</h1>
+                <p>Accedi con la tua email @cesaris.edu.it</p>
+            </div>
+            
+            <div id="alertBox" class="alert hidden"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email Scolastica</label>
+                    <input type="email" id="email" class="form-input" placeholder="nome@cesaris.edu.it" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-bottom: 1rem;">
+                    Accedi
+                </button>
+                
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <p style="color: var(--neutral); font-size: 0.875rem;">
+                        Non sei ancora registrato? 
+                        <a href="register.html" style="color: var(--primary); font-weight: 600;">Registrati qui</a>
+                    </p>
+                    <p style="color: var(--neutral); font-size: 0.875rem; margin-top: 0.5rem;">
+                        Vuoi diventare reporter? 
+                        <a href="candidatura.html" style="color: var(--primary); font-weight: 600;">Candidati</a>
+                    </p>
+                </div>
+            </form>
+            
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; text-align: center;">
+                <a href="index.html" style="color: var(--neutral); font-size: 0.875rem;">
+                    ← Torna alla Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const alertBox = document.getElementById('alertBox');
+            
+            // Validate email domain
+            if (!email.endsWith('@cesaris.edu.it')) {
+                showAlert('Utilizza la tua email @cesaris.edu.it per accedere', 'error');
+                return;
+            }
+            
+            // Simulate login (in production, this would be an API call)
+            const result = window.login(email, password);
+            
+            if (result.success) {
+                showAlert('✅ Login effettuato con successo! Reindirizzamento...', 'success');
+                
+                setTimeout(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirect = urlParams.get('redirect') || 'index.html';
+                    window.location.href = redirect;
+                }, 1500);
+            } else {
+                showAlert(result.error, 'error');
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

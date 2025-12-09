@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Globale - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .chat-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            height: calc(100vh - 150px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            background: var(--bg-card);
+            padding: 1.5rem;
+            overflow-y: auto;
+            border-left: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+        }
+        
+        .message {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .message-author {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--neutral);
+        }
+        
+        .message-text {
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        
+        .message-reactions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .reaction-btn {
+            background: var(--bg-light);
+            border: 1px solid #e5e7eb;
+            border-radius: var(--radius-full);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .reaction-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .chat-input-container {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: var(--radius-full);
+            font-family: var(--font-body);
+            font-size: 1rem;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .chat-send-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .chat-send-btn:hover {
+            background: #002880;
+        }
+        
+        .pinned-messages {
+            background: #FFF9E6;
+            border: 2px solid var(--secondary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .typing-indicator {
+            color: var(--neutral);
+            font-size: 0.875rem;
+            font-style: italic;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link active">Chat</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                💬 Chat Globale
+                <span style="font-size: 0.875rem; opacity: 0.9;">• <span id="onlineCount">12</span> online</span>
+            </h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.875rem;">Chatta con tutti gli studenti del Cesaris</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="pinned-messages">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1.25rem;">📌</span>
+                    <strong>Messaggio Fissato</strong>
+                </div>
+                <p style="margin: 0;">Ricordati di rispettare sempre gli altri e di seguire le linee guida della community!</p>
+            </div>
+            
+            <!-- Messages will be loaded here -->
+        </div>
+        
+        <div class="typing-indicator hidden" id="typingIndicator">
+            <span>Qualcuno sta scrivendo...</span>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Scrivi un messaggio..." />
+                <button class="chat-send-btn" id="sendBtn">
+                    Invia 📤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+</html>

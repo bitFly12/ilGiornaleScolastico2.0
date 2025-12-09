@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Giornale Scolastico Cesaris - Il tuo portale di notizie scolastiche">
+    <title>Giornale Scolastico Cesaris</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                    <span>☰</span>
+                </button>
+                
+                <nav>
+                    <ul class="nav-menu" id="navMenu">
+                        <li class="nav-item"><a href="index.html" class="nav-link active">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="categorie.html" class="nav-link">Categorie</a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link">Chat</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
+                        <li class="nav-item"><a href="login.html" class="btn btn-primary btn-sm">Login</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-mobile container">
+        <img src="img/hero-placeholder.jpg" alt="Articolo in evidenza" class="hero-img" id="heroImg">
+        <div class="hero-overlay">
+            <h1 class="hero-title" id="heroTitle">Benvenuti al Giornale Scolastico Cesaris</h1>
+            <div class="hero-meta" id="heroMeta">Redazione | 5 min di lettura | In Evidenza</div>
+            <a href="#" class="btn btn-secondary" id="heroBtn">Leggi l'articolo</a>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Articles Grid -->
+        <section class="articles-grid" id="articlesGrid">
+            <!-- Articles will be loaded dynamically -->
+        </section>
+
+        <!-- Pagination -->
+        <nav class="pagination" id="pagination">
+            <button class="page-num active" data-page="1">1</button>
+            <button class="page-num" data-page="2">2</button>
+            <button class="page-num" data-page="3">3</button>
+            <button class="page-num" data-page="4">4</button>
+            <button class="page-num" data-page="5">5</button>
+        </nav>
+
+        <!-- Newsletter Widget -->
+        <section class="newsletter-widget">
+            <h4>📰 Iscriviti alla Newsletter</h4>
+            <p>Ricevi gli ultimi articoli direttamente nella tua casella email</p>
+            <form class="newsletter-form" id="newsletterForm">
+                <input type="email" placeholder="tua@email.com" required id="newsletterEmail">
+                <button type="submit">Iscriviti</button>
+            </form>
+            <p id="newsletterMessage" class="hidden"></p>
+        </section>
+
+        <!-- Daily Quote -->
+        <section class="card" style="margin: 2rem 0; padding: 2rem; text-align: center;">
+            <h4 style="color: var(--primary); margin-bottom: 1rem;">✨ Frase del Giorno</h4>
+            <p id="dailyQuote" style="font-size: 1.25rem; font-style: italic; color: var(--neutral);"></p>
+        </section>
+
+        <!-- Trending Articles -->
+        <section style="margin: 3rem 0;">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">🔥 Articoli di Tendenza</h2>
+            <div class="grid grid-3" id="trendingGrid">
+                <!-- Trending articles will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Chat Bubble -->
+    <div class="chat-bubble" id="chatBubble" title="Apri Chat">
+        💬
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Giornale Cesaris</h4>
+                    <p>Il portale ufficiale del giornale scolastico del Cesaris.</p>
+                    <p>📍 Casalpusterlengo, Italia</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Link Rapidi</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="articoli.html">Tutti gli Articoli</a></li>
+                        <li><a href="candidatura.html">Diventa Reporter</a></li>
+                        <li><a href="guidelines.html">Linee Guida Community</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Informazioni</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">Chi Siamo</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Termini di Servizio</a></li>
+                        <li><a href="contact.html">Contatti</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Social Media</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" target="_blank">Facebook</a></li>
+                        <li><a href="#" target="_blank">Instagram</a></li>
+                        <li><a href="#" target="_blank">Twitter</a></li>
+                        <li><a href="#" target="_blank">YouTube</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/articles.js"></script>
+</body>
+</html>
