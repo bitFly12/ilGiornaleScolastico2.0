@@ -17,7 +17,7 @@ const SupabaseAPI = {
                 .from('articoli')
                 .select(`
                     *,
-                    autore:profili_utenti!articoli_autore_id_fkey(
+                    autore:profili_utenti!autore_id(
                         id,
                         nome_visualizzato,
                         avatar_url
@@ -56,7 +56,7 @@ const SupabaseAPI = {
                 .from('articoli')
                 .select(`
                     *,
-                    autore:profili_utenti!articoli_autore_id_fkey(
+                    autore:profili_utenti!autore_id(
                         id,
                         nome_visualizzato,
                         avatar_url,
