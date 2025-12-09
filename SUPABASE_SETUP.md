@@ -6,7 +6,7 @@ Follow these steps to set up the complete backend infrastructure for the website
 
 ## Step 1: Run the SQL Schema
 
-1. Go to your Supabase project: https://ftazdkxyfekyzfvgrgiw.supabase.co
+1. Go to your Supabase project: https://tepxvijiamuaszvyzeze.supabase.co
 2. Navigate to **SQL Editor** in the left sidebar
 3. Click **New Query**
 4. Copy the entire content of `supabase-schema.sql`
@@ -288,7 +288,7 @@ If you need additional API keys, add them in **Project Settings** → **API**:
 ## API Keys Already Configured
 
 Your Supabase project is already configured with:
-- **URL**: `https://ftazdkxyfekyzfvgrgiw.supabase.co`
+- **URL**: `https://tepxvijiamuaszvyzeze.supabase.co`
 - **Anon Key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
 
 These are already in `js/supabase-config.js`.

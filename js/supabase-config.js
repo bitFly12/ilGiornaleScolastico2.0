@@ -4,8 +4,8 @@
 
 // NOTE: API keys provided by user - in production, move to environment variables
 // For security best practices, use .env files and never commit secrets to git
-const SUPABASE_URL = 'https://ftazdkxyfekyzfvgrgiw.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXpka3h5ZmVreXpmdmdyZ2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTE3MzQsImV4cCI6MjA4MDYyNzczNH0._V8LM9f8Dz2s9j8hcxUEWkHN8FMX9QW7YzKH3CgAzdU';
+const SUPABASE_URL = 'https://tepxvijiamuaszvyzeze.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcHh2aWppYW11YXN6dnl6ZXplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNjU0MTMsImV4cCI6MjA4MDg0MTQxM30.6_OAMwfomGmz93BJrbYbOuqTDF1ZUxbW8eZ91fHifr4';
 
 // PostgreSQL Error Codes (for better code readability)
 const PG_ERROR_CODES = {
