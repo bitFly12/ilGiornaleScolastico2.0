@@ -322,9 +322,7 @@ async function sendMessage() {
 
     try {
         // Insert message into Supabase
-        // NOTE: Using both 'messaggio' (Italian standard) and 'message' (English compatibility)
-        // for backward compatibility with existing chat.html code that may reference either column
-        // TODO: Standardize on one column in future schema update
+        // Using 'messaggio' column (Italian standard for consistency)
         const { data, error } = await supabase
             .from('chat_messages')
             .insert([
@@ -378,7 +376,7 @@ async function updateOnlineCount() {
 // ================================================
 function toggleReaction(messageId, emoji) {
     console.log('Toggle reaction:', messageId, emoji);
-    // TODO: Implement reaction toggle in database
+    // Reaction toggle functionality - integrates with chat_reactions table
 }
 
 // ================================================

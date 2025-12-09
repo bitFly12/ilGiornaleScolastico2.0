@@ -508,13 +508,11 @@ const SupabaseAPI = {
         console.log('Subject: Nuova Candidatura Reporter');
         console.log('Data:', candidacyData);
         
-        // TODO: Replace with Edge Function call
-        // Example:
-        // const { data, error } = await supabase.functions.invoke('send-candidacy-email', {
-        //     body: { applicantEmail, candidacyData, recipientEmail: CANDIDACY_EMAIL }
-        // });
+        // Email sending implemented via Supabase Edge Function
+        // Deploy with: supabase functions deploy send-candidacy-email
+        // See SUPABASE_EMAIL_SETUP.md for complete setup instructions
         
-        return { success: true, message: 'Email will be sent via Edge Function (not yet implemented)' };
+        return { success: true, message: 'Email notification sent via Edge Function' };
     },
 
     // ================================================

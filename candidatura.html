@@ -317,20 +317,16 @@ const { error: emailError } = await supabaseClient.functions.invoke('send-candid
 })
 
 if (emailError) {
-  console.error('Email sending error:', emailError)
-  // Don't fail the whole operation, just log
+  console.error('Email sending error:', emailError);
 }
                 
-                // TODO: Send email notification to mohamed.mashaal@cesaris.edu.it
-                // This should be done via Supabase Edge Function for security
-                // For now, we'll just log it
-                console.log('Candidature submitted:', data);
-                console.log('TODO: Send email to mohamed.mashaal@cesaris.edu.it with approval link');
+                // Email notification handled via Supabase Edge Function
+                console.log('Candidature submitted successfully:', data);
                 
                 // Create approval link for admin
                 const siteUrl = window.location.origin;
                 const approvalLink = `${siteUrl}/admin.html?tab=candidatures&action=review&id=${data.id}`;
-                console.log('Approval link:', approvalLink);
+                console.log('Admin approval link:', approvalLink);
                 
                 showAlert('✅ Candidatura inviata con successo! Riceverai una risposta via email entro 7 giorni. Il caporedattore ha ricevuto una notifica.', 'success');
                 
