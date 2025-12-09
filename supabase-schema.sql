@@ -1169,7 +1169,41 @@ INSERT INTO weekly_challenges (title, description, challenge_type, target_value,
 ON CONFLICT DO NOTHING;
 
 -- ============================================
+-- STEP 10: AUTH TRIGGER FOR AUTOMATIC PROFILE CREATION
+-- ============================================
+-- This ensures profili_utenti is always in sync with auth.users
+-- Automatically creates profile when user signs up
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Insert new profile entry
+    INSERT INTO public.profili_utenti (id, email)
+    VALUES (NEW.id, NEW.email)
+    ON CONFLICT (id) DO NOTHING;
+    
+    -- The set_user_role_and_username trigger will handle:
+    -- - Extracting username from email
+    -- - Assigning caporedattore role to mohamed.mashaal@cesaris.edu.it
+    -- - Setting nome_visualizzato
+    
+    -- Create default preferences
+    INSERT INTO public.preferenze_utente (user_id)
+    VALUES (NEW.id)
+    ON CONFLICT (user_id) DO NOTHING;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger on auth.users table
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
 -- COMPLETION
 -- ============================================
 
-SELECT 'Supabase schema created successfully! All tables, indexes, triggers, and views are ready.' as status;
+SELECT 'Supabase schema created successfully! All tables, indexes, triggers, views, and auth sync are ready.' as status;

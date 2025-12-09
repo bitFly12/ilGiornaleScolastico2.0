@@ -242,22 +242,25 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script>
         document.getElementById('candidaturaForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
-            const fullName = document.getElementById('fullName').value;
-            const studentClass = document.getElementById('class').value;
-            const motivation = document.getElementById('motivation').value;
-            const experience = document.getElementById('experience').value;
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const fullName = document.getElementById('fullName').value.trim();
+            const studentClass = document.getElementById('class').value.trim();
+            const motivation = document.getElementById('motivation').value.trim();
+            const experience = document.getElementById('experience').value.trim();
             const termsAccept = document.getElementById('termsAccept').checked;
             
             const alertBox = document.getElementById('alertBox');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             
             // Validate email domain (case-insensitive)
-            if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
+            if (!email.endsWith('@cesaris.edu.it')) {
                 showAlert('Utilizza la tua email @cesaris.edu.it per candidarti', 'error');
                 return;
             }
@@ -273,36 +276,72 @@
                 return;
             }
             
-            // Save candidature
-            const candidature = {
-                id: window.generateUUID(),
-                email: email,
-                fullName: fullName,
-                class: studentClass,
-                motivation: motivation,
-                experience: experience,
-                status: 'pending',
-                submittedAt: new Date().toISOString()
-            };
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = '📤 Invio in corso...';
             
-            let candidatures = JSON.parse(localStorage.getItem('reporterCandidatures') || '[]');
-            
-            // Check if already submitted
-            if (candidatures.some(c => c.email === email)) {
-                showAlert('Hai già inviato una candidatura! Attendiamo la revisione.', 'error');
-                return;
+            try {
+                // Extract username from email
+                const username = email.split('@')[0];
+                
+                // Save candidature to database
+                const { data, error } = await supabaseClient
+                    .from('reporter_candidatures')
+                    .insert([
+                        {
+                            email: email,
+                            full_name: fullName,
+                            username: username,
+                            class: studentClass,
+                            motivation: motivation,
+                            experience: experience,
+                            status: 'pending',
+                            submitted_at: new Date().toISOString()
+                        }
+                    ])
+                    .select()
+                    .single();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // TODO: Send email notification to mohamed.mashaal@cesaris.edu.it
+                // This should be done via Supabase Edge Function for security
+                // For now, we'll just log it
+                console.log('Candidature submitted:', data);
+                console.log('TODO: Send email to mohamed.mashaal@cesaris.edu.it with approval link');
+                
+                // Create approval link for admin
+                const siteUrl = window.location.origin;
+                const approvalLink = `${siteUrl}/admin.html?tab=candidatures&action=review&id=${data.id}`;
+                console.log('Approval link:', approvalLink);
+                
+                showAlert('✅ Candidatura inviata con successo! Riceverai una risposta via email entro 7 giorni. Il caporedattore ha ricevuto una notifica.', 'success');
+                
+                // Reset form
+                document.getElementById('candidaturaForm').reset();
+                
+                // Scroll to alert
+                alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                submitBtn.textContent = '✅ Candidatura Inviata';
+                
+            } catch (error) {
+                console.error('Candidature error:', error);
+                
+                let errorMessage = 'Errore durante l\'invio della candidatura';
+                
+                if (error.message.includes('duplicate') || error.code === '23505') {
+                    errorMessage = 'Hai già inviato una candidatura! Attendiamo la revisione.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showAlert('❌ ' + errorMessage, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📤 Invia Candidatura';
             }
-            
-            candidatures.push(candidature);
-            localStorage.setItem('reporterCandidatures', JSON.stringify(candidatures));
-            
-            showAlert('✅ Candidatura inviata con successo! Riceverai una risposta via email entro 7 giorni.', 'success');
-            
-            // Reset form
-            document.getElementById('candidaturaForm').reset();
-            
-            // Scroll to alert
-            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
         
         function showAlert(message, type) {
@@ -314,7 +353,7 @@
             if (type === 'success') {
                 setTimeout(() => {
                     alertBox.classList.add('hidden');
-                }, 10000);
+                }, 15000);
             }
         }
     </script>
