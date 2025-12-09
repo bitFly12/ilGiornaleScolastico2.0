@@ -166,7 +166,7 @@
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script>
-        // Check if user is logged in
+        // Check if user is logged in and has reporter or admin role
         async function checkAuth() {
             const user = await SupabaseAPI.getCurrentUser();
             if (!user) {
@@ -177,8 +177,17 @@
             // Display user info
             const profile = await SupabaseAPI.getUserProfile(user.id);
             if (profile.success) {
+                const userRole = profile.data.ruolo;
+                
+                // Check if user has permission (reporter, docente, or caporedattore)
+                if (userRole === 'utente') {
+                    alert('⛔ Accesso negato. Solo i reporter possono accedere a questa pagina.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
                 document.getElementById('userInfo').innerHTML = `
-                    <span style="color: var(--neutral);">Ciao, <strong>${profile.data.nome_visualizzato}</strong></span>
+                    <span style="color: var(--neutral);">Ciao, <strong>${profile.data.nome_visualizzato || profile.data.username}</strong> (${userRole})</span>
                 `;
             }
 
@@ -211,30 +220,92 @@
                 const div = document.createElement('div');
                 div.className = 'article-item';
                 div.innerHTML = `
-                    <h3>${article.titolo}</h3>
-                    <p style="color: var(--neutral); font-size: 0.875rem;">${article.sommario}</p>
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
-                        <span style="font-size: 0.875rem; color: var(--neutral);">
-                            <strong>${article.categoria}</strong> | 
-                            ${article.stato} | 
-                            ${article.visualizzazioni || 0} visualizzazioni
-                        </span>
+                    <div style="flex: 1;">
+                        <h3>${article.titolo}</h3>
+                        <p style="color: var(--neutral); font-size: 0.875rem; margin: 0.5rem 0;">${article.sommario || ''}</p>
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
+                            <span style="font-size: 0.875rem; color: var(--neutral);">
+                                <strong>${article.categoria}</strong> | 
+                                <span class="badge badge-${article.stato === 'pubblicato' ? 'success' : 'warning'}">${article.stato}</span> | 
+                                ${article.visualizzazioni || 0} visualizzazioni
+                            </span>
+                        </div>
                     </div>
                     <div class="article-actions">
                         <a href="articolo.html?id=${article.id}" class="btn btn-sm btn-primary">Visualizza</a>
+                        <button onclick="editArticle('${article.id}')" class="btn btn-sm" style="background: var(--secondary); color: var(--text-dark);">Modifica</button>
+                        <button onclick="deleteArticle('${article.id}')" class="btn btn-sm btn-error">Elimina</button>
                     </div>
                 `;
                 container.appendChild(div);
             });
         }
 
-        // Handle form submission
+        // Edit article
+        async function editArticle(id) {
+            try {
+                const result = await SupabaseAPI.getArticleById(id);
+                if (!result.success) {
+                    alert('Errore nel caricamento dell\'articolo');
+                    return;
+                }
+
+                const article = result.data;
+
+                // Fill form with article data
+                document.getElementById('titolo').value = article.titolo;
+                document.getElementById('categoria').value = article.categoria;
+                document.getElementById('sommario').value = article.sommario || '';
+                document.getElementById('contenuto').value = article.contenuto;
+                document.getElementById('readingTime').value = article.reading_time_minutes || 5;
+
+                // Change form to edit mode
+                document.querySelector('.article-form h2').textContent = 'Modifica Articolo';
+                
+                // Store article ID for update
+                document.getElementById('articleForm').dataset.editId = id;
+
+                // Scroll to form
+                document.querySelector('.article-form').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error loading article for edit:', error);
+                alert('Errore nel caricamento dell\'articolo');
+            }
+        }
+
+        // Delete article
+        async function deleteArticle(id) {
+            if (!confirm('Sei sicuro di voler eliminare questo articolo?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('articoli')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showAlert('✅ Articolo eliminato con successo', 'success');
+                
+                // Reload articles
+                const user = await SupabaseAPI.getCurrentUser();
+                if (user) {
+                    loadMyArticles(user.id);
+                }
+            } catch (error) {
+                console.error('Error deleting article:', error);
+                showAlert('❌ Errore nell\'eliminazione dell\'articolo', 'error');
+            }
+        }
+
+        // Handle form submission (create or update)
         document.getElementById('articleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitBtn = e.submitter;
             const action = submitBtn.value;
             const originalText = submitBtn.textContent;
+            const editId = e.target.dataset.editId;
             
             submitBtn.disabled = true;
             submitBtn.textContent = 'Salvataggio...';
@@ -260,14 +331,27 @@
                     }
                 }
 
-                // Create article
-                const result = await SupabaseAPI.createArticle(articleData);
+                let result;
+                if (editId) {
+                    // Update existing article
+                    const { error } = await supabase
+                        .from('articoli')
+                        .update(articleData)
+                        .eq('id', editId);
+
+                    result = { success: !error, error: error?.message };
+                } else {
+                    // Create new article
+                    result = await SupabaseAPI.createArticle(articleData);
+                }
 
                 if (result.success) {
-                    showAlert(`✅ Articolo ${action === 'pubblicato' ? 'pubblicato' : 'salvato come bozza'}!`, 'success');
+                    showAlert(`✅ Articolo ${editId ? 'aggiornato' : (action === 'pubblicato' ? 'pubblicato' : 'salvato')}!`, 'success');
                     
                     // Reset form
                     e.target.reset();
+                    delete e.target.dataset.editId;
+                    document.querySelector('.article-form h2').textContent = 'Nuovo Articolo';
                     
                     // Reload articles
                     const user = await SupabaseAPI.getCurrentUser();
@@ -278,7 +362,7 @@
                     showAlert('❌ Errore: ' + result.error, 'error');
                 }
             } catch (error) {
-                console.error('Error creating article:', error);
+                console.error('Error saving article:', error);
                 showAlert('❌ Errore durante il salvataggio', 'error');
             } finally {
                 submitBtn.disabled = false;
