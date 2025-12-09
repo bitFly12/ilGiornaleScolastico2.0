@@ -103,14 +103,17 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const alertBox = document.getElementById('alertBox');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             
             // Validate email domain (case-insensitive)
             if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
@@ -118,19 +121,39 @@
                 return;
             }
             
-            // Simulate login (in production, this would be an API call)
-            const result = window.login(email, password);
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Accesso in corso...';
             
-            if (result.success) {
-                showAlert('✅ Login effettuato con successo! Reindirizzamento...', 'success');
+            try {
+                // Real Supabase authentication
+                const result = await signInWithEmail(email, password);
                 
-                setTimeout(() => {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const redirect = urlParams.get('redirect') || 'index.html';
-                    window.location.href = redirect;
-                }, 1500);
-            } else {
-                showAlert(result.error, 'error');
+                if (result.success) {
+                    showAlert('✅ Login effettuato con successo! Reindirizzamento...', 'success');
+                    
+                    // Store user info in localStorage
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userId', result.user.id);
+                    if (result.profile) {
+                        localStorage.setItem('userProfile', JSON.stringify(result.profile));
+                    }
+                    
+                    setTimeout(() => {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const redirect = urlParams.get('redirect') || 'index.html';
+                        window.location.href = redirect;
+                    }, 1500);
+                } else {
+                    showAlert('❌ ' + (result.error || 'Credenziali non valide. Verifica email e password.'), 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Accedi';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('❌ Errore durante l\'accesso. Riprova più tardi.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Accedi';
             }
         });
         

@@ -7,6 +7,14 @@
 const SUPABASE_URL = 'https://tepxvijiamuaszvyzeze.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcHh2aWppYW11YXN6dnl6ZXplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNjU0MTMsImV4cCI6MjA4MDg0MTQxM30.6_OAMwfomGmz93BJrbYbOuqTDF1ZUxbW8eZ91fHifr4';
 
+// External API Keys
+const GOOGLE_AI_API_KEY = 'AIzaSyDXwkvfGymYKD5pN3cV0f8ofC54j9IcS90';
+const RESEND_API_KEY = 're_TdwD1rg2_33toySQdNwgiCuNEwCEXQbWY';
+
+// Export API keys for use in other modules
+window.GOOGLE_AI_API_KEY = GOOGLE_AI_API_KEY;
+window.RESEND_API_KEY = RESEND_API_KEY;
+
 // PostgreSQL Error Codes (for better code readability)
 const PG_ERROR_CODES = {
     UNIQUE_VIOLATION: '23505',
