@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidatura Reporter - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .candidatura-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .candidatura-hero {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .candidatura-hero h1 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .benefit-card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+        }
+        
+        .benefit-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .requirements-list {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin: 2rem 0;
+        }
+        
+        .requirements-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .requirements-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .requirements-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .form-container {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin: 2rem 0;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background-color: #D1FAE5;
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-error {
+            background-color: #FEE2E2;
+            color: var(--error);
+            border-left: 4px solid var(--error);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link">Chat</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="candidatura-container">
+        <div class="candidatura-hero">
+            <h1>✍️ Diventa Reporter del Giornale Cesaris</h1>
+            <p style="font-size: 1.125rem; margin-bottom: 0;">Condividi la tua voce, racconta storie, fai la differenza nella tua scuola</p>
+        </div>
+        
+        <section>
+            <h2>Perché Diventare Reporter?</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">✍️</div>
+                    <h3>Scrivi Articoli</h3>
+                    <p>Pubblica le tue storie e condividile con tutta la scuola</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎖️</div>
+                    <h3>Guadagna Badge</h3>
+                    <p>Sblocca achievements e scala la leaderboard</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">📊</div>
+                    <h3>Analytics</h3>
+                    <p>Vedi le statistiche dei tuoi articoli e il loro impatto</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">🌟</div>
+                    <h3>Cresci</h3>
+                    <p>Sviluppa le tue capacità di scrittura e giornalismo</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="requirements-list">
+            <h2>Requisiti</h2>
+            <ul>
+                <li>✅ Essere studente del Cesaris</li>
+                <li>✅ Avere un account @cesaris.edu.it</li>
+                <li>✅ Passione per la scrittura e il giornalismo</li>
+                <li>✅ Rispetto delle linee guida etiche</li>
+                <li>✅ Impegno a verificare le fonti</li>
+                <li>✅ Zero tolleranza per plagio e contenuti AI</li>
+            </ul>
+        </section>
+        
+        <section class="form-container">
+            <h2>Invia la Tua Candidatura</h2>
+            <p style="color: var(--neutral); margin-bottom: 2rem;">
+                Compila il form qui sotto. La tua candidatura sarà revisionata dal team di redazione.
+            </p>
+            
+            <div id="alertBox" class="alert hidden"></div>
+            
+            <form id="candidaturaForm">
+                <div class="form-group">
+                    <label class="form-label">Email Scolastica *</label>
+                    <input type="email" id="email" class="form-input" 
+                           placeholder="nome@cesaris.edu.it" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Nome Completo *</label>
+                    <input type="text" id="fullName" class="form-input" 
+                           placeholder="Mario Rossi" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Classe *</label>
+                    <input type="text" id="class" class="form-input" 
+                           placeholder="4A" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Perché vuoi diventare reporter? *</label>
+                    <textarea id="motivation" class="form-textarea" rows="6" 
+                              placeholder="Racconta la tua passione per il giornalismo..." required></textarea>
+                    <small style="color: var(--neutral);">Minimo 100 caratteri</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Hai esperienze precedenti di scrittura?</label>
+                    <textarea id="experience" class="form-textarea" rows="4" 
+                              placeholder="Descrivi eventuali esperienze (opzionale)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="termsAccept" required>
+                        <span>Ho letto e accetto i <a href="code-of-conduct.html" target="_blank" style="color: var(--primary);">termini e condizioni</a> del reporter *</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    📤 Invia Candidatura
+                </button>
+            </form>
+        </section>
+        
+        <section style="background: var(--bg-card); padding: 2rem; border-radius: var(--radius-lg); margin-top: 2rem;">
+            <h3>Cosa Succede Dopo?</h3>
+            <ol style="padding-left: 1.5rem; line-height: 2;">
+                <li>La tua candidatura viene inviata al team di redazione</li>
+                <li>Ricevi una conferma via email</li>
+                <li>Il team revisiona la tua candidatura (entro 7 giorni)</li>
+                <li>Se approvato, ricevi le credenziali per l'area reporter</li>
+                <li>Accetti i termini etici e legali (obbligatorio)</li>
+                <li>Inizi a scrivere i tuoi primi articoli!</li>
+            </ol>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.getElementById('candidaturaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const fullName = document.getElementById('fullName').value;
+            const studentClass = document.getElementById('class').value;
+            const motivation = document.getElementById('motivation').value;
+            const experience = document.getElementById('experience').value;
+            const termsAccept = document.getElementById('termsAccept').checked;
+            
+            const alertBox = document.getElementById('alertBox');
+            
+            // Validate email domain
+            if (!email.endsWith('@cesaris.edu.it')) {
+                showAlert('Utilizza la tua email @cesaris.edu.it per candidarti', 'error');
+                return;
+            }
+            
+            // Validate motivation length
+            if (motivation.length < 100) {
+                showAlert('La motivazione deve essere almeno di 100 caratteri', 'error');
+                return;
+            }
+            
+            if (!termsAccept) {
+                showAlert('Devi accettare i termini e condizioni', 'error');
+                return;
+            }
+            
+            // Save candidature
+            const candidature = {
+                id: window.generateUUID(),
+                email: email,
+                fullName: fullName,
+                class: studentClass,
+                motivation: motivation,
+                experience: experience,
+                status: 'pending',
+                submittedAt: new Date().toISOString()
+            };
+            
+            let candidatures = JSON.parse(localStorage.getItem('reporterCandidatures') || '[]');
+            
+            // Check if already submitted
+            if (candidatures.some(c => c.email === email)) {
+                showAlert('Hai già inviato una candidatura! Attendiamo la revisione.', 'error');
+                return;
+            }
+            
+            candidatures.push(candidature);
+            localStorage.setItem('reporterCandidatures', JSON.stringify(candidatures));
+            
+            showAlert('✅ Candidatura inviata con successo! Riceverai una risposta via email entro 7 giorni.', 'success');
+            
+            // Reset form
+            document.getElementById('candidaturaForm').reset();
+            
+            // Scroll to alert
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+        
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.classList.remove('hidden');
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertBox.classList.add('hidden');
+                }, 10000);
+            }
+        }
+    </script>
+</body>
+</html>

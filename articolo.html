@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Articolo - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .article-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .article-header {
+            margin-bottom: 2rem;
+        }
+        
+        .article-category {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .article-title {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .article-summary {
+            font-size: 1.25rem;
+            color: var(--neutral);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            padding: 1rem 0;
+            border-top: 2px solid #e5e7eb;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--neutral);
+        }
+        
+        .article-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
+        }
+        
+        .article-content {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: var(--text-dark);
+            margin-bottom: 3rem;
+        }
+        
+        .article-content p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        
+        .tag {
+            background: var(--bg-light);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .article-reactions {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin: 2rem 0;
+        }
+        
+        .reaction-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .reaction-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: var(--radius-full);
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1.25rem;
+        }
+        
+        .reaction-btn:hover {
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .reaction-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .comments-section {
+            margin-top: 3rem;
+        }
+        
+        .comment {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .comment-time {
+            font-size: 0.875rem;
+            color: var(--neutral);
+        }
+        
+        .comment-text {
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .article-title {
+                font-size: 1.75rem;
+            }
+            
+            .article-summary {
+                font-size: 1rem;
+            }
+            
+            .article-content {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                    <span>☰</span>
+                </button>
+                
+                <nav>
+                    <ul class="nav-menu" id="navMenu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link">Chat</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="article-container">
+        <article id="articleContent">
+            <!-- Article content will be loaded here -->
+        </article>
+        
+        <!-- Reactions -->
+        <div class="article-reactions">
+            <h3>Come ti è sembrato questo articolo?</h3>
+            <div class="reaction-buttons" id="reactionButtons">
+                <button class="reaction-btn" data-reaction="like">👍 <span class="count">0</span></button>
+                <button class="reaction-btn" data-reaction="love">❤️ <span class="count">0</span></button>
+                <button class="reaction-btn" data-reaction="wow">😮 <span class="count">0</span></button>
+                <button class="reaction-btn" data-reaction="sad">😢 <span class="count">0</span></button>
+            </div>
+        </div>
+        
+        <!-- Comments Section -->
+        <section class="comments-section">
+            <h2>Commenti</h2>
+            
+            <div id="commentsList">
+                <p style="text-align: center; color: var(--neutral); padding: 2rem;">
+                    Effettua il login per vedere e lasciare commenti
+                </p>
+            </div>
+            
+            <div id="commentForm" class="hidden" style="margin-top: 2rem;">
+                <h3>Lascia un commento</h3>
+                <form id="addCommentForm">
+                    <div class="form-group">
+                        <textarea id="commentText" class="form-textarea" placeholder="Scrivi il tuo commento..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Invia Commento</button>
+                </form>
+            </div>
+        </section>
+        
+        <!-- Related Articles -->
+        <section style="margin-top: 4rem;">
+            <h2>Articoli Correlati</h2>
+            <div class="grid grid-3" id="relatedArticles" style="margin-top: 2rem;">
+                <!-- Related articles will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/articles.js"></script>
+    <script>
+        // Get article ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get('id');
+        
+        if (!articleId) {
+            document.getElementById('articleContent').innerHTML = `
+                <div style="text-align: center; padding: 4rem 0;">
+                    <h2>Articolo non trovato</h2>
+                    <p>L'articolo che stai cercando non esiste.</p>
+                    <a href="index.html" class="btn btn-primary">Torna alla Home</a>
+                </div>
+            `;
+        } else {
+            loadArticleDetail(articleId);
+        }
+        
+        function loadArticleDetail(id) {
+            const article = window.getArticleById(id);
+            
+            if (!article) {
+                document.getElementById('articleContent').innerHTML = `
+                    <div style="text-align: center; padding: 4rem 0;">
+                        <h2>Articolo non trovato</h2>
+                        <p>L'articolo che stai cercando non esiste.</p>
+                        <a href="index.html" class="btn btn-primary">Torna alla Home</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Increment views
+            article.visualizzazioni++;
+            
+            // Format date
+            const date = new Date(article.data_pubblicazione);
+            const formattedDate = date.toLocaleDateString('it-IT', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Render article
+            const container = document.getElementById('articleContent');
+            container.innerHTML = `
+                <div class="article-header">
+                    <span class="article-category">${article.categoria}</span>
+                    <h1 class="article-title">${article.titolo}</h1>
+                    <p class="article-summary">${article.sommario}</p>
+                    
+                    <div class="article-meta">
+                        <span class="meta-item">👤 ${article.autore.nome}</span>
+                        <span class="meta-item">📅 ${formattedDate}</span>
+                        <span class="meta-item">📖 ${article.reading_time} min di lettura</span>
+                        <span class="meta-item">👁️ ${article.visualizzazioni} visualizzazioni</span>
+                    </div>
+                </div>
+                
+                <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                     alt="${article.titolo}" 
+                     class="article-image"
+                     onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+                
+                <div class="article-content">
+                    <p>${article.contenuto}</p>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                </div>
+                
+                <div class="article-tags">
+                    ${article.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                </div>
+            `;
+            
+            // Load reactions
+            loadReactions(id);
+            
+            // Load comments
+            if (window.AppState && window.AppState.isAuthenticated) {
+                loadComments(id);
+                document.getElementById('commentForm').classList.remove('hidden');
+            }
+            
+            // Load related articles
+            loadRelatedArticles(article.categoria, id);
+        }
+        
+        function loadReactions(articleId) {
+            const reactions = JSON.parse(localStorage.getItem(`reactions_${articleId}`) || '{"like":0,"love":0,"wow":0,"sad":0}');
+            const userReaction = localStorage.getItem(`userReaction_${articleId}`);
+            
+            const buttons = document.querySelectorAll('.reaction-btn');
+            buttons.forEach(btn => {
+                const reaction = btn.getAttribute('data-reaction');
+                const countSpan = btn.querySelector('.count');
+                countSpan.textContent = reactions[reaction] || 0;
+                
+                if (userReaction === reaction) {
+                    btn.classList.add('active');
+                }
+                
+                btn.addEventListener('click', () => {
+                    if (userReaction) {
+                        reactions[userReaction]--;
+                        localStorage.removeItem(`userReaction_${articleId}`);
+                    }
+                    
+                    if (userReaction !== reaction) {
+                        reactions[reaction]++;
+                        localStorage.setItem(`userReaction_${articleId}`, reaction);
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                    
+                    localStorage.setItem(`reactions_${articleId}`, JSON.stringify(reactions));
+                    loadReactions(articleId);
+                });
+            });
+        }
+        
+        function loadComments(articleId) {
+            const comments = JSON.parse(localStorage.getItem(`comments_${articleId}`) || '[]');
+            const container = document.getElementById('commentsList');
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--neutral); padding: 2rem;">Nessun commento ancora. Sii il primo a commentare!</p>';
+                return;
+            }
+            
+            container.innerHTML = comments.map(comment => `
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">${comment.author}</span>
+                        <span class="comment-time">${formatTimeAgo(new Date(comment.timestamp))}</span>
+                    </div>
+                    <div class="comment-text">${escapeHTML(comment.text)}</div>
+                </div>
+            `).join('');
+        }
+        
+        function loadRelatedArticles(category, currentId) {
+            const related = window.filterArticlesByCategory(category)
+                .filter(a => a.id !== currentId)
+                .slice(0, 3);
+            
+            const container = document.getElementById('relatedArticles');
+            container.innerHTML = related.map(article => `
+                <div class="card">
+                    <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                         alt="${article.titolo}" 
+                         class="card-img"
+                         onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+                    <div class="card-body">
+                        <h3 class="card-title">${article.titolo}</h3>
+                        <p class="card-text">${truncateText(article.sommario, 100)}</p>
+                        <a href="articolo.html?id=${article.id}" class="btn btn-primary" style="width: 100%;">Leggi</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Comment form
+        document.getElementById('addCommentForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const text = document.getElementById('commentText').value;
+            const comments = JSON.parse(localStorage.getItem(`comments_${articleId}`) || '[]');
+            
+            comments.push({
+                id: window.generateUUID(),
+                author: window.AppState.user.name,
+                text: text,
+                timestamp: new Date().toISOString()
+            });
+            
+            localStorage.setItem(`comments_${articleId}`, JSON.stringify(comments));
+            document.getElementById('commentText').value = '';
+            loadComments(articleId);
+        });
+        
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Adesso';
+            if (diffMins < 60) return `${diffMins} min fa`;
+            if (diffHours < 24) return `${diffHours} ore fa`;
+            return `${diffDays} giorni fa`;
+        }
+        
+        function escapeHTML(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function createPlaceholderImage(category) {
+            const colors = {
+                'Attualità': '#0033A0',
+                'Sport': '#10B981',
+                'Cultura': '#EC4899',
+                'Tecnologia': '#FFD700',
+                'Scienza': '#6366F1',
+                'Viaggi': '#F59E0B',
+                'Orientamento': '#8B5CF6',
+                'default': '#6B7280'
+            };
+            
+            const emoji = {
+                'Attualità': '📰',
+                'Sport': '⚽',
+                'Cultura': '🎭',
+                'Tecnologia': '💻',
+                'Scienza': '🔬',
+                'Viaggi': '✈️',
+                'Orientamento': '🎓',
+                'default': '📝'
+            };
+            
+            const color = colors[category] || colors.default;
+            const icon = emoji[category] || emoji.default;
+            
+            const svg = `
+                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="400" height="300" fill="${color}"/>
+                    <text x="50%" y="50%" font-size="80" text-anchor="middle" dy=".3em">${icon}</text>
+                </svg>
+            `;
+            
+            return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+        }
+    </script>
+</body>
+</html>
