@@ -490,7 +490,8 @@ CREATE TABLE reading_history (
     article_id UUID NOT NULL,
     read_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     time_spent_seconds INTEGER,
-    progress_percentage INTEGER
+    progress_percentage INTEGER,
+    UNIQUE(user_id, article_id, read_at)
 );
 
 -- Featured content
@@ -1016,20 +1017,20 @@ CREATE POLICY "Public profiles are viewable by everyone" ON profili_utenti
     FOR SELECT USING (true);
 
 CREATE POLICY "Users can update own profile" ON profili_utenti
-    FOR UPDATE USING (id = auth.uid());
+    FOR UPDATE USING (auth.uid() = id);
 
 CREATE POLICY "Users can insert own profile" ON profili_utenti
-    FOR INSERT WITH CHECK (id = auth.uid());
+    FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Preferenze utente policies
 CREATE POLICY "Users can view own preferences" ON preferenze_utente
-    FOR SELECT USING (user_id = auth.uid());
+    FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can update own preferences" ON preferenze_utente
-    FOR UPDATE USING (user_id = auth.uid());
+    FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert own preferences" ON preferenze_utente
-    FOR INSERT WITH CHECK (user_id = auth.uid());
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Articoli policies
 CREATE POLICY "Published articles are viewable by everyone" ON articoli
@@ -1042,7 +1043,7 @@ CREATE POLICY "Reporters can insert own articles" ON articoli
     );
 
 CREATE POLICY "Authors can update own articles" ON articoli
-    FOR UPDATE USING (autore_id = auth.uid());
+    FOR UPDATE USING (auth.uid() = autore_id);
 
 CREATE POLICY "Moderators can update all articles" ON articoli
     FOR UPDATE USING (
@@ -1051,7 +1052,7 @@ CREATE POLICY "Moderators can update all articles" ON articoli
 
 -- Comments policies
 CREATE POLICY "Approved comments are viewable by everyone" ON article_comments
-    FOR SELECT USING (is_approved = true OR user_id = auth.uid());
+    FOR SELECT USING (is_approved = true OR auth.uid() = user_id);
 
 CREATE POLICY "Authenticated users can insert comments" ON article_comments
     FOR INSERT WITH CHECK (auth.uid() = user_id);
