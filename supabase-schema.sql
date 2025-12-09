@@ -124,6 +124,9 @@ DROP TABLE IF EXISTS profili_utenti CASCADE;
 -- ============================================
 
 -- User profiles table (extends Supabase auth.users)
+-- NOTE: username is auto-extracted from email (part before @) by trigger
+-- Since email is UNIQUE, username will also be unique (no conflicts possible)
+-- Example: mario.rossi@cesaris.edu.it → username: mario.rossi
 CREATE TABLE profili_utenti (
     id UUID PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,

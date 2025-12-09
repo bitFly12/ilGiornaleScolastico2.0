@@ -147,7 +147,13 @@ function createMessageElement(msg) {
 // Highlight @ Mentions in Message
 // ================================================
 function highlightMentions(text) {
-    // Find all @username mentions
+    // Find all @username mentions in message text
+    // Regex pattern explanation:
+    // @ - literal @ character
+    // (\w+(?:\.\w+)*) - captures username:
+    //   \w+ - one or more word characters (letters, digits, underscore)
+    //   (?:\.\w+)* - zero or more groups of: dot followed by word characters
+    // Examples matched: @mario.rossi, @john_doe, @user123, @test.user.name
     const mentionRegex = /@(\w+(?:\.\w+)*)/g;
     return escapeHTML(text).replace(mentionRegex, (match, username) => {
         return `<span class="mention">@${username}</span>`;
@@ -316,13 +322,16 @@ async function sendMessage() {
 
     try {
         // Insert message into Supabase
+        // NOTE: Using both 'messaggio' (Italian standard) and 'message' (English compatibility)
+        // for backward compatibility with existing chat.html code that may reference either column
+        // TODO: Standardize on one column in future schema update
         const { data, error } = await supabase
             .from('chat_messages')
             .insert([
                 {
                     user_id: currentUser.id,
                     messaggio: message,
-                    message: message // Compatibility
+                    message: message // Compatibility with existing code
                 }
             ])
             .select(`

@@ -180,6 +180,11 @@
                 const userRole = profile.data.ruolo;
                 
                 // Check if user has permission (reporter, docente, or caporedattore)
+                // Role hierarchy:
+                // - utente: basic user, cannot create articles → BLOCKED
+                // - reporter: can create and manage own articles → ALLOWED
+                // - docente: teacher, can access both dashboards → ALLOWED
+                // - caporedattore: chief editor, full access → ALLOWED
                 if (userRole === 'utente') {
                     alert('⛔ Accesso negato. Solo i reporter possono accedere a questa pagina.');
                     window.location.href = 'index.html';
