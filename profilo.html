@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilo - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link active">Profilo</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" style="padding: 3rem 1rem; max-width: 800px; margin: 0 auto;">
+        <div class="card" style="padding: 2rem;">
+            <h1 style="color: var(--primary); margin-bottom: 2rem;">👤 Il Tuo Profilo</h1>
+            
+            <div id="profileContent">
+                <p>Effettua il login per vedere il tuo profilo.</p>
+                <a href="login.html" class="btn btn-primary">Accedi</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="js/main.js"></script>
+    <script>
+        if (window.AppState && window.AppState.isAuthenticated) {
+            document.getElementById('profileContent').innerHTML = `
+                <h2>Benvenuto, ${window.AppState.user.name}!</h2>
+                <p><strong>Email:</strong> ${window.AppState.user.email}</p>
+                <p><strong>Ruolo:</strong> ${window.AppState.user.role}</p>
+                <button onclick="window.logout()" class="btn btn-danger">Logout</button>
+            `;
+        }
+    </script>
+</body>
+</html>

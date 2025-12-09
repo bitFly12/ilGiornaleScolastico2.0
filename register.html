@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+        <div style="background: var(--bg-card); padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); max-width: 450px; width: 100%;">
+            <h1 style="text-align: center; color: var(--primary);">Registrazione</h1>
+            <p style="text-align: center; color: var(--neutral); margin-bottom: 2rem;">Crea il tuo account con l'email @cesaris.edu.it</p>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Email Scolastica</label>
+                    <input type="email" class="form-input" placeholder="nome@cesaris.edu.it" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Nome</label>
+                    <input type="text" class="form-input" placeholder="Mario Rossi" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Registrati</button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 1.5rem;">
+                Hai già un account? <a href="login.html" style="color: var(--primary);">Accedi</a>
+            </p>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Registrazione completata! Effettua il login.');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

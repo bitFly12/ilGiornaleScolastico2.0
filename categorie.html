@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorie - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .category-card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .category-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="categorie.html" class="nav-link active">Categorie</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" style="padding: 3rem 1rem;">
+        <h1 style="text-align: center; color: var(--primary); margin-bottom: 2rem;">📚 Categorie</h1>
+        
+        <div class="categories-grid">
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">📰</div>
+                <h3>Attualità</h3>
+                <p>Eventi e notizie della scuola</p>
+            </a>
+            
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">⚽</div>
+                <h3>Sport</h3>
+                <p>Tornei e attività sportive</p>
+            </a>
+            
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">🎭</div>
+                <h3>Cultura</h3>
+                <p>Teatro, letteratura, arte</p>
+            </a>
+            
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">💻</div>
+                <h3>Tecnologia</h3>
+                <p>Coding, AI, innovazione</p>
+            </a>
+            
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">🔬</div>
+                <h3>Scienza</h3>
+                <p>Esperimenti e scoperte</p>
+            </a>
+            
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">✈️</div>
+                <h3>Viaggi</h3>
+                <p>Gite e scambi culturali</p>
+            </a>
+            
+            <a href="articoli.html" class="category-card">
+                <div class="category-icon">🎓</div>
+                <h3>Orientamento</h3>
+                <p>Università e futuro</p>
+            </a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>
