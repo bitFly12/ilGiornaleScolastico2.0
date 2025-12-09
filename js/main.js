@@ -285,8 +285,8 @@ function login(email, password) {
         return { success: false, error: 'Email e password richiesti' };
     }
     
-    // Check if email is from @cesaris.edu.it
-    if (!email.endsWith('@cesaris.edu.it')) {
+    // Check if email is from @cesaris.edu.it (case-insensitive)
+    if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
         return { success: false, error: 'Utilizza la tua email @cesaris.edu.it' };
     }
     
@@ -437,7 +437,7 @@ function calculateReadingTime(text) {
 
 function truncateText(text, maxLength) {
     if (text.length <= maxLength) return text;
-    return text.substr(0, maxLength) + '...';
+    return text.substring(0, maxLength) + '...';
 }
 
 // ================================================

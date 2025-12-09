@@ -112,8 +112,8 @@
             const password = document.getElementById('password').value;
             const alertBox = document.getElementById('alertBox');
             
-            // Validate email domain
-            if (!email.endsWith('@cesaris.edu.it')) {
+            // Validate email domain (case-insensitive)
+            if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
                 showAlert('Utilizza la tua email @cesaris.edu.it per accedere', 'error');
                 return;
             }
