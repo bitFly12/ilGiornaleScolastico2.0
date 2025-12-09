@@ -820,13 +820,18 @@ INSERT INTO weekly_challenges (title, description, challenge_type, target_value,
 ('Community Champion', 'Lascia 10 commenti approvati', 'comments_count', 10, 40, CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days');
 
 -- ============================================
--- GRANTS (if needed for service role)
+-- GRANTS
 -- ============================================
 
--- Grant necessary permissions
--- GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
--- GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
--- GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+-- Grant necessary permissions for authenticated users
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+
+-- Grant SELECT permissions to anon users for public tables
+GRANT SELECT ON profili_utenti TO anon;
+GRANT SELECT ON articoli TO anon;
 
 -- ============================================
 -- COMPLETION

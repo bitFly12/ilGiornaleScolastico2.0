@@ -2,8 +2,17 @@
 // Supabase Configuration
 // ================================================
 
+// NOTE: API keys provided by user - in production, move to environment variables
+// For security best practices, use .env files and never commit secrets to git
 const SUPABASE_URL = 'https://ftazdkxyfekyzfvgrgiw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXpka3h5ZmVreXpmdmdyZ2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTE3MzQsImV4cCI6MjA4MDYyNzczNH0._V8LM9f8Dz2s9j8hcxUEWkHN8FMX9QW7YzKH3CgAzdU';
+
+// PostgreSQL Error Codes (for better code readability)
+const PG_ERROR_CODES = {
+    UNIQUE_VIOLATION: '23505',
+    FOREIGN_KEY_VIOLATION: '23503',
+    NOT_NULL_VIOLATION: '23502'
+};
 
 // Initialize Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -263,8 +272,8 @@ async function addArticleReaction(articleId, reactionType) {
         if (error) throw error;
         return { success: true, data };
     } catch (error) {
-        // If already exists, remove it
-        if (error.code === '23505') {
+        // If already exists (unique constraint violation), remove it
+        if (error.code === PG_ERROR_CODES.UNIQUE_VIOLATION) {
             return await removeArticleReaction(articleId, reactionType);
         }
         return { success: false, error: error.message };
@@ -490,7 +499,7 @@ async function subscribeToNewsletter(email) {
         if (error) throw error;
         return { success: true, data };
     } catch (error) {
-        if (error.code === '23505') {
+        if (error.code === PG_ERROR_CODES.UNIQUE_VIOLATION) {
             return { success: false, error: 'Email già registrata' };
         }
         return { success: false, error: error.message };
