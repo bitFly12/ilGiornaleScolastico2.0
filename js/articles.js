@@ -1,8 +1,8 @@
 // ================================================
-// Articles Management
+// Articles Management with Supabase Integration
 // ================================================
 
-// Sample articles data (in production, this would come from an API/database)
+// Sample articles data (fallback for offline mode)
 const sampleArticles = [
     {
         id: '1',
@@ -121,14 +121,44 @@ const sampleArticles = [
 // ================================================
 // Load Articles on Page
 // ================================================
-function loadArticles(page = 1) {
+async function loadArticles(page = 1) {
     const articlesGrid = document.getElementById('articlesGrid');
     if (!articlesGrid) return;
     
     const articlesPerPage = window.AppState?.articlesPerPage || 8;
-    const startIndex = (page - 1) * articlesPerPage;
-    const endIndex = startIndex + articlesPerPage;
+    const offset = (page - 1) * articlesPerPage;
     
+    // Show loading state
+    articlesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;"><div class="spinner"></div><p>Caricamento articoli...</p></div>';
+    
+    // Try to load from Supabase first
+    if (window.SupabaseAPI) {
+        const result = await window.SupabaseAPI.getArticles({ 
+            limit: articlesPerPage, 
+            offset: offset 
+        });
+        
+        if (result.success && result.data && result.data.length > 0) {
+            articlesGrid.innerHTML = '';
+            result.data.forEach(article => {
+                const articleCard = createArticleCardFromSupabase(article);
+                articlesGrid.appendChild(articleCard);
+            });
+            
+            // Add fade-in animation
+            const cards = articlesGrid.querySelectorAll('.article-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 100);
+            });
+            return;
+        }
+    }
+    
+    // Fallback to sample articles
+    const startIndex = offset;
+    const endIndex = startIndex + articlesPerPage;
     const articlesToShow = sampleArticles.slice(startIndex, endIndex);
     
     // Clear existing articles
@@ -147,6 +177,33 @@ function loadArticles(page = 1) {
             card.classList.add('fade-in');
         }, index * 100);
     });
+}
+
+// ================================================
+// Create Article Card from Supabase Data
+// ================================================
+function createArticleCardFromSupabase(article) {
+    const card = document.createElement('div');
+    card.className = 'article-card article-card-mini';
+    
+    // Use placeholder if image doesn't exist
+    const imageSrc = article.immagine_url || createPlaceholderImage(article.categoria);
+    const authorName = article.autore?.nome_visualizzato || 'Anonimo';
+    
+    card.innerHTML = `
+        <img src="${imageSrc}" alt="${article.titolo}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+        <div class="card-body">
+            <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${article.categoria}</span>
+            <h3 class="card-title">${truncateText(article.titolo, 60)}</h3>
+            <div class="card-meta">
+                <span>👤 ${authorName}</span>
+                <span>📖 ${article.reading_time_minutes} min</span>
+            </div>
+            <a href="articolo.html?id=${article.id}" class="btn btn-primary btn-sm" style="margin-top: 0.5rem; width: 100%;">Leggi</a>
+        </div>
+    `;
+    
+    return card;
 }
 
 // ================================================
@@ -178,43 +235,77 @@ function createArticleCard(article) {
 // ================================================
 // Load Hero Article
 // ================================================
-function loadHeroArticle() {
-    // Get the most viewed article as hero
+async function loadHeroArticle() {
+    // Try to get featured article from Supabase
+    if (window.SupabaseAPI) {
+        const result = await window.SupabaseAPI.getArticles({ limit: 1 });
+        if (result.success && result.data && result.data.length > 0) {
+            const heroArticle = result.data[0];
+            updateHeroUI(heroArticle);
+            return;
+        }
+    }
+    
+    // Fallback to sample articles
     const heroArticle = sampleArticles.reduce((prev, current) => 
         (prev.visualizzazioni > current.visualizzazioni) ? prev : current
     );
-    
+    updateHeroUI(heroArticle);
+}
+
+function updateHeroUI(article) {
     const heroTitle = document.getElementById('heroTitle');
     const heroMeta = document.getElementById('heroMeta');
     const heroBtn = document.getElementById('heroBtn');
     const heroImg = document.getElementById('heroImg');
     
-    if (heroTitle) heroTitle.textContent = heroArticle.titolo;
-    if (heroMeta) heroMeta.textContent = `${heroArticle.autore.nome} | ${heroArticle.reading_time} min | ${heroArticle.visualizzazioni} visualizzazioni`;
-    if (heroBtn) heroBtn.href = `articolo.html?id=${heroArticle.id}`;
-    if (heroImg) heroImg.src = heroArticle.immagine || createPlaceholderImage(heroArticle.categoria);
+    const authorName = article.autore?.nome_visualizzato || article.autore?.nome || 'Redazione';
+    const readingTime = article.reading_time_minutes || article.reading_time || 5;
+    const views = article.visualizzazioni || 0;
+    
+    if (heroTitle) heroTitle.textContent = article.titolo;
+    if (heroMeta) heroMeta.textContent = `${authorName} | ${readingTime} min | ${views} visualizzazioni`;
+    if (heroBtn) heroBtn.href = `articolo.html?id=${article.id}`;
+    if (heroImg) heroImg.src = article.immagine_url || article.immagine || createPlaceholderImage(article.categoria);
 }
 
 // ================================================
 // Load Trending Articles
 // ================================================
-function loadTrendingArticles() {
+async function loadTrendingArticles() {
     const trendingGrid = document.getElementById('trendingGrid');
     if (!trendingGrid) return;
     
-    // Sort by views and take top 3
+    // Try to get trending from Supabase
+    if (window.SupabaseAPI) {
+        const result = await window.SupabaseAPI.getArticles({ limit: 3 });
+        if (result.success && result.data && result.data.length > 0) {
+            renderTrendingArticles(result.data, trendingGrid);
+            return;
+        }
+    }
+    
+    // Fallback to sample articles
     const trendingArticles = [...sampleArticles]
         .sort((a, b) => b.visualizzazioni - a.visualizzazioni)
         .slice(0, 3);
     
-    trendingGrid.innerHTML = '';
+    renderTrendingArticles(trendingArticles, trendingGrid);
+}
+
+function renderTrendingArticles(articles, container) {
+    container.innerHTML = '';
     
-    trendingArticles.forEach((article, index) => {
+    articles.forEach((article, index) => {
         const medal = ['🥇', '🥈', '🥉'][index];
+        const authorName = article.autore?.nome_visualizzato || article.autore?.nome || 'Redazione';
+        const views = article.visualizzazioni || 0;
+        const imageSrc = article.immagine_url || article.immagine || createPlaceholderImage(article.categoria);
+        
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-            <img src="${article.immagine || createPlaceholderImage(article.categoria)}" alt="${article.titolo}" class="card-img" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            <img src="${imageSrc}" alt="${article.titolo}" class="card-img" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
             <div class="card-body">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <span style="font-size: 0.875rem; color: var(--primary); font-weight: 600;">${article.categoria}</span>
@@ -223,13 +314,13 @@ function loadTrendingArticles() {
                 <h3 class="card-title">${article.titolo}</h3>
                 <p class="card-text">${truncateText(article.sommario, 100)}</p>
                 <div class="card-meta">
-                    <span>👤 ${article.autore.nome}</span>
-                    <span>👁️ ${article.visualizzazioni}</span>
+                    <span>👤 ${authorName}</span>
+                    <span>👁️ ${views}</span>
                 </div>
                 <a href="articolo.html?id=${article.id}" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Leggi Articolo</a>
             </div>
         `;
-        trendingGrid.appendChild(card);
+        container.appendChild(card);
     });
 }
 
