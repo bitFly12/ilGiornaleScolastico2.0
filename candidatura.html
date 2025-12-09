@@ -305,6 +305,21 @@
                 if (error) {
                     throw error;
                 }
+
+                // After successfully inserting candidature to database
+const { error: emailError } = await supabaseClient.functions.invoke('send-candidacy-email', {
+  body: {
+    candidatureId: data.id,
+    email: email,
+    fullName: fullName,
+    motivation: motivation
+  }
+})
+
+if (emailError) {
+  console.error('Email sending error:', emailError)
+  // Don't fail the whole operation, just log
+}
                 
                 // TODO: Send email notification to mohamed.mashaal@cesaris.edu.it
                 // This should be done via Supabase Edge Function for security
