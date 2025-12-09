@@ -42,31 +42,24 @@ console.log('✅ Supabase client initialized');
 // Authentication Helper Functions
 // ================================================
 
-async function signUpWithEmail(email, password, fullName) {
+async function signUpWithEmail(email, password, username) {
     try {
         const { data, error } = await supabase.auth.signUp({
             email: email,
-            password: password,
-            options: {
-                data: {
-                    full_name: fullName
-                }
-            }
+            password: password
         });
 
         if (error) throw error;
 
-        // Create user profile
+        // Create user profile (trigger will auto-set username and role)
         if (data.user) {
             const { error: profileError } = await supabase
                 .from('profili_utenti')
                 .insert([
                     {
                         id: data.user.id,
-                        email: email,
-                        nome_completo: fullName,
-                        nome_visualizzato: fullName.split(' ')[0],
-                        ruolo: 'studente'
+                        email: email
+                        // username, role, and nome_visualizzato will be set by trigger
                     }
                 ]);
 

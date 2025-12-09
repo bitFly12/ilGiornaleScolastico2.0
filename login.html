@@ -137,12 +137,31 @@
                     localStorage.setItem('userId', result.user.id);
                     if (result.profile) {
                         localStorage.setItem('userProfile', JSON.stringify(result.profile));
+                        localStorage.setItem('userRole', result.profile.ruolo);
+                        localStorage.setItem('username', result.profile.username || result.profile.nome_visualizzato);
                     }
                     
                     setTimeout(() => {
+                        // Role-based redirection
+                        const role = result.profile ? result.profile.ruolo : 'utente';
+                        let redirectUrl = 'index.html';
+                        
+                        if (role === 'caporedattore' || role === 'docente') {
+                            // Admin users go to admin dashboard
+                            redirectUrl = 'admin.html';
+                        } else if (role === 'reporter') {
+                            // Reporters go to reporter dashboard
+                            redirectUrl = 'dashboard.html';
+                        } else {
+                            // Normal users go to homepage
+                            redirectUrl = 'index.html';
+                        }
+                        
+                        // Check if there's a specific redirect requested
                         const urlParams = new URLSearchParams(window.location.search);
-                        const redirect = urlParams.get('redirect') || 'index.html';
-                        window.location.href = redirect;
+                        const requestedRedirect = urlParams.get('redirect');
+                        
+                        window.location.href = requestedRedirect || redirectUrl;
                     }, 1500);
                 } else {
                     showAlert('❌ ' + (result.error || 'Credenziali non valide. Verifica email e password.'), 'error');
