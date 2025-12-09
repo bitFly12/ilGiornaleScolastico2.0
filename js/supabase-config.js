@@ -8,10 +8,18 @@ const SUPABASE_URL = 'https://tepxvijiamuaszvyzeze.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlcHh2aWppYW11YXN6dnl6ZXplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNjU0MTMsImV4cCI6MjA4MDg0MTQxM30.6_OAMwfomGmz93BJrbYbOuqTDF1ZUxbW8eZ91fHifr4';
 
 // External API Keys
+// ⚠️ SECURITY NOTE: These API keys are exposed in client-side code.
+// For production deployment:
+// 1. Move these to Supabase Edge Functions (server-side)
+// 2. Use Supabase secrets management
+// 3. Never commit sensitive keys to version control
+// 4. The Supabase anon key is safe to expose (designed for client-side use)
+// 5. Google AI and Resend keys should be server-side only
 const GOOGLE_AI_API_KEY = 'AIzaSyDXwkvfGymYKD5pN3cV0f8ofC54j9IcS90';
 const RESEND_API_KEY = 're_TdwD1rg2_33toySQdNwgiCuNEwCEXQbWY';
 
 // Export API keys for use in other modules
+// TODO: Remove these exports and implement via Edge Functions
 window.GOOGLE_AI_API_KEY = GOOGLE_AI_API_KEY;
 window.RESEND_API_KEY = RESEND_API_KEY;
 

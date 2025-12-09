@@ -3,9 +3,11 @@
 // ================================================
 
 // API Keys for external services
+// ⚠️ SECURITY NOTE: These are duplicated from supabase-config.js
+// In production, these should be called via Supabase Edge Functions only
 const GOOGLE_AI_API_KEY = 'AIzaSyDXwkvfGymYKD5pN3cV0f8ofC54j9IcS90';
 const RESEND_API_KEY = 're_TdwD1rg2_33toySQdNwgiCuNEwCEXQbWY';
-const CANDIDACY_EMAIL = 'mohamed.mashaal@cesrais.edu.it';
+const CANDIDACY_EMAIL = 'mohamed.mashaal@cesaris.edu.it';
 
 // ================================================
 // Article Operations
@@ -165,12 +167,16 @@ const SupabaseAPI = {
             // Track in article_views table if user is logged in
             const user = await this.getCurrentUser();
             if (user) {
+                // Use upsert to avoid duplicate view records
                 await supabase
                     .from('article_views')
-                    .insert([{
+                    .upsert([{
                         article_id: articleId,
-                        user_id: user.id
-                    }]);
+                        user_id: user.id,
+                        viewed_at: new Date().toISOString()
+                    }], {
+                        onConflict: 'article_id,user_id'
+                    });
             }
         } catch (error) {
             // Silently fail - views are not critical
@@ -491,37 +497,28 @@ const SupabaseAPI = {
     },
 
     async sendCandidacyEmail(applicantEmail, candidacyData) {
-        // In production, this would be called from a Supabase Edge Function
-        // to keep the API key secure. For now, we log the email that would be sent.
-        console.log('Candidacy email would be sent to:', CANDIDACY_EMAIL);
+        // NOTE: Email sending should be implemented via Supabase Edge Function
+        // to keep API keys secure on the server side.
+        // This is a placeholder that logs the email that would be sent.
+        // 
+        // To implement:
+        // 1. Create Edge Function in Supabase dashboard
+        // 2. Add RESEND_API_KEY to Edge Function secrets
+        // 3. Call Edge Function from here instead of logging
+        
+        console.log('[CANDIDACY EMAIL - TO BE SENT VIA EDGE FUNCTION]');
+        console.log('To:', CANDIDACY_EMAIL);
         console.log('From:', applicantEmail);
+        console.log('Subject: Nuova Candidatura Reporter');
         console.log('Data:', candidacyData);
         
-        // TODO: Implement Edge Function with Resend API
-        // Example Edge Function code:
-        /*
-        const res = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${RESEND_API_KEY}`
-            },
-            body: JSON.stringify({
-                from: 'noreply@cesaris.edu.it',
-                to: CANDIDACY_EMAIL,
-                subject: 'Nuova Candidatura Reporter',
-                html: `
-                    <h2>Nuova Candidatura Reporter</h2>
-                    <p><strong>Email:</strong> ${applicantEmail}</p>
-                    <p><strong>Motivazione:</strong> ${candidacyData.motivazione}</p>
-                    <p><strong>Esperienza:</strong> ${candidacyData.esperienza}</p>
-                    <p><strong>Esempi Lavori:</strong> ${candidacyData.esempiLavori}</p>
-                `
-            })
-        });
-        */
+        // TODO: Replace with Edge Function call
+        // Example:
+        // const { data, error } = await supabase.functions.invoke('send-candidacy-email', {
+        //     body: { applicantEmail, candidacyData, recipientEmail: CANDIDACY_EMAIL }
+        // });
         
-        return { success: true };
+        return { success: true, message: 'Email will be sent via Edge Function (not yet implemented)' };
     },
 
     // ================================================
