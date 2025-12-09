@@ -68,6 +68,11 @@ DO $$ BEGIN
 EXCEPTION WHEN undefined_table THEN NULL;
 END $$;
 
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS set_user_profile_on_insert_or_update ON profili_utenti;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
 -- Drop functions
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 DROP FUNCTION IF EXISTS increment_article_views() CASCADE;
@@ -122,11 +127,11 @@ DROP TABLE IF EXISTS profili_utenti CASCADE;
 CREATE TABLE profili_utenti (
     id UUID PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
-    nome_completo TEXT NOT NULL,
+    username TEXT, -- Extracted from email (part before @)
     nome_visualizzato TEXT,
     bio TEXT,
     avatar_url TEXT,
-    ruolo TEXT DEFAULT 'studente' CHECK (ruolo IN ('studente', 'reporter', 'moderatore', 'caporedattore')),
+    ruolo TEXT DEFAULT 'utente' CHECK (ruolo IN ('utente', 'reporter', 'docente', 'caporedattore')),
     classe TEXT,
     livello_reporter TEXT DEFAULT 'junior' CHECK (livello_reporter IN ('junior', 'senior', 'chief')),
     punti_totali INTEGER DEFAULT 0,
@@ -957,6 +962,33 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_stats_on_article_publish AFTER UPDATE ON articoli
     FOR EACH ROW EXECUTE FUNCTION update_article_stats();
+
+-- Function to set user role and extract username on profile creation/update
+CREATE OR REPLACE FUNCTION set_user_role_and_username()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Extract username from email (part before @)
+    IF NEW.username IS NULL OR NEW.username = '' THEN
+        NEW.username := SPLIT_PART(NEW.email, '@', 1);
+    END IF;
+    
+    -- Auto-assign caporedattore role to mohamed.mashaal@cesaris.edu.it
+    IF LOWER(NEW.email) = 'mohamed.mashaal@cesaris.edu.it' THEN
+        NEW.ruolo := 'caporedattore';
+    END IF;
+    
+    -- Set nome_visualizzato if not provided
+    IF NEW.nome_visualizzato IS NULL OR NEW.nome_visualizzato = '' THEN
+        NEW.nome_visualizzato := NEW.username;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_user_profile_on_insert_or_update
+    BEFORE INSERT OR UPDATE ON profili_utenti
+    FOR EACH ROW EXECUTE FUNCTION set_user_role_and_username();
 
 -- ============================================
 -- STEP 7: CREATE VIEWS FOR ANALYTICS
