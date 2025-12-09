@@ -2,6 +2,18 @@
 -- GIORNALE SCOLASTICO CESARIS 2.0
 -- Complete Supabase SQL Schema - Error-Free Version
 -- ============================================
+--
+-- IMPORTANT: How to execute this script in Supabase:
+-- 1. Go to your Supabase project: https://tepxvijiamuaszvyzeze.supabase.co
+-- 2. Open the SQL Editor
+-- 3. Copy this ENTIRE file (all 1,129 lines)
+-- 4. Paste into the SQL Editor
+-- 5. Click "Run" button
+-- 6. Wait for completion (may take 30-60 seconds)
+-- 7. You should see: "Supabase schema created successfully!"
+--
+-- This script is safe to run multiple times - it will drop and recreate everything.
+-- ============================================
 
 -- ============================================
 -- STEP 1: ENABLE EXTENSIONS
@@ -12,6 +24,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm"; -- For full-text search
 -- ============================================
 -- STEP 2: DROP EXISTING OBJECTS (if any)
 -- This ensures a clean slate
+-- Note: Using DO blocks to handle non-existent objects gracefully
 -- ============================================
 
 -- Drop views first (they depend on tables)
@@ -19,14 +32,41 @@ DROP VIEW IF EXISTS article_analytics CASCADE;
 DROP VIEW IF EXISTS leaderboard_writers CASCADE;
 DROP VIEW IF EXISTS trending_articles CASCADE;
 
--- Drop triggers
-DROP TRIGGER IF EXISTS update_profili_utenti_updated_at ON profili_utenti CASCADE;
-DROP TRIGGER IF EXISTS update_preferenze_utente_updated_at ON preferenze_utente CASCADE;
-DROP TRIGGER IF EXISTS update_articoli_updated_at ON articoli CASCADE;
-DROP TRIGGER IF EXISTS update_article_comments_updated_at ON article_comments CASCADE;
-DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages CASCADE;
-DROP TRIGGER IF EXISTS increment_views_on_article_view ON article_views CASCADE;
-DROP TRIGGER IF EXISTS update_stats_on_article_publish ON articoli CASCADE;
+-- Drop triggers (using DO blocks to handle non-existent tables)
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS update_profili_utenti_updated_at ON profili_utenti;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS update_preferenze_utente_updated_at ON preferenze_utente;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS update_articoli_updated_at ON articoli;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS update_article_comments_updated_at ON article_comments;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS increment_views_on_article_view ON article_views;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    DROP TRIGGER IF EXISTS update_stats_on_article_publish ON articoli;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
 
 -- Drop functions
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
