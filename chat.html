@@ -2,478 +2,333 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chat Globale - Giornale Cesaris</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chat-mobile.css">
     <style>
-        .chat-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            height: calc(100vh - 150px);
-            display: flex;
-            flex-direction: column;
+        /* Additional inline styles for quick fixes */
+        * {
+            box-sizing: border-box;
         }
         
-        .chat-header {
-            background: linear-gradient(135deg, var(--primary), var(--neon-blue, #00f0ff));
-            color: white;
-            padding: 1.5rem;
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
         }
         
-        .chat-messages {
-            flex: 1;
-            background: var(--bg-card);
-            padding: 1.5rem;
-            overflow-y: auto;
-            border-left: 2px solid rgba(0, 240, 255, 0.2);
-            border-right: 2px solid rgba(0, 240, 255, 0.2);
+        .hidden {
+            display: none !important;
         }
         
-        .message {
-            margin-bottom: 1rem;
-            display: flex;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            border-radius: var(--radius-md);
-            transition: background-color 0.2s ease;
-            position: relative;
-        }
-        
-        .message:hover {
-            background-color: rgba(0, 51, 160, 0.03);
-        }
-        
-        .message-mentioned {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(176, 38, 255, 0.1));
-            border-left: 3px solid var(--neon-blue, #00f0ff);
-        }
-        
-        .message-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            flex-shrink: 0;
-            font-size: 1rem;
-        }
-        
-        .message-content {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.25rem;
-            flex-wrap: wrap;
-        }
-        
-        .message-author {
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-        
-        .message-time {
-            font-size: 0.75rem;
-            color: var(--neutral);
-            cursor: help;
-        }
-        
-        .message-text {
-            color: var(--text-dark);
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-        
-        .message-actions {
-            display: none;
-            gap: 0.25rem;
-            margin-left: auto;
-        }
-        
-        .message:hover .message-actions {
-            display: flex;
-        }
-        
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.875rem;
-            opacity: 0.6;
-            transition: all 0.2s ease;
-        }
-        
-        .action-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
-            opacity: 1;
-        }
-        
-        .edited-indicator {
-            font-size: 0.75rem;
-            color: var(--neutral);
-            font-style: italic;
-        }
-        
-        .edit-container {
-            margin-top: 0.5rem;
-        }
-        
-        .edit-input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 2px solid var(--primary);
-            border-radius: var(--radius-md);
-            font-family: inherit;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .edit-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .message-reactions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .reaction-btn {
-            background: var(--bg-light);
-            border: 1px solid #e5e7eb;
-            border-radius: var(--radius-full);
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: var(--transition);
-            min-height: 28px;
-        }
-        
-        .reaction-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            transform: scale(1.1);
-        }
-        
-        .reaction-add {
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        
-        .message:hover .reaction-add {
-            opacity: 0.6;
-        }
-        
-        .reaction-add:hover {
-            opacity: 1 !important;
-        }
-        
-        .reaction-picker {
-            position: absolute;
-            background: white;
-            border: 2px solid var(--primary);
-            border-radius: var(--radius-lg);
-            padding: 0.5rem;
-            display: flex;
-            gap: 0.25rem;
-            box-shadow: var(--shadow-lg);
-            z-index: 100;
-        }
-        
-        .reaction-option {
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: var(--radius-sm);
-            transition: transform 0.2s ease;
-        }
-        
-        .reaction-option:hover {
-            transform: scale(1.3);
-            background: var(--bg-light);
-        }
-        
-        .chat-input-container {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border: 2px solid rgba(0, 240, 255, 0.2);
-            border-top: none;
-            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-        }
-        
-        .chat-input-wrapper {
-            display: flex;
-            gap: 0.75rem;
-            position: relative;
-        }
-        
-        .chat-input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: var(--radius-full);
-            font-family: var(--font-body);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .chat-input:focus {
-            outline: none;
-            border-color: var(--neon-blue, #00f0ff);
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-        }
-        
-        .mention {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(176, 38, 255, 0.15));
-            color: var(--primary);
-            padding: 0.125rem 0.5rem;
-            border-radius: 0.25rem;
-            font-weight: 600;
-            border: 1px solid rgba(0, 240, 255, 0.3);
-        }
-        
-        .mention-self {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
-            color: #b8860b;
-            border-color: rgba(255, 215, 0, 0.5);
-            animation: mentionPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes mentionPulse {
-            0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
-            50% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
-        }
-        
-        .mention-dropdown {
-            position: absolute;
-            bottom: 100%;
-            left: 0;
-            right: 80px;
-            background: white;
-            border: 2px solid var(--neon-blue, #00f0ff);
-            border-radius: var(--radius-md);
-            margin-bottom: 0.5rem;
-            max-height: 250px;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 240, 255, 0.2);
-            z-index: 1000;
-            display: none;
-        }
-        
-        .mention-dropdown.show {
-            display: block;
-        }
-        
-        .mention-option {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            border-bottom: 1px solid #e5e7eb;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .mention-option:hover,
-        .mention-option.selected {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(176, 38, 255, 0.1));
-        }
-        
-        .mention-option:last-child {
-            border-bottom: none;
-        }
-        
-        .mention-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-        
-        .mention-info strong {
-            color: var(--primary);
-        }
-        
-        .chat-send-btn {
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, var(--primary), var(--neon-blue, #00f0ff));
-            color: white;
-            border: none;
-            border-radius: var(--radius-full);
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .chat-send-btn:hover {
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .chat-send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .pinned-messages {
-            background: linear-gradient(135deg, #FFF9E6, #FFF5CC);
-            border: 2px solid var(--secondary);
-            border-radius: var(--radius-md);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-        }
-        
-        .typing-indicator {
-            color: var(--neutral);
-            font-size: 0.875rem;
-            font-style: italic;
+        /* Pinned message styling */
+        .pinned-banner {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
             padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #fcd34d;
         }
         
-        .mention-notification {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--neon-blue, #00f0ff));
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl), 0 0 20px rgba(0, 240, 255, 0.4);
-            z-index: 9999;
-            animation: slideIn 0.3s ease;
+        .pinned-banner-icon {
+            font-size: 1rem;
         }
         
-        .mention-notification.fade-out {
-            opacity: 0;
-            transform: translateX(20px);
+        .pinned-banner-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        /* System messages */
+        .system-message {
+            text-align: center;
+            padding: 0.5rem;
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        
+        .system-message span {
+            background: #e2e8f0;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+        }
+        
+        /* Image messages */
+        .message-image {
+            max-width: 250px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        
+        /* Link preview */
+        .link-preview {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-left: 3px solid var(--primary, #0033A0);
+        }
+        
+        .link-preview-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .link-preview-description {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        
+        /* Unread indicator */
+        .unread-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: #ef4444;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .unread-divider::before,
+        .unread-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ef4444;
         }
     </style>
 </head>
 <body>
-    <!-- Global Page Loader -->
-    <div class="page-loader" id="page-loader">
-        <div class="loader-spinner"></div>
-        <div class="loader-text">Caricamento pagina...</div>
-    </div>
-    
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <a href="index.html" class="logo">
-                    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8IS0tIENyZWF0b3I6IENvcmVsRFJBVyAtLT4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWw6c3BhY2U9InByZXNlcnZlIiB3aWR0aD0iOTUuODIwNG1tIiBoZWlnaHQ9IjgyLjc0MTRtbSIgc3R5bGU9InNoYXBlLXJlbmRlcmluZzpnZW9tZXRyaWNQcmVjaXNpb247IHRleHQtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbjsgaW1hZ2UtcmVuZGVyaW5nOm9wdGltaXplUXVhbGl0eTsgZmlsbC1ydWxlOmV2ZW5vZGQ7IGNsaXAtcnVsZTpldmVub2RkIg0Kdmlld0JveD0iMCAwIDUxLjY3MiA0NC42MTkiDQogeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPg0KIDxkZWZzPg0KICA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KICAgPCFbQ0RBVEFbDQogICAgLnN0cjAge3N0cm9rZTojMkIyQTI5O3N0cm9rZS13aWR0aDowLjE3NTk2fQ0KICAgIC5zdHIxIHtzdHJva2U6I0IyQjNCMztzdHJva2Utd2lkdGg6MC4xNzU5Nn0NCiAgICAuZmlsMCB7ZmlsbDpub25lfQ0KICAgIC5maWwxIHtmaWxsOiMzMzY2OTl9DQogICAgLmZpbDIge2ZpbGw6I0ZGQ0MzM30NCiAgIF1dPg0KICA8L3N0eWxlPg0KIDwvZGVmcz4NCiA8ZyBpZD0iTGl2ZWxsb194MDAyMF8xIj4NCiAgPG1ldGFkYXRhIGlkPSJDb3JlbENvcnBJRF8wQ29yZWwtTGF5ZXIiLz4KICA8ZyBpZD0iXzQ4NzY4Njk1MiI+DQogICA8bGluZSBpZD0iXzQ4NzY4Nzc5MiIgY2xhc3M9ImZpbDAgc3RyMCIgeDE9IjI1LjQ3NyIgeTE9IjMuMDg1MTUiIHgyPSIxLjUxNzA0IiB5Mj0iNDQuMzI0OSIgLz4NCiAgIDxsaW5lIGlkPSJfNDg3Njg3NzIwIiBjbGFzcz0iZmlsMCBzdHIwIiB4MT0iNTAuNjMxMiIgeTE9IjQ0LjU3NSIgeDI9IjI0LjkyNDIiIHkyPSIwLjA0NDAwMzUiIC8+DQogICA8bGluZSBpZD0iXzQ4NzY4NzY0OCIgY2xhc3M9ImZpbDAgc3RyMCIgeDE9Ii0wIiB5MT0iNDIuOTE2MiIgeDI9IjUxLjY3MiIgeTI9IjQyLjkxNjIiIC8+DQogICA8cG9seWdvbiBpZD0iXzQ4NzY4NzU3NiIgY2xhc3M9ImZpbDEgc3RyMSIgcG9pbnRzPSIxMi4zNDIxLDQyLjkxNiA3LjM1NjY4LDM0LjMwMjUgMjEuMDQ0NywxMC41OTI5IDMxLjAwMjksMTAuNTkyOSA0NC42OTA5LDM0LjMwMjUgMzkuNzE3OSw0Mi45MTYgIi8+DQogICA8cGF0aCBpZD0iXzQ4NzY4NzUwNCIgY2xhc3M9ImZpbDIiIGQ9Ik00My45MDQ3IDM5LjI1OGMtMS43Mjc0MSwtMi41MTAyNSAtMy43MjQ3NywtNC4yOTE5MSAtNi40MjQxNCwtNS43MzU5NGwwIDBjLTIuMzM0OTksLTEuNTY1NTIgLTMuOTgxMzUsLTMuMzg3NjMgLTUuMzE3NTMsLTUuODU3MjJsMCAwYy0xLjA3OTY1LDAuNjM0MTE1IC0yLjE5OTkxLDAuODUwMDM0IC0zLjQ0MTY2LDAuNjQ3NzU4bDAgMGMtMC42NDc3NTgsMi4xOTk5MSAtMC43NTU2MSw0LjE5NzI3IC0wLjMxMDM0NCw2LjQzNzU3bC0wLjAxMzQyNzYgMC4wMTM1ODkzYzAuOTE3NTQ5LDMuMDA5NTUgMC45NDQ3ODIsNS44MDM0NSAwLjA5NDQ3ODIsOC44NDAwMmwwIDBjMi4xMTg4LC0wLjYwNzM2NyA0LjA3NTc3LC0wLjYwNzM2NyA2LjE5NDg1LDAuMDEzNTg5M2wwIC0wLjAxMzU4OTNjMS44MDg0NiwwLjUyNjUzMyAzLjU2Mjg4LDAuMjU2MzEgNS4xMjgzNSwtMC43ODI2ODFsMCAwYzEuNTkyNzYsLTEuMDUyOCAyLjgyMDkyLC0yLjEzMjQ1IDQuMDg5NDIsLTMuNTQ5NDZsMCAtMC4wMTM2NDMzeiIvPg0KICAgPHBhdGggaWQ9Il80ODc2ODc0MzIiIGNsYXNzPSJmaWwyIiBkPSJNMjguMzcwNiA0Mi4wNzg2YzAuNDU4OTA5LC0yLjUxMDA0IDAuMzM3NDE0LC00Ljc1MDU1IC0wLjQxODQxMSwtNy4yMDcwNGwwIDBjLTAuNDQ1MjY2LC0yLjMyMTEzIC0wLjM1MTA1OCwtNC4zODYxMiAwLjMyMzk4NywtNi42NTM0OWwwIDBjLTEuMDEyNCwtMC4yNzAxNjkgLTEuNzk1MDksLTAuNzk2NDg2IC0yLjQxNjA0LC0xLjY0Njc5bDAgMGMtMS42NzMzNywwLjkxNzk4MSAtMi45MTUxMywyLjAzODAyIC0zLjk4MTEzLDMuNjMwNTZsLTAuMDEzODA1IDBjLTEuMjQxNTQsMi4zMzQ5OSAtMi44NzQ0Nyw0LjAwODU4IC01LjE4MjY2LDUuMzE3NTNsMC4wMTM4NTkgLTAuMDEzNDI3NmMxLjYwNTY0LDAuOTA0MzM3IDIuNzUyOTcsMi4wNjUwNCAzLjY0MzY3LDMuNjg0NmwwIDBjMC43NTU4NzksMS4zODk5OSAxLjk1Njk3LDIuMjY3MzEgMy41MDkyOCwyLjU3NzcxbDAgMGMxLjU2NTUyLDAuMzEwMzQ0IDIuOTI4NzIsMC40MDUwMzcgNC41MjEyNiwwLjMxMDM0NHoiLz4NCiAgIDxwYXRoIGlkPSJfNDg3Njg3MzYwIiBjbGFzcz0iZmlsMiIgZD0iTTE3LjM5OCAzNC41NzQ4YzEuNzY4MDEsLTEuMjI4MzIgMy4wMzY3OCwtMi42NDUzNCA0LjA0ODk3LC00LjU2MTg2bDAgMGMxLjEyMDI2LC0xLjY2IDIuNDE1ODMsLTIuODQ3NjcgNC4xNzAyNSwtMy44MDYwNGwwIDBjLTAuNDMxODkzLC0wLjc1NTY2NCAtMC41ODAxMzUsLTEuNTI0ODYgLTAuNDQ1MjY2LC0yLjM4ODgxbDAgMGMtMS41NTE4OCwtMC40NTg2NCAtMi45NTU1MiwtMC41MjYzMTcgLTQuNTM0OSwtMC4yMTU5MTlsMCAwYy0yLjEzMjQ1LDAuNjQ3NzU4IC00LjExNjE2LDAuNjc0Nzc1IC02LjI2MjI1LDAuMDk0NDI0M2wtMC4wMTMzNzM2IDBjMC40MTg0MTEsMS40OTgzMyAwLjQwNDgyMiwyLjg3NDY4IC0wLjAyNzAxNjksNC4zNTkzN2wwIDBjLTAuMzc4MDc1LDEuMjgyMTQgLTAuMTg4OTAyLDIuNTIzODkgMC41NTMyOCwzLjYzMDU2bDAgMGMwLjc1NTg3OSwxLjEyMDI2IDEuNDk4MzMsMS45OTczNiAyLjUxMDMsMi44ODgyN2wwIDB6Ii8+DQogICA8cGF0aCBpZD0iXzQ4NzY4NzI4OCIgY2xhc3M9ImZpbDIiIGQ9Ik0xNS41MDg3IDIzLjQ1MzljMS43Njc4LDAuMzIzNzcxIDMuMzMzMzIsMC4yMjkzNDcgNS4wNDczLC0wLjI5Njk3bDAuMDEzNjQzMyAwYzEuNjMzMTUsLTAuMzIzOTg3IDMuMDkwNiwtMC4yNTYzMSA0LjY5Njc4LDAuMjAyNTQ2bDAgMGMwLjIwMjQ5MiwtMC42ODg2MzQgMC41NjY5MjMsLTEuMjE0NzMgMS4xMzM2MywtMS42NDY1N2wwIDBjLTAuNjQ3NzU4LC0xLjE2MDcgLTEuNDMwNjUsLTIuMDI0NTkgLTIuNTM3MjcsLTIuNzY2ODNsMCAwYy0xLjYzMjkzLC0wLjg3NzMyMSAtMi44MDcyNywtMi4wMTEgLTMuNzM4NjMsLTMuNjE3MTNsMCAwLjAxMzU4OTNjLTAuNjQ3NzU4LDEuMTA2NjcgLTEuNDU3NDYsMS45MDI5NCAtMi41OTEzLDIuNTEwM2wwIDBjLTAuOTcxNTgzLDAuNTM5OTA2IC0xLjU3ODk1LDEuMzc2ODQgLTEuNzk0ODcsMi40NTY0M2wwIDBjLTAuMjE1OTE5LDEuMDkzMjQgLTAuMjgzMzI3LDIuMDM3ODEgLTAuMjI5MjkzLDMuMTQ0NjRsMCAweiIvPg0KICAgPHBhdGggaWQ9Il80ODc2ODcyMTYiIGNsYXNzPSJmaWwyIiBkPSJNMjAuOTYxMSAxNS43NjA4YzAuODYzNjc3LDEuMjI4MzIgMS44MzU0OCwyLjA5MjA2IDMuMTU4MDEsMi43OTM4NWwwIDBjMS4xNjA5MiwwLjc4Mjg5NiAxLjk4NDIsMS42ODY5NiAyLjY3MjQxLDIuOTAxN2wwIDBjMC41MTI4ODksLTAuMjY5OTUzIDEuMDI1NTYsLTAuMzY0NDMxIDEuNjA2MTMsLTAuMjk2OTdsMCAwYzAuMjk3MDI0LC0xLjA1MjYzIDAuMzM3NDE0LC0yLjAxMDc0IDAuMTM0ODY5LC0zLjEwNDAzbDAgMC4wMTM0Mjc2Yy0wLjQ0NTQ4MiwtMS40ODQ2OSAtMC40NzIyMjksLTIuODQ3ODggLTAuMDk0NDI0MywtNC4zNDU3M2wwIDBjLTEuMDI1NjIsMC4yNjk2ODMgLTEuOTcwNTYsMC4yNDI5MzYgLTIuOTk2MzksLTAuMDU0MDg3N2wwIDBjLTAuODc3MTA1LC0wLjI1NjMxIC0xLjc0MTA1LC0wLjEyMTQ0MSAtMi40OTY2NiwwLjM5MTQ0OGwwIDBjLTAuNzY5MjUzLDAuNTEyNjc0IC0xLjM2Mjk4LDEuMDI1NjIgLTEuOTgzOTMsMS43MTQwM2wwIC0wLjAxMzY0MzN6Ii8+DQogICA8cGF0aCBpZD0iXzQ4NzY4NzE0NCIgY2xhc3M9ImZpbDIiIGQ9Ik0yOC43NjE5IDE0LjQ1MTZjLTAuMjAyMzMsMS4yMjgzMiAtMC4xMzQ4NjksMi4zMjE1NiAwLjIyOTU2MywzLjUwOTI4bDAgMGMwLjIyOTI5MywxLjE0NzA2IDAuMTg4OTAyLDIuMTcyODkgLTAuMTM0ODY5LDMuMzA2MzFsMCAwYzAuNDU4NjQsMC4xMzUzIDAuODA5ODU5LDAuMzc4MDIxIDEuMTA2NjEsMC43NTU4MjVsMCAwYzAuNzk2MjcsLTAuNDQ1MjEyIDEuMzc2NjIsLTAuOTg1MTcyIDEuODg5NTEsLTEuNzQxbDAgMGMwLjYwNzE1MiwtMS4xMzM0MSAxLjM5MDI2LC0xLjk1Njk3IDIuNDgzMjMsLTIuNjE4MWwwIDBjLTAuNzQyMTgyLC0wLjQ3MjI4MyAtMS4yODIxNCwtMS4wMjU2MiAtMS43MTM5OCwtMS44MDg3M2wwIDBjLTAuMzY0MTYyLC0wLjY2MTEzMiAtMC45NDQ3MjgsLTEuMDkzMjQgLTEuNzAwNjEsLTEuMjQxNDhsMC4wMTMzNzM2IDBjLTAuNzU1NjEsLTAuMTQ4NzI4IC0xLjQwMzU4LC0wLjIwMjU0NiAtMi4xNzI4NCwtMC4xNjIxMDFsMCAweiIvPg0KICAgPHBhdGggaWQ9Il80ODc2ODcwNDgiIGNsYXNzPSJmaWwyIiBkPSJNMzQuMTYwNCAxOC4zMTE3Yy0wLjgzNjcxNCwwLjYwNzM2NyAtMS40MzA0NCwxLjI4MjE0IC0xLjkxNjUzLDIuMTk5OTFsMCAwYy0wLjU1MzMzNCwwLjgyMzI4NyAtMS4xNzM4NiwxLjQxNzIzIC0yLjAyNDE2LDEuOTAyODhsMCAwYzAuMTc1MjU5LDAuMzUxMDA0IDAuMjI5MjkzLDAuNjg4MjAyIDAuMjAyMjc2LDEuMDY2MjJsMCAwYzAuNzI4NjQ3LDAuMjAyNTQ2IDEuMzc2NjIsMC4yMTU5MTkgMi4xMTg4NiwwLjA4MTA1MDZsMCAtMC4wMTMzNzM2YzEuMDI1ODMsLTAuMzEwMzk4IDEuOTcwMzQsLTAuMzM3NjMgMy4wMDk3NywtMC4wOTQ0NzgybDAgMGMtMC4xNjE4ODYsLTAuNzE1NDM1IC0wLjE0ODQ1OCwtMS4zNjMxOSAwLjA1NDAzMzgsLTIuMDY0OThsMCAwYzAuMTc1MzEzLC0wLjYwNzM2NyAwLjA4MDgzNDksLTEuMjAxMzYgLTAuMjgzMzI3LC0xLjcyNzQxbDAuMDEzMzczNiAwYy0wLjM1MDc4OCwtMC41MjY1MzMgLTAuNzAxNzkyLC0wLjkzMTM1NCAtMS4xNzQyOSwtMS4zNDk4MmwwIDB6Ii8+DQogICA8cGF0aCBpZD0iXzQ4NzY4NzAwMCIgY2xhc3M9ImZpbDIiIGQ9Ik0zNS4xMzIyIDIzLjg0NTFjLTAuODYzNjc3LC0wLjEzNDg2OSAtMS42MTk1NiwtMC4wOTQ0NzgyIC0yLjQ1NjQzLDAuMTYyMTAxbDAgMGMtMC44MjMwNzEsMC4xNjE4ODYgLTEuNTUxODgsMC4xMzQ4NjkgLTIuMzYxNTgsLTAuMDgxMDUwNmwwIDBjLTAuMTA4MDY4LDAuMjk2OTcgLTAuMjcwMTY5LDAuNTI2MzE3IC0wLjUxMjg4OSwwLjcyODgwOWwwIDBjMC4zMjM3NzEsMC41Mzk5NiAwLjY4ODIwMiwwLjk0NDU2NiAxLjIxNDUyLDEuMjk1NTdsLTAuMDEzNDI3NiAwYzAuNzk2MjcsMC40MzIxMDggMS4zNzY2MiwwLjk3MTc5OSAxLjg2MjQ5LDEuNzQxbDAgMGMwLjMzNzQxNCwtMC41MTI4ODkgMC43Mjg4NjMsLTAuODc3MDUxIDEuMjY4NzcsLTEuMTc0MDdsMC4wMTMzNzM2IDBjMC40NTg5MDksLTAuMjU2MzEgMC43NTU4NzksLTAuNjYxMzQ3IDAuODYzNzMxLC0xLjE3NDI5bDAgMGMwLjA5NDQyNDMsLTAuNTI2MzE3IDAuMTM0ODY5LC0wLjk3MTc0NSAwLjEyMTQ0MSwtMS40OTgwNmwwIDB6Ii8+DQogIDwvZz4NCiA8L2c+DQo8L3N2Zz4NCg==" alt="Logo Cesaris" style="height: 40px; width: auto; margin-right: 0.5rem;">
-                    <span>Giornale Cesaris</span>
-                </a>
-                
-                <nav>
-                    <ul class="nav-menu">
-                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
-                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
-                        <li class="nav-item"><a href="chat.html" class="nav-link active">Chat</a></li>
-                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
-                    </ul>
-                </nav>
+    <!-- Main Chat App Container -->
+    <div class="chat-app" id="chatApp">
+        
+        <!-- Mobile Header -->
+        <header class="chat-mobile-header">
+            <div class="chat-header-left">
+                <button class="chat-back-btn" onclick="window.location.href='index.html'" aria-label="Torna alla home">
+                    ←
+                </button>
+                <div class="chat-avatar-group">💬</div>
+                <div class="chat-header-info">
+                    <h1>Chat Globale</h1>
+                    <p><span id="onlineCount">0</span> utenti • <span id="typingStatus">Nessuno sta scrivendo</span></p>
+                </div>
             </div>
-        </div>
-    </header>
-
-    <div class="chat-container">
-        <div class="chat-header">
-            <h2 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                💬 Chat Globale
-                <span style="font-size: 0.875rem; opacity: 0.9;">• <span id="onlineCount">0</span> utenti registrati</span>
-            </h2>
-            <p style="margin: 0; opacity: 0.9; font-size: 0.875rem;">Chatta con tutti gli studenti del Cesaris • Modifica/elimina i tuoi messaggi • Usa /nome per menzionare</p>
+            <div class="chat-header-actions">
+                <button class="header-action-btn" onclick="openSearch()" title="Cerca">🔍</button>
+                <button class="header-action-btn" onclick="toggleSidebar()" title="Stanze">☰</button>
+            </div>
+        </header>
+        
+        <!-- Pinned Message Banner -->
+        <div class="pinned-banner" id="pinnedBanner">
+            <span class="pinned-banner-icon">📌</span>
+            <span class="pinned-banner-text">Ricorda: Rispetta tutti e segui le linee guida della community!</span>
+            <button onclick="togglePinned()" style="background: none; border: none; cursor: pointer;">✕</button>
         </div>
         
-        <div class="chat-messages" id="chatMessages">
-            <div class="pinned-messages">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <span style="font-size: 1.25rem;">📌</span>
-                    <strong>Messaggio Fissato</strong>
-                </div>
-                <p style="margin: 0;">Ricordati di rispettare sempre gli altri e di seguire le linee guida della community!</p>
+        <!-- Messages Container -->
+        <div class="chat-messages-container" id="messagesContainer">
+            <!-- Date separator example -->
+            <div class="date-separator">
+                <span>Oggi</span>
             </div>
             
             <!-- Messages will be loaded here -->
+            <div id="messagesList"></div>
+            
+            <!-- Typing indicator -->
+            <div class="typing-indicator-mobile" id="typingIndicator">
+                <span class="typing-dots">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </span>
+                <span id="typingUsers">Qualcuno sta scrivendo...</span>
+            </div>
         </div>
         
-        <div class="typing-indicator hidden" id="typingIndicator">
-            <span>Qualcuno sta scrivendo...</span>
-        </div>
-        
-        <div class="chat-input-container">
-            <div class="chat-input-wrapper">
-                <div id="mentionDropdown" class="mention-dropdown"></div>
-                <input type="text" class="chat-input" id="chatInput" placeholder="Scrivi un messaggio... (usa / per menzionare)" />
-                <button class="chat-send-btn" id="sendBtn">
-                    Invia 📤
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <!-- Reply banner (hidden by default) -->
+            <div class="reply-banner" id="replyBanner">
+                <div class="reply-banner-content">
+                    <div class="reply-banner-author" id="replyAuthor">Nome Utente</div>
+                    <div class="reply-banner-text" id="replyText">Testo del messaggio...</div>
+                </div>
+                <button class="reply-banner-close" onclick="cancelReply()">✕</button>
+            </div>
+            
+            <!-- Mention dropdown -->
+            <div class="mention-dropdown-mobile" id="mentionDropdown"></div>
+            
+            <!-- Input row -->
+            <div class="input-row">
+                <div class="input-attachments">
+                    <button class="attach-btn" onclick="toggleMediaPicker()" title="GIF/Sticker">🎨</button>
+                    <button class="attach-btn" onclick="attachImage()" title="Immagine">📷</button>
+                </div>
+                
+                <div class="message-input-wrapper">
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Scrivi un messaggio..." 
+                        rows="1"
+                        autocomplete="off"
+                    ></textarea>
+                    <button class="emoji-btn" onclick="toggleEmojiPicker()" title="Emoji">😊</button>
+                    
+                    <!-- Emoji picker -->
+                    <div class="emoji-picker" id="emojiPicker">
+                        <div class="emoji-grid" id="emojiGrid">
+                            <!-- Emojis will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled title="Invia">
+                    📤
                 </button>
             </div>
-            <p style="color: var(--neutral); font-size: 0.75rem; margin-top: 0.5rem;">
-                Suggerimento: Scrivi <strong>/</strong> seguito dal nome utente per menzionare qualcuno
+        </div>
+        
+        <!-- Scroll to bottom button -->
+        <button class="scroll-bottom-btn" id="scrollBtn" onclick="scrollToBottom()">
+            ↓
+            <span class="badge hidden" id="newMessagesBadge">0</span>
+        </button>
+    </div>
+    
+    <!-- Chat Rooms Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <aside class="chat-sidebar" id="chatSidebar">
+        <div class="sidebar-header">
+            <h2>📱 Chat Rooms</h2>
+        </div>
+        <div class="room-list">
+            <div class="room-item active" onclick="selectRoom('generale')">
+                <div class="room-icon">💬</div>
+                <div class="room-info">
+                    <div class="room-name">Chat Globale</div>
+                    <div class="room-preview">Chatta con tutti</div>
+                </div>
+            </div>
+            <div class="room-item" onclick="selectRoom('sport')">
+                <div class="room-icon">⚽</div>
+                <div class="room-info">
+                    <div class="room-name">Sport</div>
+                    <div class="room-preview">Discussioni sportive</div>
+                </div>
+                <span class="room-badge">3</span>
+            </div>
+            <div class="room-item" onclick="selectRoom('musica')">
+                <div class="room-icon">🎵</div>
+                <div class="room-info">
+                    <div class="room-name">Musica</div>
+                    <div class="room-preview">Condividi la tua musica</div>
+                </div>
+            </div>
+            <div class="room-item" onclick="selectRoom('gaming')">
+                <div class="room-icon">🎮</div>
+                <div class="room-info">
+                    <div class="room-name">Gaming</div>
+                    <div class="room-preview">Per i gamer</div>
+                </div>
+                <span class="room-badge">7</span>
+            </div>
+            <div class="room-item" onclick="selectRoom('meme')">
+                <div class="room-icon">😂</div>
+                <div class="room-info">
+                    <div class="room-name">Meme</div>
+                    <div class="room-preview">Solo meme divertenti</div>
+                </div>
+            </div>
+            <div class="room-item" onclick="selectRoom('studio')">
+                <div class="room-icon">📚</div>
+                <div class="room-info">
+                    <div class="room-name">Studio</div>
+                    <div class="room-preview">Aiuto compiti</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-header">
+            <button class="search-back-btn" onclick="closeSearch()">←</button>
+            <input type="text" class="search-input" id="searchInput" placeholder="Cerca nei messaggi..." oninput="handleSearch(this.value)">
+        </div>
+        <div class="search-results" id="searchResults">
+            <p style="text-align: center; color: #64748b; padding: 2rem;">
+                Digita per cercare nei messaggi
             </p>
         </div>
     </div>
-
+    
+    <!-- GIF/Sticker Picker -->
+    <div class="media-picker" id="mediaPicker">
+        <div class="media-tabs">
+            <button class="media-tab active" onclick="selectMediaTab('gif')">GIF</button>
+            <button class="media-tab" onclick="selectMediaTab('sticker')">Sticker</button>
+        </div>
+        <div class="media-grid" id="mediaGrid">
+            <!-- Media items will be loaded -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #64748b;">
+                🎨 GIF e sticker in arrivo!
+            </div>
+        </div>
+    </div>
+    
+    <!-- Message Actions Menu -->
+    <div class="message-actions-menu hidden" id="actionsMenu">
+        <div class="action-menu-item" onclick="replyToMessage()">
+            <span class="icon">↩️</span>
+            <span>Rispondi</span>
+        </div>
+        <div class="action-menu-item" onclick="copyMessage()">
+            <span class="icon">📋</span>
+            <span>Copia</span>
+        </div>
+        <div class="action-menu-item" onclick="reactToMessage()">
+            <span class="icon">😀</span>
+            <span>Reagisci</span>
+        </div>
+        <div class="action-menu-item own-only" onclick="editCurrentMessage()">
+            <span class="icon">✏️</span>
+            <span>Modifica</span>
+        </div>
+        <div class="action-menu-item own-only" onclick="forwardMessage()">
+            <span class="icon">↗️</span>
+            <span>Inoltra</span>
+        </div>
+        <div class="action-menu-item own-only danger" onclick="deleteCurrentMessage()">
+            <span class="icon">🗑️</span>
+            <span>Elimina</span>
+        </div>
+    </div>
+    
+    <!-- Notification Toast -->
+    <div class="notification-toast" id="notificationToast">
+        <span id="toastIcon">📬</span>
+        <span id="toastMessage">Nuovo messaggio!</span>
+    </div>
+    
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/chat-enhanced.js"></script>
-    
-    <!-- Page Loader Script -->
-    <script>
-        // Note: Page loader for chat is removed by chat.js after messages load
-        // This ensures chat doesn't show until messages are ready
-        
-        // Fallback: remove loader after 15 seconds if chat init fails
-        setTimeout(function() {
-            const loader = document.getElementById('page-loader');
-            if (loader && loader.style.display !== 'none') {
-                console.warn('Chat init took too long, removing loader');
-                loader.style.display = 'none';
-            }
-        }, 15000);
-    </script>
+    <script src="js/chat-mobile.js"></script>
 </body>
 </html>
