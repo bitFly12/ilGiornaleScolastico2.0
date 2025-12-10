@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Giornale Scolastico Cesaris - Notizie, articoli e storie dalla nostra scuola">
+    <title>Giornale Scolastico Cesaris</title>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/homepage.css">
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <div class="navbar-brand">
+                <a href="index.html" class="logo">
+                    📰 <span>Giornale Cesaris</span>
+                </a>
+            </div>
+            
+            <div class="navbar-menu" id="navbar-menu">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="pages/articles.html" class="nav-link">Articoli</a>
+                <a href="pages/categories.html" class="nav-link">Categorie</a>
+                <a href="pages/about.html" class="nav-link">Chi Siamo</a>
+            </div>
+            
+            <div class="navbar-actions">
+                <!-- Not logged in -->
+                <div id="auth-buttons" class="auth-buttons">
+                    <a href="pages/login.html" class="btn btn-sm btn-outline">Accedi</a>
+                    <a href="pages/register.html" class="btn btn-sm btn-primary">Registrati</a>
+                </div>
+                
+                <!-- Logged in -->
+                <div id="user-menu" class="user-menu hidden">
+                    <button class="user-button" id="user-button">
+                        <span id="user-name">Utente</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="user-dropdown hidden" id="user-dropdown">
+                        <a href="pages/profile.html" class="dropdown-item">Il Mio Profilo</a>
+                        <a href="pages/bookmarks.html" class="dropdown-item">I Miei Bookmark</a>
+                        <a href="pages/settings.html" class="dropdown-item">Impostazioni</a>
+                        <hr style="margin: var(--space-sm) 0;">
+                        <button id="logout-btn" class="dropdown-item" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">Esci</button>
+                    </div>
+                </div>
+                
+                <button class="navbar-toggle" id="navbar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Benvenuti al Giornale Scolastico Cesaris</h1>
+                <p class="hero-subtitle">
+                    Storie, notizie e approfondimenti dalla nostra scuola. 
+                    Scritto da studenti, per studenti.
+                </p>
+                <div class="hero-actions">
+                    <a href="#featured-articles" class="btn btn-lg btn-primary">Leggi gli Articoli</a>
+                    <a href="pages/register.html" class="btn btn-lg btn-outline">Unisciti a Noi</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Featured Article -->
+    <section class="featured-section" id="featured-articles">
+        <div class="container">
+            <h2 class="section-title">📌 In Evidenza</h2>
+            <div id="featured-article" class="featured-article">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Latest Articles -->
+    <section class="articles-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">📰 Ultimi Articoli</h2>
+                <div class="section-filters">
+                    <select id="category-filter" class="filter-select">
+                        <option value="">Tutte le Categorie</option>
+                        <option value="Sport">Sport</option>
+                        <option value="Cultura">Cultura</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Attualità">Attualità</option>
+                        <option value="Scienza">Scienza</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="articles-grid" class="articles-grid">
+                <div class="spinner"></div>
+            </div>
+            
+            <!-- Pagination -->
+            <div id="pagination" class="pagination hidden"></div>
+        </div>
+    </section>
+    
+    <!-- Newsletter -->
+    <section class="newsletter-section">
+        <div class="container">
+            <div class="newsletter-card">
+                <h2>📧 Iscriviti alla Newsletter</h2>
+                <p>Ricevi gli ultimi articoli direttamente nella tua casella email</p>
+                <form id="newsletter-form" class="newsletter-form">
+                    <input 
+                        type="email" 
+                        id="newsletter-email" 
+                        class="form-input" 
+                        placeholder="tua@email.com"
+                        required
+                    >
+                    <button type="submit" class="btn btn-secondary">Iscriviti</button>
+                </form>
+                <div id="newsletter-message" class="hidden"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Giornale Cesaris</h3>
+                    <p>Il giornale scolastico degli studenti dell'Istituto Cesaris</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Link Utili</h4>
+                    <ul>
+                        <li><a href="pages/about.html">Chi Siamo</a></li>
+                        <li><a href="pages/contact.html">Contatti</a></li>
+                        <li><a href="pages/terms.html">Termini e Condizioni</a></li>
+                        <li><a href="pages/privacy.html">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Seguici</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook">📘</a>
+                        <a href="#" aria-label="Instagram">📷</a>
+                        <a href="#" aria-label="Twitter">🐦</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Chat Bubble (for authenticated users) -->
+    <div id="chat-bubble" class="chat-bubble hidden">
+        💬
+    </div>
+    
+    <script type="module" src="js/homepage.js"></script>
+</body>
+</html>
