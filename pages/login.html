@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accedi al Giornale Scolastico Cesaris">
+    <title>Login - Giornale Scolastico Cesaris</title>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="../css/main.css">
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-lg);
+            background: linear-gradient(135deg, #4338CA 0%, #EC4899 100%);
+        }
+        
+        .auth-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-2xl);
+            max-width: 480px;
+            width: 100%;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+        
+        .auth-logo {
+            font-size: 3rem;
+            margin-bottom: var(--space-md);
+        }
+        
+        .auth-title {
+            color: var(--primary);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .auth-subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-xl);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .forgot-password {
+            text-align: right;
+            margin-top: var(--space-sm);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">📰</div>
+                <h1 class="auth-title">Accedi</h1>
+                <p class="auth-subtitle">Benvenuto al Giornale Scolastico Cesaris</p>
+            </div>
+            
+            <!-- Alert Messages -->
+            <div id="alert-container"></div>
+            
+            <form id="login-form">
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email *</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="nome.cognome@cesaris.edu.it"
+                        required
+                        autocomplete="email"
+                    >
+                    <span class="form-error" id="email-error"></span>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Password *</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        required
+                        autocomplete="current-password"
+                    >
+                    <span class="form-error" id="password-error"></span>
+                    <div class="forgot-password">
+                        <a href="forgot-password.html">Password dimenticata?</a>
+                    </div>
+                </div>
+                
+                <!-- Remember Me -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
+                        <input type="checkbox" id="remember-me">
+                        <span style="font-size: 0.875rem;">Ricordami</span>
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-lg btn-full" id="submit-btn">
+                    Accedi
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Non hai un account? 
+                <a href="register.html">Registrati qui</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+    
+    <script type="module">
+        import { loginUser } from '../js/auth.js';
+        
+        // DOM Elements
+        const form = document.getElementById('login-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const alertContainer = document.getElementById('alert-container');
+        
+        // Form inputs
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const rememberMeInput = document.getElementById('remember-me');
+        
+        // Error elements
+        const emailError = document.getElementById('email-error');
+        const passwordError = document.getElementById('password-error');
+        
+        /**
+         * Show alert message
+         */
+        function showAlert(message, type = 'error') {
+            const alertClass = type === 'success' ? 'alert-success' : 
+                              type === 'warning' ? 'alert-warning' : 'alert-error';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}" role="alert">
+                    ${message}
+                </div>
+            `;
+            
+            // Scroll to alert
+            alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        /**
+         * Clear all error messages
+         */
+        function clearErrors() {
+            alertContainer.innerHTML = '';
+            emailError.textContent = '';
+            passwordError.textContent = '';
+            emailInput.classList.remove('error');
+            passwordInput.classList.remove('error');
+        }
+        
+        /**
+         * Validate form inputs
+         */
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+            
+            // Validate email
+            if (!emailInput.value.trim()) {
+                emailError.textContent = 'L\'email è obbligatoria';
+                emailInput.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate password
+            if (!passwordInput.value) {
+                passwordError.textContent = 'La password è obbligatoria';
+                passwordInput.classList.add('error');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        /**
+         * Handle form submission
+         */
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Accesso in corso...';
+            loadingOverlay.classList.remove('hidden');
+            clearErrors();
+            
+            try {
+                // Login user
+                const result = await loginUser(
+                    emailInput.value.trim(),
+                    passwordInput.value
+                );
+                
+                if (result.success) {
+                    // Show success message
+                    showAlert('✅ Accesso effettuato con successo!', 'success');
+                    
+                    // Save remember me preference
+                    if (rememberMeInput.checked) {
+                        localStorage.setItem('rememberMe', 'true');
+                    } else {
+                        localStorage.removeItem('rememberMe');
+                    }
+                    
+                    // Redirect after 1 second
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 1000);
+                    
+                } else {
+                    // Show error
+                    showAlert(result.error || 'Login fallito. Riprova.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Accedi';
+                }
+                
+            } catch (error) {
+                console.error('Unexpected error during login:', error);
+                showAlert(
+                    'Si è verificato un errore imprevisto. Riprova più tardi.',
+                    'error'
+                );
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Accedi';
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+        
+        // Check for remember me preference
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('rememberMe') === 'true') {
+                rememberMeInput.checked = true;
+            }
+            
+            // Check for query parameters (e.g., from email confirmation)
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            
+            if (message === 'email_confirmed') {
+                showAlert('✅ Email confermata con successo! Ora puoi effettuare il login.', 'success');
+            } else if (message === 'password_reset') {
+                showAlert('✅ Password reimpostata con successo! Effettua il login con la nuova password.', 'success');
+            }
+        });
+    </script>
+</body>
+</html>

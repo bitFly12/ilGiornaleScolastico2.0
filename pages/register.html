@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Registrati al Giornale Scolastico Cesaris">
+    <title>Registrazione - Giornale Scolastico Cesaris</title>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="../css/main.css">
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-lg);
+            background: linear-gradient(135deg, #4338CA 0%, #EC4899 100%);
+        }
+        
+        .auth-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-2xl);
+            max-width: 480px;
+            width: 100%;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+        
+        .auth-logo {
+            font-size: 3rem;
+            margin-bottom: var(--space-md);
+        }
+        
+        .auth-title {
+            color: var(--primary);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .auth-subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .password-requirements {
+            background: #F3F4F6;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-sm);
+            font-size: 0.875rem;
+        }
+        
+        .password-requirements ul {
+            margin: var(--space-sm) 0 0 var(--space-lg);
+            color: var(--text-muted);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-xl);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">📰</div>
+                <h1 class="auth-title">Registrazione</h1>
+                <p class="auth-subtitle">Crea il tuo account per accedere al Giornale Scolastico Cesaris</p>
+            </div>
+            
+            <!-- Alert Messages -->
+            <div id="alert-container"></div>
+            
+            <form id="register-form">
+                <!-- Display Name -->
+                <div class="form-group">
+                    <label for="display-name" class="form-label">Nome e Cognome *</label>
+                    <input 
+                        type="text" 
+                        id="display-name" 
+                        class="form-input" 
+                        placeholder="Mario Rossi"
+                        required
+                        autocomplete="name"
+                    >
+                    <span class="form-error" id="display-name-error"></span>
+                </div>
+                
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Cesaris *</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="nome.cognome@cesaris.edu.it"
+                        required
+                        autocomplete="email"
+                    >
+                    <span class="form-help">Usa la tua email istituzionale @cesaris.edu.it</span>
+                    <span class="form-error" id="email-error"></span>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Password *</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <div class="password-requirements">
+                        <strong>La password deve:</strong>
+                        <ul>
+                            <li>Essere di almeno 8 caratteri</li>
+                            <li>Contenere lettere e numeri</li>
+                        </ul>
+                    </div>
+                    <span class="form-error" id="password-error"></span>
+                </div>
+                
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirm-password" class="form-label">Conferma Password *</label>
+                    <input 
+                        type="password" 
+                        id="confirm-password" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <span class="form-error" id="confirm-password-error"></span>
+                </div>
+                
+                <!-- Terms Acceptance -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
+                        <input type="checkbox" id="terms" required>
+                        <span style="font-size: 0.875rem;">
+                            Accetto i <a href="terms.html" target="_blank">Termini e Condizioni</a> 
+                            e la <a href="privacy.html" target="_blank">Privacy Policy</a>
+                        </span>
+                    </label>
+                    <span class="form-error" id="terms-error"></span>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-lg btn-full" id="submit-btn">
+                    Registrati
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Hai già un account? 
+                <a href="login.html">Accedi qui</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+    
+    <script type="module">
+        import { registerUser } from '../js/auth.js';
+        
+        // DOM Elements
+        const form = document.getElementById('register-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const alertContainer = document.getElementById('alert-container');
+        
+        // Form inputs
+        const displayNameInput = document.getElementById('display-name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const termsInput = document.getElementById('terms');
+        
+        // Error elements
+        const displayNameError = document.getElementById('display-name-error');
+        const emailError = document.getElementById('email-error');
+        const passwordError = document.getElementById('password-error');
+        const confirmPasswordError = document.getElementById('confirm-password-error');
+        const termsError = document.getElementById('terms-error');
+        
+        /**
+         * Show alert message
+         */
+        function showAlert(message, type = 'error') {
+            const alertClass = type === 'success' ? 'alert-success' : 
+                              type === 'warning' ? 'alert-warning' : 'alert-error';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}" role="alert">
+                    ${message}
+                </div>
+            `;
+            
+            // Scroll to alert
+            alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        /**
+         * Clear all error messages
+         */
+        function clearErrors() {
+            alertContainer.innerHTML = '';
+            [displayNameError, emailError, passwordError, confirmPasswordError, termsError].forEach(el => {
+                el.textContent = '';
+            });
+            [displayNameInput, emailInput, passwordInput, confirmPasswordInput].forEach(input => {
+                input.classList.remove('error');
+            });
+        }
+        
+        /**
+         * Validate form inputs
+         */
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+            
+            // Validate display name
+            if (!displayNameInput.value.trim()) {
+                displayNameError.textContent = 'Il nome e cognome è obbligatorio';
+                displayNameInput.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate email
+            const email = emailInput.value.trim();
+            if (!email) {
+                emailError.textContent = 'L\'email è obbligatoria';
+                emailInput.classList.add('error');
+                isValid = false;
+            } else if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
+                emailError.textContent = 'Usa la tua email @cesaris.edu.it';
+                emailInput.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate password
+            const password = passwordInput.value;
+            if (!password) {
+                passwordError.textContent = 'La password è obbligatoria';
+                passwordInput.classList.add('error');
+                isValid = false;
+            } else if (password.length < 8) {
+                passwordError.textContent = 'La password deve essere di almeno 8 caratteri';
+                passwordInput.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate password confirmation
+            const confirmPassword = confirmPasswordInput.value;
+            if (!confirmPassword) {
+                confirmPasswordError.textContent = 'Conferma la password';
+                confirmPasswordInput.classList.add('error');
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                confirmPasswordError.textContent = 'Le password non corrispondono';
+                confirmPasswordInput.classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate terms
+            if (!termsInput.checked) {
+                termsError.textContent = 'Devi accettare i termini e condizioni';
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        /**
+         * Handle form submission
+         */
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registrazione in corso...';
+            loadingOverlay.classList.remove('hidden');
+            clearErrors();
+            
+            try {
+                // Register user
+                const result = await registerUser(
+                    emailInput.value.trim(),
+                    passwordInput.value,
+                    displayNameInput.value.trim()
+                );
+                
+                if (result.success) {
+                    // Show success message
+                    showAlert(
+                        result.requiresConfirmation 
+                            ? '✅ Registrazione completata! Controlla la tua email per confermare l\'account.'
+                            : '✅ Registrazione completata con successo!',
+                        'success'
+                    );
+                    
+                    // Reset form
+                    form.reset();
+                    
+                    // Redirect after 3 seconds
+                    setTimeout(() => {
+                        if (result.requiresConfirmation) {
+                            window.location.href = 'confirm-email.html';
+                        } else {
+                            window.location.href = 'login.html';
+                        }
+                    }, 3000);
+                    
+                } else {
+                    // Show error
+                    let errorMessage = result.error || 'Registrazione fallita. Riprova.';
+                    
+                    // Show technical error if available (for debugging)
+                    if (result.technicalError && window.location.hostname === 'localhost') {
+                        errorMessage += '<br><small>Errore tecnico: ' + result.technicalError + '</small>';
+                    }
+                    
+                    showAlert(errorMessage, 'error');
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Registrati';
+                }
+                
+            } catch (error) {
+                console.error('Unexpected error during registration:', error);
+                showAlert(
+                    'Si è verificato un errore imprevisto. Riprova più tardi.',
+                    'error'
+                );
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Registrati';
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+        
+        // Real-time email validation
+        emailInput.addEventListener('blur', () => {
+            const email = emailInput.value.trim();
+            if (email && !email.toLowerCase().endsWith('@cesaris.edu.it')) {
+                emailError.textContent = 'Usa la tua email @cesaris.edu.it';
+                emailInput.classList.add('error');
+            } else {
+                emailError.textContent = '';
+                emailInput.classList.remove('error');
+            }
+        });
+        
+        // Real-time password match validation
+        confirmPasswordInput.addEventListener('input', () => {
+            if (confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordError.textContent = 'Le password non corrispondono';
+                confirmPasswordInput.classList.add('error');
+            } else {
+                confirmPasswordError.textContent = '';
+                confirmPasswordInput.classList.remove('error');
+            }
+        });
+    </script>
+</body>
+</html>
