@@ -44,18 +44,34 @@ document.addEventListener('DOMContentLoaded', () => {
 // MOBILE MENU
 // ================================================
 function initMobileMenu() {
-    const menuToggle = document.getElementById('menuToggle');
-    const navMenu = document.getElementById('navMenu');
+    const menuToggle = document.querySelector('.mobile-menu-toggle, .menu-toggle, #menuToggle');
+    const navMenu = document.querySelector('nav ul, .nav-menu, #navMenu');
+    const navLinks = navMenu ? navMenu.querySelectorAll('li a') : [];
     
     if (menuToggle && navMenu) {
-        menuToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navMenu.classList.toggle('mobile-menu-open');
+        });
+        
+        // Close menu when clicking a link
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('mobile-menu-open');
+            });
         });
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             if (!menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
-                navMenu.classList.remove('active');
+                navMenu.classList.remove('mobile-menu-open');
+            }
+        });
+        
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && navMenu.classList.contains('mobile-menu-open')) {
+                navMenu.classList.remove('mobile-menu-open');
             }
         });
     }
