@@ -117,7 +117,7 @@ function createMessageElement(msg) {
     const timeAgo = formatTimeAgo(new Date(msg.created_at));
 
     // Parse and highlight mentions
-    const messageText = highlightMentions(msg.messaggio || msg.message);
+    const messageText = highlightMentions(msg.content || msg.message || msg.messaggio || '');
 
     let reactionsHTML = '';
     if (msg.reactions && Object.keys(msg.reactions).length > 0) {
@@ -321,15 +321,24 @@ async function sendMessage() {
     if (!message || !currentUser) return;
 
     try {
+        // Get user profile for author_name
+        const { data: profile } = await supabase
+            .from('profili_utenti')
+            .select('nome_visualizzato, username')
+            .eq('id', currentUser.id)
+            .single();
+        
+        const authorName = profile?.nome_visualizzato || profile?.username || 'Anonimo';
+        
         // Insert message into Supabase
-        // Using 'messaggio' column (Italian standard for consistency)
         const { data, error } = await supabase
             .from('chat_messages')
             .insert([
                 {
                     user_id: currentUser.id,
-                    messaggio: message,
-                    message: message // Compatibility with existing code
+                    author_name: authorName,
+                    content: message,
+                    message_type: 'text'
                 }
             ])
             .select(`
