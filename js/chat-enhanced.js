@@ -10,6 +10,9 @@ let realtimeInterval = null;
 let lastMessageId = null;
 let editingMessageId = null;
 
+// Use window.supabaseClient consistently
+const getSupabase = () => window.supabaseClient || window.supabase;
+
 // ================================================
 // Initialize Chat
 // ================================================
@@ -18,8 +21,16 @@ async function initChat() {
         // Wait a moment for Supabase session to be ready
         await new Promise(resolve => setTimeout(resolve, 100));
         
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            console.error('Supabase client not available');
+            hidePageLoader();
+            window.location.href = 'login.html?redirect=chat.html';
+            return;
+        }
+        
         // Get current user from Supabase auth
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        const { data: { user } } = await supabaseClient.auth.getUser();
         
         if (!user) {
             window.location.href = 'login.html?redirect=chat.html';
@@ -29,7 +40,7 @@ async function initChat() {
         currentUser = user;
         
         // Get current user profile
-        const { data: profile } = await supabase
+        const { data: profile } = await supabaseClient
             .from('profili_utenti')
             .select('*')
             .eq('id', user.id)
@@ -51,6 +62,9 @@ async function initChat() {
 
         // Setup send button
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        
+        // Setup event delegation for chat messages
+        setupChatEventDelegation();
         
         // Start real-time message updates
         startRealtimeUpdates();
@@ -95,7 +109,10 @@ async function checkForNewMessages() {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         
-        let query = supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
+        let query = supabaseClient
             .from('chat_messages')
             .select(`
                 *,
@@ -151,7 +168,10 @@ async function checkForNewMessages() {
 // ================================================
 async function loadAllUsers() {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
+        const { data, error } = await supabaseClient
             .from('profili_utenti')
             .select('id, username, nome_visualizzato')
             .order('username');
@@ -205,7 +225,13 @@ async function loadChatMessages() {
     showChatLoading();
 
     try {
-        const { data: messages, error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) {
+            hideChatLoading();
+            return;
+        }
+        
+        const { data: messages, error } = await supabaseClient
             .from('chat_messages')
             .select(`
                 *,
@@ -250,6 +276,51 @@ async function loadChatMessages() {
 }
 
 // ================================================
+// Setup Event Delegation for Chat Actions
+// ================================================
+function setupChatEventDelegation() {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    
+    container.addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        
+        const action = target.dataset.action;
+        const messageId = target.dataset.messageId;
+        const emoji = target.dataset.emoji;
+        
+        switch (action) {
+            case 'toggle-reaction':
+                if (messageId && emoji) {
+                    toggleReaction(messageId, emoji);
+                }
+                break;
+            case 'show-reaction-picker':
+                if (messageId) {
+                    showReactionPicker(messageId);
+                }
+                break;
+            case 'edit-message':
+                if (messageId) {
+                    editMessage(messageId);
+                }
+                break;
+            case 'delete-message':
+                if (messageId) {
+                    deleteMessage(messageId);
+                }
+                break;
+            case 'add-reaction':
+                if (messageId && emoji) {
+                    addReaction(messageId, emoji);
+                }
+                break;
+        }
+    });
+}
+
+// ================================================
 // Create Message Element with Discord-like Features
 // ================================================
 function createMessageElement(msg) {
@@ -276,24 +347,26 @@ function createMessageElement(msg) {
     // Check if this is the current user's message
     const isOwnMessage = msg.user_id === currentUser?.id;
     
-    // Build reactions HTML
+    // Build reactions HTML using data attributes for security
     let reactionsHTML = '<div class="message-reactions">';
     if (msg.reactions && Object.keys(msg.reactions).length > 0) {
         for (const [emoji, count] of Object.entries(msg.reactions)) {
-            reactionsHTML += `<button class="reaction-btn" onclick="toggleReaction('${msg.id}', '${emoji}')">${emoji} ${count}</button>`;
+            // Validate emoji is safe (only emoji characters)
+            const safeEmoji = escapeHTML(emoji);
+            reactionsHTML += `<button class="reaction-btn" data-action="toggle-reaction" data-message-id="${msg.id}" data-emoji="${safeEmoji}">${safeEmoji} ${count}</button>`;
         }
     }
     // Add reaction picker button
-    reactionsHTML += `<button class="reaction-btn reaction-add" onclick="showReactionPicker('${msg.id}')">➕</button>`;
+    reactionsHTML += `<button class="reaction-btn reaction-add" data-action="show-reaction-picker" data-message-id="${msg.id}">➕</button>`;
     reactionsHTML += '</div>';
     
-    // Build message actions for own messages
+    // Build message actions for own messages using data attributes
     let actionsHTML = '';
     if (isOwnMessage) {
         actionsHTML = `
             <div class="message-actions">
-                <button class="action-btn" onclick="editMessage('${msg.id}')" title="Modifica">✏️</button>
-                <button class="action-btn" onclick="deleteMessage('${msg.id}')" title="Elimina">🗑️</button>
+                <button class="action-btn" data-action="edit-message" data-message-id="${msg.id}" title="Modifica">✏️</button>
+                <button class="action-btn" data-action="delete-message" data-message-id="${msg.id}" title="Elimina">🗑️</button>
             </div>
         `;
     }
@@ -305,8 +378,8 @@ function createMessageElement(msg) {
         <div class="message-avatar" style="background: ${stringToColor(username)}">${initial}</div>
         <div class="message-content">
             <div class="message-header">
-                <span class="message-author">${escapeHTML(displayName)} <span style="color: var(--neutral); font-weight: normal;">@${username}</span></span>
-                <span class="message-time" title="${fullTime}">${timeAgo}</span>
+                <span class="message-author">${escapeHTML(displayName)} <span style="color: var(--neutral); font-weight: normal;">@${escapeHTML(username)}</span></span>
+                <span class="message-time" title="${escapeHTML(fullTime)}">${timeAgo}</span>
                 ${editedIndicator}
                 ${actionsHTML}
             </div>
@@ -365,25 +438,46 @@ async function editMessage(messageId) {
     const textEl = document.getElementById(`msg-text-${messageId}`);
     if (!textEl) return;
     
-    // Get current text (strip HTML)
+    // Get current text (innerText already strips HTML)
     const currentText = textEl.innerText;
     
-    // Create edit input
+    // Create edit input using DOM methods (avoid innerHTML for security)
     const editContainer = document.createElement('div');
     editContainer.className = 'edit-container';
-    editContainer.innerHTML = `
-        <input type="text" class="edit-input" value="${escapeHTML(currentText)}" id="edit-input-${messageId}">
-        <div class="edit-actions">
-            <button class="btn btn-sm btn-primary" onclick="saveEdit('${messageId}')">Salva</button>
-            <button class="btn btn-sm btn-secondary" onclick="cancelEdit('${messageId}', '${escapeHTML(currentText)}')">Annulla</button>
-        </div>
-        <small style="color: var(--neutral);">Esc per annullare, Invio per salvare</small>
-    `;
+    editContainer.id = `edit-container-${messageId}`;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'edit-input';
+    input.id = `edit-input-${messageId}`;
+    input.value = currentText; // No need to escape, setting via .value is safe
+    
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'edit-actions';
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-sm btn-primary';
+    saveBtn.textContent = 'Salva';
+    saveBtn.addEventListener('click', () => saveEdit(messageId));
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-sm btn-secondary';
+    cancelBtn.textContent = 'Annulla';
+    cancelBtn.addEventListener('click', () => cancelEdit(messageId));
+    
+    const hint = document.createElement('small');
+    hint.style.color = 'var(--neutral)';
+    hint.textContent = 'Esc per annullare, Invio per salvare';
+    
+    actionsDiv.appendChild(saveBtn);
+    actionsDiv.appendChild(cancelBtn);
+    editContainer.appendChild(input);
+    editContainer.appendChild(actionsDiv);
+    editContainer.appendChild(hint);
     
     textEl.style.display = 'none';
     textEl.parentNode.insertBefore(editContainer, textEl.nextSibling);
     
-    const input = document.getElementById(`edit-input-${messageId}`);
     input.focus();
     input.select();
     
@@ -392,7 +486,7 @@ async function editMessage(messageId) {
         if (e.key === 'Enter') {
             saveEdit(messageId);
         } else if (e.key === 'Escape') {
-            cancelEdit(messageId, currentText);
+            cancelEdit(messageId);
         }
     });
     
@@ -413,7 +507,10 @@ async function saveEdit(messageId) {
     }
     
     try {
-        const { error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
+        const { error } = await supabaseClient
             .from('chat_messages')
             .update({ 
                 content: newText,
@@ -431,7 +528,7 @@ async function saveEdit(messageId) {
         textEl.style.display = 'block';
         
         // Remove edit container
-        const editContainer = textEl.parentNode.querySelector('.edit-container');
+        const editContainer = document.getElementById(`edit-container-${messageId}`);
         if (editContainer) editContainer.remove();
         
         editingMessageId = null;
@@ -444,13 +541,13 @@ async function saveEdit(messageId) {
 // ================================================
 // Cancel Edit
 // ================================================
-function cancelEdit(messageId, originalText) {
+function cancelEdit(messageId) {
     const textEl = document.getElementById(`msg-text-${messageId}`);
     if (textEl) {
         textEl.style.display = 'block';
     }
     
-    const editContainer = textEl?.parentNode.querySelector('.edit-container');
+    const editContainer = document.getElementById(`edit-container-${messageId}`);
     if (editContainer) editContainer.remove();
     
     editingMessageId = null;
@@ -465,7 +562,10 @@ async function deleteMessage(messageId) {
     }
     
     try {
-        const { error } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
+        const { error } = await supabaseClient
             .from('chat_messages')
             .update({ is_deleted: true })
             .eq('id', messageId)
@@ -498,9 +598,17 @@ function showReactionPicker(messageId) {
     
     const picker = document.createElement('div');
     picker.className = 'reaction-picker';
-    picker.innerHTML = reactions.map(r => 
-        `<button class="reaction-option" onclick="addReaction('${messageId}', '${r}')">${r}</button>`
-    ).join('');
+    
+    // Create buttons safely without inline onclick
+    reactions.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'reaction-option';
+        btn.textContent = r;
+        btn.dataset.action = 'add-reaction';
+        btn.dataset.messageId = messageId;
+        btn.dataset.emoji = r;
+        picker.appendChild(btn);
+    });
     
     const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageEl) {
@@ -526,8 +634,18 @@ function showReactionPicker(messageId) {
 // ================================================
 async function addReaction(messageId, emoji) {
     try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
+        // Validate emoji - only allow known safe emoji
+        const safeEmojis = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '👏'];
+        if (!safeEmojis.includes(emoji)) {
+            console.warn('Invalid emoji attempted:', emoji);
+            return;
+        }
+        
         // Get current message
-        const { data: message, error: fetchError } = await supabase
+        const { data: message, error: fetchError } = await supabaseClient
             .from('chat_messages')
             .select('reactions')
             .eq('id', messageId)
@@ -538,7 +656,7 @@ async function addReaction(messageId, emoji) {
         let reactions = message.reactions || {};
         reactions[emoji] = (reactions[emoji] || 0) + 1;
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('chat_messages')
             .update({ reactions })
             .eq('id', messageId);
@@ -800,9 +918,12 @@ async function sendMessage() {
     }
 
     try {
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
         const authorName = currentUserProfile?.nome_visualizzato || currentUserProfile?.username || 'Anonimo';
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('chat_messages')
             .insert([
                 {
@@ -851,7 +972,10 @@ async function sendMessage() {
 // ================================================
 async function updateOnlineCount() {
     try {
-        const { count } = await supabase
+        const supabaseClient = getSupabase();
+        if (!supabaseClient) return;
+        
+        const { count } = await supabaseClient
             .from('profili_utenti')
             .select('*', { count: 'exact', head: true });
 
