@@ -195,13 +195,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Perché vuoi diventare reporter? *</label>
-                    <textarea id="motivation" class="form-textarea" rows="6" 
-                              placeholder="Racconta la tua passione per il giornalismo..." required></textarea>
-                    <small style="color: var(--neutral);">Minimo 100 caratteri</small>
-                </div>
-                
-                <div class="form-group">
                     <label class="form-label">Hai esperienze precedenti di scrittura?</label>
                     <textarea id="experience" class="form-textarea" rows="4" 
                               placeholder="Descrivi eventuali esperienze (opzionale)"></textarea>
@@ -282,7 +275,6 @@
             const email = document.getElementById('email').value.trim().toLowerCase();
             const fullName = document.getElementById('fullName').value.trim();
             const studentClass = document.getElementById('class').value.trim();
-            const motivation = document.getElementById('motivation').value.trim();
             const experience = document.getElementById('experience').value.trim();
             const termsAccept = document.getElementById('termsAccept').checked;
             
@@ -292,12 +284,6 @@
             // Validate email domain (case-insensitive)
             if (!email.endsWith('@cesaris.edu.it')) {
                 showAlert('Utilizza la tua email @cesaris.edu.it per candidarti', 'error');
-                return;
-            }
-            
-            // Validate motivation length
-            if (motivation.length < 100) {
-                showAlert('La motivazione deve essere almeno di 100 caratteri', 'error');
                 return;
             }
             
@@ -323,7 +309,6 @@
                             full_name: fullName,
                             username: username,
                             class: studentClass,
-                            motivation: motivation,
                             experience: experience,
                             status: 'pending',
                             submitted_at: new Date().toISOString()
@@ -342,7 +327,7 @@ const { error: emailError } = await supabaseClient.functions.invoke('send-candid
     candidatureId: data.id,
     email: email,
     fullName: fullName,
-    motivation: motivation
+    experience: experience
   }
 })
 

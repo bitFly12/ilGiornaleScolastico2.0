@@ -54,6 +54,17 @@
         </div>
     </section>
 
+    <!-- Reporter Quick Access (only for reporters) -->
+    <section id="reporterQuickAccess" style="display: none; margin: 2rem auto; max-width: 1200px; padding: 0 1rem;">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 2rem; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">✍️ Sei un Reporter!</h2>
+            <p style="margin-bottom: 1.5rem; color: #f0fdf4;">Crea e pubblica i tuoi articoli direttamente dalla dashboard</p>
+            <a href="dashboard.html" class="btn" style="background: white; color: #059669; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+                📝 Scrivi un Nuovo Articolo
+            </a>
+        </div>
+    </section>
+
     <!-- Main Content -->
     <main class="container">
         <!-- Articles Grid -->
@@ -189,6 +200,12 @@
                         dashboardLi.innerHTML = `<a href="dashboard.html" class="nav-link">✍️ Dashboard</a>`;
                     }
                     navMenu.appendChild(dashboardLi);
+                    
+                    // Show reporter quick access section
+                    const reporterQuickAccess = document.getElementById('reporterQuickAccess');
+                    if (reporterQuickAccess) {
+                        reporterQuickAccess.style.display = 'block';
+                    }
                 }
                 
                 // Add logout button
