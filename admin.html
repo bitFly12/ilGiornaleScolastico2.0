@@ -282,7 +282,7 @@
                     .from('articoli')
                     .select(`
                         *,
-                        autore:profili_utenti!articoli_autore_id_fkey(username, nome_visualizzato)
+                        autore:profili_utenti!fk_articoli_autore(username, nome_visualizzato)
                     `)
                     .order('created_at', { ascending: false });
 

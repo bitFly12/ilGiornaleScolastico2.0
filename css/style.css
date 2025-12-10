@@ -883,3 +883,262 @@ img {
     height: 40px;
     animation: spin 1s linear infinite;
 }
+
+/* ================================================
+   ENHANCED DARK MODE IMPROVEMENTS
+   ================================================ */
+
+/* Dark mode: Article cards - ensure text is visible */
+.dark-mode .article-card {
+    background-color: #2d2d2d;
+    border-color: #4b5563;
+}
+
+.dark-mode .article-card h3,
+.dark-mode .article-card .article-title {
+    color: #f9fafb !important;
+}
+
+.dark-mode .article-card p,
+.dark-mode .article-card .article-summary,
+.dark-mode .article-card .article-meta {
+    color: #d1d5db !important;
+}
+
+.dark-mode .article-card .article-category {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+/* Dark mode: Buttons and links */
+.dark-mode .btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.dark-mode .btn-secondary {
+    background-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode a {
+    color: #60a5fa;
+}
+
+.dark-mode a:hover {
+    color: #93c5fd;
+}
+
+/* Dark mode: Forms and inputs */
+.dark-mode input[type="text"],
+.dark-mode input[type="email"],
+.dark-mode input[type="password"],
+.dark-mode input[type="number"],
+.dark-mode select,
+.dark-mode textarea {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* Dark mode: Chat pinned messages */
+.dark-mode .pinned-message {
+    background-color: #374151;
+    border-left-color: #60a5fa;
+    color: #f9fafb;
+}
+
+.dark-mode .pinned-message-text {
+    color: #e5e7eb;
+}
+
+.dark-mode .pin-icon {
+    color: #fbbf24;
+}
+
+/* Dark mode: Pagination */
+.dark-mode .pagination button,
+.dark-mode .page-num {
+    background-color: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+}
+
+.dark-mode .pagination button:hover,
+.dark-mode .page-num:hover {
+    background-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode .pagination button.active,
+.dark-mode .page-num.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Dark mode: Tables */
+.dark-mode table {
+    background-color: #1f2937;
+    color: #f9fafb;
+}
+
+.dark-mode th {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+.dark-mode tr {
+    border-bottom-color: #4b5563;
+}
+
+.dark-mode tr:hover {
+    background-color: #374151;
+}
+
+/* Dark mode: Alerts and notifications */
+.dark-mode .alert {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode .alert-success {
+    background-color: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #6ee7b7;
+}
+
+.dark-mode .alert-error {
+    background-color: rgba(220, 38, 38, 0.2);
+    border-color: #dc2626;
+    color: #fca5a5;
+}
+
+/* Dark mode: Code blocks and pre */
+.dark-mode code,
+.dark-mode pre {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+
+/* Dark mode: Headings */
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+    color: #f9fafb;
+}
+
+/* Dark mode: Reporter banner on homepage */
+.dark-mode #reporterQuickAccess h2 {
+    color: white !important;
+}
+
+.dark-mode #reporterQuickAccess p {
+    color: #f0fdf4 !important;
+}
+
+/* Dark mode: Profile page */
+.dark-mode .profile-header {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .profile-stats {
+    background-color: #374151;
+}
+
+.dark-mode .stat-label {
+    color: #9ca3af;
+}
+
+.dark-mode .stat-value {
+    color: #f9fafb;
+}
+
+/* Dark mode: Settings page */
+.dark-mode .settings-section {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .setting-item {
+    border-bottom-color: #4b5563;
+}
+
+.dark-mode .setting-label {
+    color: #f9fafb;
+}
+
+.dark-mode .setting-description {
+    color: #9ca3af;
+}
+
+/* Dark mode: Toggle switch */
+.dark-mode .toggle-switch {
+    background-color: #4b5563;
+}
+
+.dark-mode .toggle-switch.active {
+    background-color: #10b981;
+}
+
+/* Dark mode: Ensure white text doesn't disappear on white backgrounds */
+.dark-mode .text-white {
+    color: #f9fafb !important;
+}
+
+/* Dark mode: Card overlays */
+.dark-mode .card-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3));
+}
+
+/* Dark mode: Dropdown menus */
+.dark-mode .dropdown-menu {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .dropdown-item {
+    color: #d1d5db;
+}
+
+.dark-mode .dropdown-item:hover {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+/* Dark mode: Badges */
+.dark-mode .badge {
+    background-color: #374151;
+    color: #d1d5db;
+}
+
+.dark-mode .badge-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.dark-mode .badge-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.dark-mode .badge-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.dark-mode .badge-error {
+    background-color: #dc2626;
+    color: white;
+}

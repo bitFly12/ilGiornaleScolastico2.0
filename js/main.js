@@ -307,6 +307,97 @@ function initPagination() {
     }
 }
 
+function renderPagination(currentPage, totalPages) {
+    const pagination = document.getElementById('pagination');
+    if (!pagination) return;
+    
+    // Clear existing pagination
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) {
+        // Hide pagination if only one page
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'flex';
+    
+    // Previous button
+    if (currentPage > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'page-num';
+        prevBtn.textContent = '← Precedente';
+        prevBtn.onclick = () => changePage(currentPage - 1);
+        pagination.appendChild(prevBtn);
+    }
+    
+    // Page numbers with smart ellipsis
+    const maxButtons = 7; // Show max 7 page buttons
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    // Adjust if near boundaries
+    if (currentPage <= 3) {
+        endPage = Math.min(totalPages, maxButtons - 1);
+    }
+    if (currentPage >= totalPages - 2) {
+        startPage = Math.max(1, totalPages - (maxButtons - 2));
+    }
+    
+    // First page
+    if (startPage > 1) {
+        const firstBtn = document.createElement('button');
+        firstBtn.className = 'page-num';
+        firstBtn.textContent = '1';
+        firstBtn.onclick = () => changePage(1);
+        pagination.appendChild(firstBtn);
+        
+        if (startPage > 2) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.padding = '0 0.5rem';
+            ellipsis.style.color = 'var(--neutral)';
+            pagination.appendChild(ellipsis);
+        }
+    }
+    
+    // Page buttons
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `page-num ${i === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.setAttribute('data-page', i);
+        pageBtn.onclick = () => changePage(i);
+        pagination.appendChild(pageBtn);
+    }
+    
+    // Last page
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.padding = '0 0.5rem';
+            ellipsis.style.color = 'var(--neutral)';
+            pagination.appendChild(ellipsis);
+        }
+        
+        const lastBtn = document.createElement('button');
+        lastBtn.className = 'page-num';
+        lastBtn.textContent = totalPages;
+        lastBtn.onclick = () => changePage(totalPages);
+        pagination.appendChild(lastBtn);
+    }
+    
+    // Next button
+    if (currentPage < totalPages) {
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'page-num';
+        nextBtn.textContent = 'Successivo →';
+        nextBtn.onclick = () => changePage(currentPage + 1);
+        pagination.appendChild(nextBtn);
+    }
+}
+
 function changePage(page) {
     AppState.currentPage = page;
     console.log(`Caricamento pagina ${page}`);
