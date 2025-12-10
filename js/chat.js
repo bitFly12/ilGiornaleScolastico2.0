@@ -67,11 +67,54 @@ async function loadAllUsers() {
 }
 
 // ================================================
+// Show Loading State
+// ================================================
+function showChatLoading() {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    
+    // Create loading element
+    const loadingEl = document.createElement('div');
+    loadingEl.id = 'chatLoadingState';
+    loadingEl.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; text-align: center;';
+    loadingEl.innerHTML = `
+        <div style="width: 50px; height: 50px; border: 4px solid #e5e7eb; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+        <p style="color: var(--neutral); font-size: 1rem; margin: 0;">Caricamento messaggi in corso...</p>
+        <style>
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+    
+    // Keep pinned message
+    const pinnedMsg = container.querySelector('.pinned-messages');
+    container.innerHTML = '';
+    if (pinnedMsg) {
+        container.appendChild(pinnedMsg);
+    }
+    container.appendChild(loadingEl);
+}
+
+// ================================================
+// Hide Loading State
+// ================================================
+function hideChatLoading() {
+    const loadingEl = document.getElementById('chatLoadingState');
+    if (loadingEl) {
+        loadingEl.remove();
+    }
+}
+
+// ================================================
 // Load Chat Messages from Supabase
 // ================================================
 async function loadChatMessages() {
     const container = document.getElementById('chatMessages');
     if (!container) return;
+
+    // Show loading state
+    showChatLoading();
 
     try {
         const { data: messages, error } = await supabase
@@ -85,6 +128,9 @@ async function loadChatMessages() {
             .limit(100);
 
         if (error) throw error;
+
+        // Hide loading state
+        hideChatLoading();
 
         // Keep pinned message
         const pinnedMsg = container.querySelector('.pinned-messages');
@@ -330,11 +376,25 @@ function insertMention(username, startPos) {
 // ================================================
 // Send Message
 // ================================================
+let isSendingMessage = false; // Prevent rapid-fire sending
+
 async function sendMessage() {
     const input = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
     const message = input.value.trim();
 
-    if (!message || !currentUser) return;
+    if (!message || !currentUser || isSendingMessage) return;
+
+    // Prevent rapid clicks
+    isSendingMessage = true;
+    
+    // Disable send button
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        sendBtn.style.cursor = 'not-allowed';
+        sendBtn.textContent = 'Invio...';
+    }
 
     try {
         // Get user profile for author_name
@@ -378,6 +438,17 @@ async function sendMessage() {
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Errore nell\'invio del messaggio');
+    } finally {
+        // Re-enable send button after a short delay
+        setTimeout(() => {
+            isSendingMessage = false;
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = '1';
+                sendBtn.style.cursor = 'pointer';
+                sendBtn.textContent = 'Invia';
+            }
+        }, 500); // 500ms cooldown to prevent spam
     }
 }
 
