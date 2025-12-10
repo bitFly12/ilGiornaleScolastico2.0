@@ -7,11 +7,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .register-box {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl), 0 0 40px rgba(0, 51, 160, 0.1);
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid transparent;
+            background-image: linear-gradient(white, white), linear-gradient(135deg, var(--primary), #00f0ff);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+        
         .alert {
             padding: 1rem;
             border-radius: var(--radius-md);
             margin-bottom: 1rem;
             display: none;
+            animation: fadeIn 0.3s ease;
         }
         .alert.show {
             display: block;
@@ -26,42 +49,176 @@
             color: var(--success);
             border-left: 4px solid var(--success);
         }
+        .alert-info {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border-left: 4px solid #3B82F6;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .password-strength {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .password-requirements {
+            font-size: 0.75rem;
+            color: var(--neutral);
+            margin-top: 0.5rem;
+        }
+        
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+        }
+        
+        .requirement.valid {
+            color: var(--success);
+        }
+        
+        .password-toggle {
+            position: relative;
+        }
+        
+        .password-toggle .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--neutral);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .terms-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .terms-checkbox input {
+            margin-top: 2px;
+            width: 18px;
+            height: 18px;
+        }
+        
+        .benefits-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: var(--radius-md);
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--neutral);
+        }
     </style>
 </head>
 <body>
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
-        <div style="background: var(--bg-card); padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); max-width: 450px; width: 100%;">
-            <h1 style="text-align: center; color: var(--primary);">Registrazione</h1>
-            <p style="text-align: center; color: var(--neutral); margin-bottom: 2rem;">Crea il tuo account con l'email @cesaris.edu.it</p>
+    <div class="register-container">
+        <div class="register-box">
+            <h1 style="text-align: center; color: var(--primary); margin-bottom: 0.5rem;">🎓 Registrazione</h1>
+            <p style="text-align: center; color: var(--neutral); margin-bottom: 1.5rem;">Unisciti alla community del Giornale Cesaris!</p>
             
             <div id="alertBox" class="alert"></div>
             
             <form id="registerForm">
                 <div class="form-group">
-                    <label class="form-label">Email Scolastica</label>
-                    <input type="email" id="email" class="form-input" placeholder="nome.cognome@cesaris.edu.it" required>
-                    <small style="color: var(--neutral); font-size: 0.875rem;">Il tuo username sarà la parte prima di @</small>
+                    <label class="form-label">📧 Email Scolastica</label>
+                    <input type="email" id="email" class="form-input" placeholder="nome.cognome@cesaris.edu.it" required autocomplete="email">
+                    <small style="color: var(--neutral); font-size: 0.8rem;">Il tuo username sarà: <strong id="previewUsername">-</strong></small>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••" minlength="6" required>
-                    <small style="color: var(--neutral); font-size: 0.875rem;">Minimo 6 caratteri</small>
+                    <label class="form-label">🔒 Password</label>
+                    <div class="password-toggle">
+                        <input type="password" id="password" class="form-input" placeholder="Crea una password sicura" minlength="6" required autocomplete="new-password">
+                        <button type="button" class="toggle-btn" onclick="togglePassword('password')">👁️</button>
+                    </div>
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="strengthBar"></div>
+                    </div>
+                    <div class="password-requirements">
+                        <div class="requirement" id="reqLength">⭕ Almeno 6 caratteri</div>
+                        <div class="requirement" id="reqUpper">⭕ Una lettera maiuscola</div>
+                        <div class="requirement" id="reqNumber">⭕ Un numero</div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Conferma Password</label>
-                    <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••" required>
+                    <label class="form-label">🔒 Conferma Password</label>
+                    <div class="password-toggle">
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Ripeti la password" required autocomplete="new-password">
+                        <button type="button" class="toggle-btn" onclick="togglePassword('confirmPassword')">👁️</button>
+                    </div>
+                    <small id="passwordMatch" style="font-size: 0.8rem;"></small>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Registrati</button>
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="acceptTerms" required>
+                    <label for="acceptTerms">
+                        Accetto i <a href="terms.html" target="_blank" style="color: var(--primary);">Termini di Servizio</a> 
+                        e la <a href="privacy.html" target="_blank" style="color: var(--primary);">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="width: 100%;">🚀 Registrati</button>
             </form>
             
-            <p style="text-align: center; margin-top: 1.5rem;">
-                Hai già un account? <a href="login.html" style="color: var(--primary);">Accedi</a>
+            <div class="benefits-list">
+                <div class="benefit-item">📰 Leggi articoli esclusivi</div>
+                <div class="benefit-item">💬 Chat con i compagni</div>
+                <div class="benefit-item">🏆 Guadagna punti e badge</div>
+                <div class="benefit-item">✍️ Diventa reporter</div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 1rem;">
+                Hai già un account? <a href="login.html" style="color: var(--primary); font-weight: 600;">Accedi</a>
             </p>
             
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center;">
                 <a href="index.html" style="color: var(--neutral); font-size: 0.875rem;">
                     ← Torna alla Home
                 </a>
@@ -74,44 +231,157 @@
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const btn = field.parentElement.querySelector('.toggle-btn');
+            if (field.type === 'password') {
+                field.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                field.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+        
+        // Preview username from email
+        document.getElementById('email').addEventListener('input', (e) => {
+            const email = e.target.value.trim().toLowerCase();
+            const preview = document.getElementById('previewUsername');
+            if (email.includes('@')) {
+                preview.textContent = email.split('@')[0];
+            } else {
+                preview.textContent = email || '-';
+            }
+        });
+        
+        // Password strength checker
+        document.getElementById('password').addEventListener('input', (e) => {
+            const password = e.target.value;
+            let strength = 0;
+            let color = '#e5e7eb';
+            
+            const reqLength = document.getElementById('reqLength');
+            const reqUpper = document.getElementById('reqUpper');
+            const reqNumber = document.getElementById('reqNumber');
+            
+            // Check length
+            if (password.length >= 6) {
+                strength += 1;
+                reqLength.innerHTML = '✅ Almeno 6 caratteri';
+                reqLength.classList.add('valid');
+            } else {
+                reqLength.innerHTML = '⭕ Almeno 6 caratteri';
+                reqLength.classList.remove('valid');
+            }
+            
+            // Check uppercase
+            if (/[A-Z]/.test(password)) {
+                strength += 1;
+                reqUpper.innerHTML = '✅ Una lettera maiuscola';
+                reqUpper.classList.add('valid');
+            } else {
+                reqUpper.innerHTML = '⭕ Una lettera maiuscola';
+                reqUpper.classList.remove('valid');
+            }
+            
+            // Check number
+            if (/[0-9]/.test(password)) {
+                strength += 1;
+                reqNumber.innerHTML = '✅ Un numero';
+                reqNumber.classList.add('valid');
+            } else {
+                reqNumber.innerHTML = '⭕ Un numero';
+                reqNumber.classList.remove('valid');
+            }
+            
+            // Update strength bar
+            const bar = document.getElementById('strengthBar');
+            if (strength === 0) {
+                bar.style.width = '0%';
+                bar.style.background = '#e5e7eb';
+            } else if (strength === 1) {
+                bar.style.width = '33%';
+                bar.style.background = '#EF4444';
+            } else if (strength === 2) {
+                bar.style.width = '66%';
+                bar.style.background = '#F59E0B';
+            } else {
+                bar.style.width = '100%';
+                bar.style.background = '#10B981';
+            }
+            
+            checkPasswordMatch();
+        });
+        
+        // Password match checker
+        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+        
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const matchIndicator = document.getElementById('passwordMatch');
+            
+            if (!confirm) {
+                matchIndicator.textContent = '';
+                return;
+            }
+            
+            if (password === confirm) {
+                matchIndicator.textContent = '✅ Le password corrispondono';
+                matchIndicator.style.color = 'var(--success)';
+            } else {
+                matchIndicator.textContent = '❌ Le password non corrispondono';
+                matchIndicator.style.color = 'var(--error)';
+            }
+        }
+        
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const acceptTerms = document.getElementById('acceptTerms').checked;
+            const submitBtn = document.getElementById('submitBtn');
             
             // Validate email domain
-            if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
-                showAlert('Utilizza la tua email @cesaris.edu.it per registrarti', 'error');
+            if (!email.endsWith('@cesaris.edu.it')) {
+                showAlert('⚠️ Utilizza la tua email @cesaris.edu.it per registrarti', 'error');
                 return;
             }
             
             // Validate password match
             if (password !== confirmPassword) {
-                showAlert('Le password non corrispondono', 'error');
+                showAlert('❌ Le password non corrispondono', 'error');
                 return;
             }
             
             // Validate password length
             if (password.length < 6) {
-                showAlert('La password deve essere di almeno 6 caratteri', 'error');
+                showAlert('⚠️ La password deve essere di almeno 6 caratteri', 'error');
+                return;
+            }
+            
+            // Validate terms acceptance
+            if (!acceptTerms) {
+                showAlert('⚠️ Devi accettare i Termini di Servizio per continuare', 'error');
                 return;
             }
             
             // Disable submit button
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Registrazione in corso...';
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Registrazione...';
             
             try {
-                // Extract username from email (before @) using utility function
-                const username = window.extractUsernameFromEmail ? window.extractUsernameFromEmail(email) : email.split('@')[0];
-                
-                // Get current site URL for redirect after email confirmation
+                const username = email.split('@')[0];
                 const siteUrl = window.location.origin;
                 
-                // Real Supabase registration with email confirmation redirect
+                // Check if Supabase client is ready
+                if (!window.supabaseClient) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
                 const { data, error } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
@@ -128,48 +398,48 @@
                 }
                 
                 if (data.user) {
-                    // Show success message
-                    showAlert('✅ Registrazione completata! Controlla la tua email per confermare l\'account.', 'success');
+                    showAlert('🎉 Registrazione completata! Controlla la tua email per confermare l\'account.', 'success');
                     
+                    // Show additional info
                     setTimeout(() => {
-                        showAlert('📧 Ti abbiamo inviato un\'email di conferma. Clicca sul link nell\'email per attivare il tuo account. Il tuo username sarà: ' + username, 'success');
+                        showAlert(`📧 Email inviata a <strong>${email}</strong>.<br>Clicca sul link nell'email per attivare il tuo account.<br>Il tuo username sarà: <strong>${username}</strong>`, 'info');
                     }, 2000);
                     
                     // Disable form
                     document.getElementById('registerForm').reset();
-                    submitBtn.textContent = 'Email inviata ✓';
+                    submitBtn.innerHTML = '✅ Email inviata!';
                     submitBtn.disabled = true;
                     
-                    // Optional: Redirect to login after a delay
+                    // Redirect to login after delay
                     setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 5000);
+                        window.location.href = 'login.html?registered=true';
+                    }, 6000);
                 } else {
                     throw new Error('Registrazione fallita - nessun utente creato');
                 }
             } catch (error) {
                 console.error('Registration error:', error);
-                let errorMessage = 'Errore durante la registrazione';
+                let errorMessage = '❌ Errore durante la registrazione';
                 
                 if (error.message.includes('already registered') || error.message.includes('User already registered')) {
-                    errorMessage = 'Questa email è già registrata. Prova ad effettuare il login.';
+                    errorMessage = '⚠️ Questa email è già registrata. <a href="login.html" style="color: var(--primary);">Prova ad effettuare il login</a>';
                 } else if (error.message.includes('Email not confirmed')) {
-                    errorMessage = 'Email già registrata ma non confermata. Controlla la tua casella di posta per l\'email di conferma.';
+                    errorMessage = '📧 Email già registrata ma non confermata. Controlla la tua casella di posta.';
                 } else if (error.message.includes('Database error')) {
-                    errorMessage = 'Errore del database. L\'account potrebbe essere stato creato. Prova ad effettuare il login o contatta il supporto.';
+                    errorMessage = '⚠️ Account creato! Potrebbe essere necessario confermare l\'email. <a href="login.html" style="color: var(--primary);">Prova ad accedere</a>';
                 } else if (error.message) {
-                    errorMessage = error.message;
+                    errorMessage = '❌ ' + error.message;
                 }
                 
-                showAlert('❌ ' + errorMessage, 'error');
+                showAlert(errorMessage, 'error');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Registrati';
+                submitBtn.innerHTML = '🚀 Registrati';
             }
         });
         
         function showAlert(message, type) {
             const alertBox = document.getElementById('alertBox');
-            alertBox.textContent = message;
+            alertBox.innerHTML = message;
             alertBox.className = `alert alert-${type} show`;
         }
     </script>

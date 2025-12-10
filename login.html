@@ -13,15 +13,20 @@
             align-items: center;
             justify-content: center;
             padding: 2rem;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
         
         .login-box {
             background: var(--bg-card);
             padding: 3rem;
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
+            box-shadow: var(--shadow-xl), 0 0 40px rgba(0, 51, 160, 0.1);
             max-width: 450px;
             width: 100%;
+            border: 2px solid transparent;
+            background-image: linear-gradient(white, white), linear-gradient(135deg, var(--primary), #00f0ff);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
         }
         
         .login-header {
@@ -32,6 +37,7 @@
         .login-header h1 {
             color: var(--primary);
             margin-bottom: 0.5rem;
+            font-size: 2rem;
         }
         
         .login-header p {
@@ -43,6 +49,7 @@
             padding: 1rem;
             border-radius: var(--radius-md);
             margin-bottom: 1rem;
+            animation: fadeIn 0.3s ease;
         }
         
         .alert-error {
@@ -55,6 +62,66 @@
             background-color: #D1FAE5;
             color: var(--success);
             border-left: 4px solid var(--success);
+        }
+        
+        .alert-info {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border-left: 4px solid #3B82F6;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .password-toggle {
+            position: relative;
+        }
+        
+        .password-toggle .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--neutral);
+        }
+        
+        .login-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--neutral);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -70,17 +137,28 @@
             
             <form id="loginForm">
                 <div class="form-group">
-                    <label class="form-label">Email Scolastica</label>
-                    <input type="email" id="email" class="form-input" placeholder="nome@cesaris.edu.it" required>
+                    <label class="form-label">📧 Email Scolastica</label>
+                    <input type="email" id="email" class="form-input" placeholder="nome@cesaris.edu.it" required autocomplete="email">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    <label class="form-label">🔒 Password</label>
+                    <div class="password-toggle">
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="toggle-btn" onclick="togglePassword()">👁️</button>
+                    </div>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-bottom: 1rem;">
-                    Accedi
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                        <input type="checkbox" id="rememberMe" style="width: 16px; height: 16px;">
+                        Ricordami
+                    </label>
+                    <a href="#" onclick="forgotPassword(); return false;" style="color: var(--primary); font-size: 0.875rem;">Password dimenticata?</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="width: 100%; margin-bottom: 1rem;">
+                    🚀 Accedi
                 </button>
                 
                 <div style="text-align: center; margin-top: 1.5rem;">
@@ -95,7 +173,14 @@
                 </div>
             </form>
             
-            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; text-align: center;">
+            <div class="login-features">
+                <div class="feature-item">📰 Leggi articoli</div>
+                <div class="feature-item">💬 Chat in tempo reale</div>
+                <div class="feature-item">🏆 Guadagna punti</div>
+                <div class="feature-item">👥 Connettiti con altri</div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
                 <a href="index.html" style="color: var(--neutral); font-size: 0.875rem;">
                     ← Torna alla Home
                 </a>
@@ -108,44 +193,113 @@
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script>
-        // Check if user is already logged in
-        async function checkIfAlreadyLoggedIn() {
+        // Prevent multiple redirects
+        let isRedirecting = false;
+        let authCheckComplete = false;
+        
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordField = document.getElementById('password');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordField.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+        
+        // Forgot password handler
+        async function forgotPassword() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                showAlert('Inserisci prima la tua email', 'error');
+                return;
+            }
+            if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
+                showAlert('Utilizza la tua email @cesaris.edu.it', 'error');
+                return;
+            }
+            
             try {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                if (user) {
-                    // User is already logged in, redirect them
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/profilo.html'
+                });
+                if (error) throw error;
+                showAlert('📧 Email per il reset password inviata! Controlla la tua casella.', 'success');
+            } catch (error) {
+                showAlert('❌ Errore: ' + error.message, 'error');
+            }
+        }
+        
+        // Check if user is already logged in (with loop prevention)
+        async function checkIfAlreadyLoggedIn() {
+            if (authCheckComplete || isRedirecting) return false;
+            
+            try {
+                // Wait for Supabase to be ready
+                if (!window.supabaseClient) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                authCheckComplete = true;
+                
+                if (error) {
+                    console.error('Session check error:', error);
+                    return false;
+                }
+                
+                if (session && session.user) {
+                    isRedirecting = true;
                     const urlParams = new URLSearchParams(window.location.search);
                     const requestedRedirect = urlParams.get('redirect');
-                    window.location.href = requestedRedirect || 'index.html';
+                    
+                    // Prevent redirect loop - don't redirect to login page
+                    let targetUrl = requestedRedirect || 'index.html';
+                    if (targetUrl.includes('login.html')) {
+                        targetUrl = 'index.html';
+                    }
+                    
+                    showAlert('✅ Già autenticato! Reindirizzamento...', 'info');
+                    setTimeout(() => {
+                        window.location.replace(targetUrl);
+                    }, 500);
                     return true;
                 }
                 return false;
             } catch (error) {
                 console.error('Error checking auth status:', error);
+                authCheckComplete = true;
                 return false;
             }
         }
         
         // Check on page load
-        checkIfAlreadyLoggedIn();
+        document.addEventListener('DOMContentLoaded', () => {
+            checkIfAlreadyLoggedIn();
+        });
         
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (isRedirecting) return;
+            
             const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
             const alertBox = document.getElementById('alertBox');
-            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const submitBtn = document.getElementById('submitBtn');
             
             // Validate email domain (case-insensitive)
             if (!email.endsWith('@cesaris.edu.it')) {
-                showAlert('Utilizza la tua email @cesaris.edu.it per accedere', 'error');
+                showAlert('⚠️ Utilizza la tua email @cesaris.edu.it per accedere', 'error');
                 return;
             }
             
             // Disable submit button
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Accesso in corso...';
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Accesso in corso...';
             
             try {
                 // Real Supabase authentication
@@ -172,7 +326,6 @@
                         .single();
                     
                     if (profileError && profileError.code !== 'PGRST116') {
-                        // PGRST116 means no rows returned, which is expected for new users
                         console.error('Profile error:', profileError);
                     }
                     
@@ -181,11 +334,8 @@
                     // If profile doesn't exist, create it
                     if (!profile) {
                         console.log('Creating new profile for user:', authData.user.id);
-                        
-                        // Extract username from email using utility function
                         const username = window.extractUsernameFromEmail ? window.extractUsernameFromEmail(email) : email.split('@')[0];
                         
-                        // Try to insert profile directly (RLS should allow this)
                         const { data: newProfile, error: insertError } = await supabaseClient
                             .from('profili_utenti')
                             .insert([{
@@ -199,19 +349,8 @@
                         
                         if (insertError) {
                             console.error('Profile creation error:', insertError);
-                            // Don't fail login, user can set up profile later
                         } else {
                             profile = newProfile;
-                            console.log('Profile created successfully');
-                        }
-                        
-                        // Also create preferences
-                        try {
-                            await supabaseClient
-                                .from('preferenze_utente')
-                                .insert([{ user_id: authData.user.id }]);
-                        } catch (prefError) {
-                            console.error('Preferences creation error:', prefError);
                         }
                     }
                 } catch (err) {
@@ -224,59 +363,78 @@
                 localStorage.setItem('userEmail', email);
                 localStorage.setItem('userId', authData.user.id);
                 localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('lastLoginTime', Date.now().toString());
+                
                 if (profile) {
                     localStorage.setItem('userProfile', JSON.stringify(profile));
                     localStorage.setItem('userRole', profile.ruolo || 'utente');
                     localStorage.setItem('username', profile.username || profile.nome_visualizzato || email.split('@')[0]);
                 }
                 
-                // Wait for session to be fully established (give Supabase time to save)
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Remember me functionality
+                if (document.getElementById('rememberMe').checked) {
+                    localStorage.setItem('rememberUser', 'true');
+                }
+                
+                isRedirecting = true;
+                
+                // Wait for session to be fully established
+                await new Promise(resolve => setTimeout(resolve, 300));
                 
                 // Role-based redirection
                 const role = profile ? (profile.ruolo || 'utente') : 'utente';
                 let redirectUrl = 'index.html';
                 
                 if (role === 'caporedattore' || role === 'docente') {
-                    // Admin users go to admin dashboard
                     redirectUrl = 'admin.html';
                 } else if (role === 'reporter') {
-                    // Reporters go to reporter dashboard
                     redirectUrl = 'dashboard.html';
-                } else {
-                    // Normal users go to homepage
-                    redirectUrl = 'index.html';
                 }
                 
                 // Check if there's a specific redirect requested
                 const urlParams = new URLSearchParams(window.location.search);
                 const requestedRedirect = urlParams.get('redirect');
                 
-                window.location.href = requestedRedirect || redirectUrl;
+                // Prevent redirect loop
+                let finalRedirect = requestedRedirect || redirectUrl;
+                if (finalRedirect.includes('login.html')) {
+                    finalRedirect = 'index.html';
+                }
+                
+                window.location.replace(finalRedirect);
                 
             } catch (error) {
                 console.error('Login error:', error);
                 let errorMessage = 'Credenziali non valide. Verifica email e password.';
                 
                 if (error.message.includes('Invalid login credentials')) {
-                    errorMessage = 'Email o password errati';
+                    errorMessage = '❌ Email o password errati. Riprova.';
                 } else if (error.message.includes('Email not confirmed')) {
-                    errorMessage = 'Devi confermare la tua email prima di accedere. Controlla la tua casella di posta.';
+                    errorMessage = '📧 Devi confermare la tua email prima di accedere. Controlla la tua casella di posta.';
+                } else if (error.message.includes('Too many requests')) {
+                    errorMessage = '⏰ Troppi tentativi. Attendi qualche minuto e riprova.';
                 } else if (error.message) {
-                    errorMessage = error.message;
+                    errorMessage = '❌ ' + error.message;
                 }
                 
-                showAlert('❌ ' + errorMessage, 'error');
+                showAlert(errorMessage, 'error');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Accedi';
+                submitBtn.innerHTML = '🚀 Accedi';
             }
         });
         
         function showAlert(message, type) {
             const alertBox = document.getElementById('alertBox');
-            alertBox.textContent = message;
+            alertBox.innerHTML = message;
             alertBox.className = `alert alert-${type}`;
             alertBox.classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds for non-success messages
+            if (type !== 'success') {
+                setTimeout(() => {
+                    alertBox.classList.add('hidden');
+                }, 5000);
+            }
         }
     </script>
 </body>
