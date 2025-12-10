@@ -206,6 +206,12 @@
     </style>
 </head>
 <body>
+    <!-- Global Page Loader -->
+    <div class="page-loader" id="page-loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Caricamento pagina...</div>
+    </div>
+    
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -271,5 +277,26 @@
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/chat.js"></script>
+    
+    <!-- Page Loader Script -->
+    <script>
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('page-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(function() {
+                    loader.style.display = 'none';
+                }, 300);
+            }
+        });
+        
+        // Fallback: remove loader after 10 seconds if load event doesn't fire
+        setTimeout(function() {
+            const loader = document.getElementById('page-loader');
+            if (loader && loader.style.display !== 'none') {
+                loader.style.display = 'none';
+            }
+        }, 10000);
+    </script>
 </body>
 </html>

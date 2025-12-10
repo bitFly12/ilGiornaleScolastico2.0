@@ -5,6 +5,8 @@
 let allUsers = [];
 let currentUser = null;
 let selectedMentionIndex = 0;
+let realtimeInterval = null;
+let lastMessageId = null;
 
 // ================================================
 // Initialize Chat
@@ -40,10 +42,89 @@ async function initChat() {
 
         // Setup send button
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        
+        // Start real-time message updates
+        startRealtimeUpdates();
     } catch (error) {
         console.error('Error initializing chat:', error);
         // On error, redirect to login
         window.location.href = 'login.html?redirect=chat.html';
+    }
+}
+
+// ================================================
+// Real-Time Message Updates
+// ================================================
+function startRealtimeUpdates() {
+    // Poll for new messages every 3 seconds
+    realtimeInterval = setInterval(checkForNewMessages, 3000);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', stopRealtimeUpdates);
+}
+
+function stopRealtimeUpdates() {
+    if (realtimeInterval) {
+        clearInterval(realtimeInterval);
+        realtimeInterval = null;
+    }
+}
+
+async function checkForNewMessages() {
+    try {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        
+        // Build query to fetch new messages
+        let query = supabase
+            .from('chat_messages')
+            .select(`
+                *,
+                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
+            `)
+            .eq('is_deleted', false)
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        // Only fetch messages newer than last known message
+        if (lastMessageId) {
+            query = query.gt('id', lastMessageId);
+        }
+        
+        const { data: newMessages, error } = await query;
+        
+        if (error) throw error;
+        
+        if (newMessages && newMessages.length > 0) {
+            // Reverse to show oldest first
+            newMessages.reverse();
+            
+            // Check if user is at bottom of chat
+            const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight ||
+                              container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            
+            // Add new messages
+            newMessages.forEach(msg => {
+                // Check if message already exists
+                const existingMsg = document.querySelector(`[data-message-id="${msg.id}"]`);
+                if (!existingMsg) {
+                    const messageEl = createMessageElement(msg);
+                    container.appendChild(messageEl);
+                    
+                    // Update last message ID
+                    if (!lastMessageId || msg.id > lastMessageId) {
+                        lastMessageId = msg.id;
+                    }
+                }
+            });
+            
+            // Auto-scroll if user was at bottom
+            if (isAtBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking for new messages:', error);
     }
 }
 
@@ -144,6 +225,11 @@ async function loadChatMessages() {
             messages.forEach(msg => {
                 const messageEl = createMessageElement(msg);
                 container.appendChild(messageEl);
+                
+                // Track last message ID for real-time updates
+                if (!lastMessageId || msg.id > lastMessageId) {
+                    lastMessageId = msg.id;
+                }
             });
         } else {
             // Show welcome message
