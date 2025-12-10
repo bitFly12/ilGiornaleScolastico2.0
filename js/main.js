@@ -23,9 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize app features
     initMobileMenu();
-    initDarkMode();
     initDailyQuote();
-    initNewsletterForm();
     initChatBubble();
     initPagination();
     initAccessControl();
@@ -78,43 +76,7 @@ function initMobileMenu() {
 }
 
 // ================================================
-// DARK MODE
-// ================================================
-function initDarkMode() {
-    // Check localStorage for saved preference
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode === 'true') {
-        enableDarkMode();
-    }
-    
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && !savedMode) {
-        enableDarkMode();
-    }
-}
-
-function enableDarkMode() {
-    document.documentElement.classList.add('dark-mode');
-    AppState.darkMode = true;
-    localStorage.setItem('darkMode', 'true');
-}
-
-function disableDarkMode() {
-    document.documentElement.classList.remove('dark-mode');
-    AppState.darkMode = false;
-    localStorage.setItem('darkMode', 'false');
-}
-
-function toggleDarkMode() {
-    if (AppState.darkMode) {
-        disableDarkMode();
-    } else {
-        enableDarkMode();
-    }
-}
-
-// ================================================
-// DAILY QUOTE
+// MOBILE MENU
 // ================================================
 function initDailyQuote() {
     const quotes = [
@@ -138,145 +100,6 @@ function initDailyQuote() {
     }
 }
 
-// ================================================
-// NEWSLETTER FORM
-// ================================================
-function initNewsletterForm() {
-    const form = document.getElementById('newsletterForm');
-    const message = document.getElementById('newsletterMessage');
-    const emailInput = document.getElementById('newsletterEmail');
-    
-    if (form) {
-        // Check if user is logged in and auto-fill email
-        checkAndFillUserEmail();
-        
-        // Check if user is already subscribed
-        checkNewsletterSubscription();
-        
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            let email = emailInput ? emailInput.value.trim() : '';
-            
-            // If no email input field (logged in user), get from localStorage
-            if (!email) {
-                email = localStorage.getItem('userEmail');
-                if (!email) {
-                    showMessage(message, '❌ Devi essere loggato per iscriverti alla newsletter', 'error');
-                    return;
-                }
-            }
-            
-            if (!validateEmail(email)) {
-                showMessage(message, 'Inserisci un indirizzo email valido', 'error');
-                return;
-            }
-            
-            try {
-                // Save to Supabase database
-                if (window.supabaseClient) {
-                    const { data, error } = await window.supabaseClient
-                        .from('iscrizioni_newsletter')
-                        .insert([{ email: email }])
-                        .select();
-                    
-                    if (error) {
-                        // Check if already subscribed (unique constraint violation)
-                        if (error.code === '23505') {
-                            showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
-                            if (form) form.reset();
-                            return;
-                        }
-                        throw error;
-                    }
-                    
-                    // Send confirmation email via Edge Function (if available)
-                    const emailResult = await sendNewsletterConfirmation(email);
-                    
-                    // Successfully subscribed - show appropriate message
-                    if (emailResult.skipEmail) {
-                        showMessage(message, '✅ Iscrizione completata! (Email di conferma non inviata - configurazione in corso)', 'success');
-                        console.info('💡 Newsletter subscription saved. Email confirmation skipped (Edge Function not configured).');
-                    } else {
-                        showMessage(message, '✅ Iscrizione completata! Controlla la tua email per confermare.', 'success');
-                    }
-                    if (form) form.reset();
-                } else {
-                    // Fallback to localStorage if Supabase not available
-                    let subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]');
-                    
-                    if (subscribers.includes(email)) {
-                        showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
-                        return;
-                    }
-                    
-                    subscribers.push(email);
-                    localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers));
-                    showMessage(message, '✅ Iscrizione completata! Grazie!', 'success');
-                    if (form) form.reset();
-                }
-            } catch (error) {
-                console.error('Newsletter subscription error:', error);
-                showMessage(message, '❌ Errore durante l\'iscrizione. Riprova più tardi.', 'error');
-            }
-        });
-    }
-}
-
-// Check if user is logged in and fill email automatically
-async function checkAndFillUserEmail() {
-    const emailInput = document.getElementById('newsletterEmail');
-    
-    if (emailInput && window.supabaseClient) {
-        try {
-            const { data: { user } } = await window.supabaseClient.auth.getUser();
-            if (user && user.email) {
-                // User is logged in, hide email input and show message
-                emailInput.value = user.email;
-                emailInput.disabled = true;
-                emailInput.placeholder = user.email + ' (email dal tuo account)';
-            }
-        } catch (error) {
-            console.error('Error checking user:', error);
-        }
-    }
-}
-
-// Send newsletter confirmation email
-async function sendNewsletterConfirmation(email) {
-    // Call Supabase Edge Function to send confirmation email via Resend
-    try {
-        if (window.supabaseClient && window.supabaseClient.functions) {
-            const { data, error } = await window.supabaseClient.functions.invoke('send-newsletter-confirmation', {
-                body: { email: email }
-            });
-            
-            if (error) {
-                console.error('Error calling edge function:', error);
-                console.warn('⚠️ Edge Function error. Newsletter subscription saved but confirmation email not sent.');
-                console.info('ℹ️ To fix: Deploy the Edge Function using: supabase functions deploy send-newsletter-confirmation');
-                console.info('ℹ️ See NEWSLETTER_CORS_FIX.md for detailed instructions');
-                // Return success anyway - subscription is saved in database
-                return { success: true, skipEmail: true };
-            }
-            
-            console.log('Confirmation email sent successfully:', data);
-            return { success: true, data };
-        } else {
-            // Edge function not available
-            console.log('[Newsletter] Edge function not deployed yet.');
-            console.log(`[Newsletter] Confirmation email should be sent to: ${email}`);
-            console.log('[Newsletter] Deploy the edge function: supabase functions deploy send-newsletter-confirmation');
-            return { success: true, message: 'Edge function not deployed' };
-        }
-    } catch (error) {
-        console.error('Error sending confirmation email:', error);
-        console.warn('⚠️ Email sending failed but subscription is saved. See NEWSLETTER_CORS_FIX.md for fix.');
-        // Return success - subscription is saved even if email fails
-        return { success: true, skipEmail: true };
-    }
-}
-
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
@@ -292,71 +115,6 @@ function showMessage(element, text, type) {
     setTimeout(() => {
         element.classList.add('hidden');
     }, 5000);
-}
-
-// Check if user is already subscribed to newsletter
-async function checkNewsletterSubscription() {
-    const form = document.getElementById('newsletterForm');
-    const formContainer = form?.parentElement;
-    
-    if (!form || !window.supabaseClient) return;
-    
-    try {
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user || !user.email) return;
-        
-        // Check if already subscribed
-        const { data, error } = await window.supabaseClient
-            .from('iscrizioni_newsletter')
-            .select('*')
-            .eq('email', user.email)
-            .single();
-        
-        if (data && !error) {
-            // User is subscribed, show different message
-            if (formContainer) {
-                formContainer.innerHTML = `
-                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 2rem; border-radius: 12px; text-align: center;">
-                        <h3 style="margin: 0 0 0.5rem 0;">✅ Già Iscritto!</h3>
-                        <p style="margin: 0 0 1rem 0;">Sei già iscritto alla nostra newsletter.</p>
-                        <p style="margin: 0; font-size: 0.875rem; opacity: 0.9;">Gestisci la tua iscrizione nelle <a href="impostazioni.html" style="color: white; text-decoration: underline;">impostazioni</a></p>
-                    </div>
-                `;
-            }
-        }
-    } catch (error) {
-        console.error('Error checking newsletter subscription:', error);
-    }
-}
-
-// Unsubscribe from newsletter (for settings page)
-async function unsubscribeNewsletter() {
-    if (!window.supabaseClient) {
-        alert('❌ Errore: Supabase non disponibile');
-        return false;
-    }
-    
-    try {
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user || !user.email) {
-            alert('❌ Devi essere loggato');
-            return false;
-        }
-        
-        const { error } = await window.supabaseClient
-            .from('iscrizioni_newsletter')
-            .delete()
-            .eq('email', user.email);
-        
-        if (error) throw error;
-        
-        alert('✅ Disiscrizione completata con successo!');
-        return true;
-    } catch (error) {
-        console.error('Error unsubscribing:', error);
-        alert('❌ Errore durante la disiscrizione: ' + error.message);
-        return false;
-    }
 }
 
 // ================================================
@@ -796,7 +554,6 @@ function truncateText(text, maxLength) {
 // EXPORT FUNCTIONS (for use in other files)
 // ================================================
 window.AppState = AppState;
-window.toggleDarkMode = toggleDarkMode;
 window.login = login;
 window.logout = logout;
 window.checkReporterAccess = checkReporterAccess;
