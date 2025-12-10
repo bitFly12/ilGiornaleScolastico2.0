@@ -168,21 +168,27 @@
     <script>
         // Check if user is logged in and has reporter or admin role
         async function checkAuth() {
-            const user = await SupabaseAPI.getCurrentUser();
-            if (!user) {
-                window.location.href = 'login.html?redirect=dashboard.html';
-                return;
-            }
-
-            // Display user info
-            const profile = await SupabaseAPI.getUserProfile(user.id);
-            if (profile.success) {
-                const userRole = profile.data.ruolo;
+            try {
+                // Wait a moment for Supabase session to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
                 
-                // Check if user has permission (reporter, docente, or caporedattore)
-                // Role hierarchy:
-                // - utente: basic user, cannot create articles → BLOCKED
-                // - reporter: can create and manage own articles → ALLOWED
+                // Check Supabase auth
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    window.location.href = 'login.html?redirect=dashboard.html';
+                    return;
+                }
+
+                // Get user profile
+                const profile = await SupabaseAPI.getUserProfile(user.id);
+                if (profile.success) {
+                    const userRole = profile.data.ruolo;
+                    
+                    // Check if user has permission (reporter, docente, or caporedattore)
+                    // Role hierarchy:
+                    // - utente: basic user, cannot create articles → BLOCKED
+                    // - reporter: can create and manage own articles → ALLOWED
                 // - docente: teacher, can access both dashboards → ALLOWED
                 // - caporedattore: chief editor, full access → ALLOWED
                 if (userRole === 'utente') {

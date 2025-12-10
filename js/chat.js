@@ -11,12 +11,20 @@ let selectedMentionIndex = 0;
 // ================================================
 async function initChat() {
     try {
-        // Get current user
-        currentUser = await SupabaseAPI.getCurrentUser();
-        if (!currentUser) {
+        // Wait a moment for Supabase session to be ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get current user from Supabase auth
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            // No authenticated user, redirect to login
             window.location.href = 'login.html?redirect=chat.html';
             return;
         }
+        
+        // Store as currentUser
+        currentUser = user;
 
         // Load all users for mentions
         await loadAllUsers();
@@ -34,6 +42,8 @@ async function initChat() {
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
     } catch (error) {
         console.error('Error initializing chat:', error);
+        // On error, redirect to login
+        window.location.href = 'login.html?redirect=chat.html';
     }
 }
 

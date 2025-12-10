@@ -192,21 +192,34 @@
 
         // Check authentication and admin role
         async function checkAdminAccess() {
-            const userData = await getCurrentUser();
-            if (!userData || !userData.profile) {
-                window.location.href = 'login.html?redirect=admin.html';
-                return false;
-            }
+            try {
+                // Wait a moment for Supabase session to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check Supabase auth
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    window.location.href = 'login.html?redirect=admin.html';
+                    return false;
+                }
+                
+                // Get full user data with profile
+                const userData = await getCurrentUser();
+                if (!userData || !userData.profile) {
+                    window.location.href = 'login.html?redirect=admin.html';
+                    return false;
+                }
 
-            currentUser = userData;
-            const role = userData.profile.ruolo;
+                currentUser = userData;
+                const role = userData.profile.ruolo;
 
-            // Only allow caporedattore and docente
-            if (role !== 'caporedattore' && role !== 'docente') {
-                alert('⛔ Accesso negato. Solo gli amministratori possono accedere a questa pagina.');
-                window.location.href = 'index.html';
-                return false;
-            }
+                // Only allow caporedattore and docente
+                if (role !== 'caporedattore' && role !== 'docente') {
+                    alert('⛔ Accesso negato. Solo gli amministratori possono accedere a questa pagina.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
 
             document.getElementById('adminInfo').textContent = 
                 `Benvenuto, ${userData.profile.nome_visualizzato || userData.profile.username} (${role})`;

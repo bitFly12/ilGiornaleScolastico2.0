@@ -252,19 +252,50 @@ function saveUserPreferences() {
 // ================================================
 // AUTHENTICATION
 // ================================================
-function checkAuth() {
-    // Check if user is logged in (in production, verify JWT or session)
-    const userSession = localStorage.getItem('userSession');
-    
-    if (userSession) {
-        try {
-            AppState.user = JSON.parse(userSession);
-            AppState.isAuthenticated = true;
-            updateUIForAuthenticatedUser();
-        } catch (e) {
-            console.error('Error parsing user session:', e);
-            logout();
+async function checkAuth() {
+    try {
+        // Check if user is logged in via Supabase
+        if (window.supabaseClient) {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            
+            if (user) {
+                // User is authenticated via Supabase
+                AppState.isAuthenticated = true;
+                
+                // Try to get profile from localStorage first (faster)
+                const cachedProfile = localStorage.getItem('userProfile');
+                if (cachedProfile) {
+                    try {
+                        AppState.user = JSON.parse(cachedProfile);
+                        AppState.user.id = user.id;
+                        AppState.user.email = user.email;
+                    } catch (e) {
+                        console.error('Error parsing cached profile:', e);
+                    }
+                }
+                
+                updateUIForAuthenticatedUser();
+                return;
+            }
         }
+        
+        // Fallback: Check localStorage (for backwards compatibility)
+        const userSession = localStorage.getItem('userSession');
+        const isAuthenticated = localStorage.getItem('isAuthenticated');
+        
+        if (userSession && isAuthenticated === 'true') {
+            try {
+                AppState.user = JSON.parse(userSession);
+                AppState.isAuthenticated = true;
+                updateUIForAuthenticatedUser();
+            } catch (e) {
+                console.error('Error parsing user session:', e);
+                logout();
+            }
+        }
+    } catch (error) {
+        console.error('Error checking auth:', error);
+        AppState.isAuthenticated = false;
     }
 }
 
@@ -307,24 +338,63 @@ function login(email, password) {
     return { success: true, user };
 }
 
-function logout() {
+async function logout() {
+    try {
+        // Sign out from Supabase
+        if (window.supabaseClient) {
+            await window.supabaseClient.auth.signOut();
+        }
+    } catch (error) {
+        console.error('Error signing out:', error);
+    }
+    
+    // Clear local state
     AppState.user = null;
     AppState.isAuthenticated = false;
+    
+    // Clear all localStorage items
     localStorage.removeItem('userSession');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    
     window.location.href = 'index.html';
 }
 
 // ================================================
 // ACCESS CONTROL
 // ================================================
-function initAccessControl() {
+async function initAccessControl() {
     // Check if current page requires authentication
-    const protectedPages = ['chat.html', 'profilo.html', 'dashboard.html', 'editor.html'];
+    const protectedPages = ['chat.html', 'profilo.html', 'dashboard.html', 'editor.html', 'admin.html'];
     const currentPage = window.location.pathname.split('/').pop();
     
-    if (protectedPages.includes(currentPage) && !AppState.isAuthenticated) {
-        // Redirect to login
-        window.location.href = `login.html?redirect=${currentPage}`;
+    if (protectedPages.includes(currentPage)) {
+        try {
+            // Wait for Supabase to be ready
+            if (!window.supabaseClient) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Check Supabase auth
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            
+            if (!user) {
+                // Not authenticated, redirect to login
+                window.location.href = `login.html?redirect=${currentPage}`;
+                return;
+            }
+            
+            // User is authenticated
+            AppState.isAuthenticated = true;
+        } catch (error) {
+            console.error('Error checking access:', error);
+            // On error, redirect to login
+            window.location.href = `login.html?redirect=${currentPage}`;
+        }
     }
 }
 
