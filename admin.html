@@ -196,8 +196,8 @@
                 // Wait a moment for Supabase session to be ready
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
-                // Check Supabase auth
-                const { data: { user } } = await supabase.auth.getUser();
+                // Check Supabase auth (use window.supabaseClient for consistency)
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
                 
                 if (!user) {
                     window.location.href = 'login.html?redirect=admin.html';
@@ -220,6 +220,11 @@
                     window.location.href = 'index.html';
                     return false;
                 }
+            } catch (error) {
+                console.error('Error checking admin access:', error);
+                window.location.href = 'login.html?redirect=admin.html';
+                return false;
+            }
 
             document.getElementById('adminInfo').textContent = 
                 `Benvenuto, ${userData.profile.nome_visualizzato || userData.profile.username} (${role})`;

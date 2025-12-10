@@ -14,8 +14,8 @@ async function initChat() {
         // Wait a moment for Supabase session to be ready
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Get current user from Supabase auth
-        const { data: { user } } = await supabase.auth.getUser();
+        // Get current user from Supabase auth (use window.supabaseClient for consistency)
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
         
         if (!user) {
             // No authenticated user, redirect to login
