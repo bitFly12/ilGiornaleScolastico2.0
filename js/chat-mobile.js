@@ -391,10 +391,36 @@ function copyMessage() {
     const msg = ChatState.messages.find(m => m.id === ChatState.selectedMessageId);
     if (!msg) return;
     
-    navigator.clipboard.writeText(msg.content || '').then(() => {
-        showToast('Messaggio copiato!', '📋');
-    });
+    // Use clipboard API with fallback
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(msg.content || '').then(() => {
+            showToast('Messaggio copiato!', '📋');
+        }).catch(() => {
+            fallbackCopy(msg.content || '');
+        });
+    } else {
+        fallbackCopy(msg.content || '');
+    }
     closeActionsMenu();
+}
+
+function fallbackCopy(text) {
+    // Fallback for non-secure contexts
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('Messaggio copiato!', '📋');
+    } catch (err) {
+        showToast('Impossibile copiare', '❌');
+    }
+    document.body.removeChild(textArea);
 }
 
 async function deleteCurrentMessage() {
