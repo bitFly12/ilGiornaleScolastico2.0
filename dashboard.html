@@ -200,10 +200,14 @@
                 document.getElementById('userInfo').innerHTML = `
                     <span style="color: var(--neutral);">Ciao, <strong>${profile.data.nome_visualizzato || profile.data.username}</strong> (${userRole})</span>
                 `;
+                
+                // Load user's articles
+                loadMyArticles(user.id);
             }
-
-            // Load user's articles
-            loadMyArticles(user.id);
+            } catch (error) {
+                console.error('Error during auth check:', error);
+                window.location.href = 'login.html?redirect=dashboard.html';
+            }
         }
 
         // Load user's articles

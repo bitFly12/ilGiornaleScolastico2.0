@@ -675,8 +675,10 @@
             initToggles();
             initSelects();
             checkUserRole();
-            initAuth();
-            initMobileMenu();
+            // initAuth() is not needed here - it's handled by main.js
+            if (typeof initMobileMenu === 'function') {
+                initMobileMenu();
+            }
         });
     </script>
 </body>
