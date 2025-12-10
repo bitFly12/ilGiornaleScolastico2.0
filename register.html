@@ -71,6 +71,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -117,7 +118,8 @@
                     options: {
                         emailRedirectTo: `${siteUrl}/login.html`,
                         data: {
-                            username: username
+                            username: username,
+                            email: email
                         }
                     }
                 });
@@ -127,40 +129,35 @@
                 }
                 
                 if (data.user) {
-                    // Create user profile via RPC call
-                    try {
-                        const { error: profileError } = await supabaseClient.rpc('create_user_profile', {
-                            user_id: data.user.id,
-                            user_email: data.user.email
-                        });
-                        
-                        if (profileError) {
-                            console.error('Profile creation error:', profileError);
-                            // Don't fail registration, profile can be created on first login
-                        }
-                    } catch (profileErr) {
-                        console.error('Profile creation failed:', profileErr);
-                        // Don't fail registration
-                    }
-                    
-                    showAlert('✅ Registrazione completata! Controlla la tua email per confermare l\'account. Il tuo username sarà: ' + username, 'success');
+                    // Show success message
+                    showAlert('✅ Registrazione completata! Controlla la tua email per confermare l\'account.', 'success');
                     
                     setTimeout(() => {
-                        showAlert('📧 Ti abbiamo inviato un\'email di conferma. Dopo la conferma, torna qui per effettuare il login.', 'success');
-                    }, 3000);
+                        showAlert('📧 Ti abbiamo inviato un\'email di conferma. Clicca sul link nell\'email per attivare il tuo account. Il tuo username sarà: ' + username, 'success');
+                    }, 2000);
                     
                     // Disable form
                     document.getElementById('registerForm').reset();
-                    submitBtn.textContent = 'Controlla la tua email';
+                    submitBtn.textContent = 'Email inviata ✓';
+                    submitBtn.disabled = true;
+                    
+                    // Optional: Redirect to login after a delay
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 5000);
                 } else {
-                    throw new Error('Registrazione fallita');
+                    throw new Error('Registrazione fallita - nessun utente creato');
                 }
             } catch (error) {
                 console.error('Registration error:', error);
                 let errorMessage = 'Errore durante la registrazione';
                 
-                if (error.message.includes('already registered')) {
+                if (error.message.includes('already registered') || error.message.includes('User already registered')) {
                     errorMessage = 'Questa email è già registrata. Prova ad effettuare il login.';
+                } else if (error.message.includes('Email not confirmed')) {
+                    errorMessage = 'Email già registrata ma non confermata. Controlla la tua casella di posta per l\'email di conferma.';
+                } else if (error.message.includes('Database error')) {
+                    errorMessage = 'Errore del database. L\'account potrebbe essere stato creato. Prova ad effettuare il login o contatta il supporto.';
                 } else if (error.message) {
                     errorMessage = error.message;
                 }

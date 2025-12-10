@@ -105,6 +105,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -141,39 +142,59 @@
                 }
                 
                 // Get user profile from profili_utenti
-                const { data: profile, error: profileError } = await supabaseClient
-                    .from('profili_utenti')
-                    .select('*')
-                    .eq('id', authData.user.id)
-                    .single();
-                
-                if (profileError) {
-                    console.error('Profile error:', profileError);
-                    // Profile might not exist yet if registration just happened
-                    // Create it now using RPC function
-                    try {
-                        const { error: createError } = await supabaseClient.rpc('create_user_profile', {
-                            user_id: authData.user.id,
-                            user_email: email
-                        });
-                        
-                        if (createError) {
-                            console.error('Profile creation error:', createError);
-                        }
-                    } catch (err) {
-                        console.error('RPC call failed:', err);
-                    }
-                    
-                    // Retry getting profile
-                    const { data: retryProfile } = await supabaseClient
+                let profile = null;
+                try {
+                    const { data: profileData, error: profileError } = await supabaseClient
                         .from('profili_utenti')
                         .select('*')
                         .eq('id', authData.user.id)
                         .single();
                     
-                    if (retryProfile) {
-                        profile = retryProfile;
+                    if (profileError && profileError.code !== 'PGRST116') {
+                        // PGRST116 means no rows returned, which is expected for new users
+                        console.error('Profile error:', profileError);
                     }
+                    
+                    profile = profileData;
+                    
+                    // If profile doesn't exist, create it
+                    if (!profile) {
+                        console.log('Creating new profile for user:', authData.user.id);
+                        
+                        // Extract username from email
+                        const username = email.split('@')[0];
+                        
+                        // Try to insert profile directly (RLS should allow this)
+                        const { data: newProfile, error: insertError } = await supabaseClient
+                            .from('profili_utenti')
+                            .insert([{
+                                id: authData.user.id,
+                                email: email,
+                                username: username,
+                                nome_visualizzato: username
+                            }])
+                            .select()
+                            .single();
+                        
+                        if (insertError) {
+                            console.error('Profile creation error:', insertError);
+                            // Don't fail login, user can set up profile later
+                        } else {
+                            profile = newProfile;
+                            console.log('Profile created successfully');
+                        }
+                        
+                        // Also create preferences
+                        try {
+                            await supabaseClient
+                                .from('preferenze_utente')
+                                .insert([{ user_id: authData.user.id }]);
+                        } catch (prefError) {
+                            console.error('Preferences creation error:', prefError);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error handling profile:', err);
                 }
                 
                 showAlert('✅ Login effettuato con successo! Reindirizzamento...', 'success');
