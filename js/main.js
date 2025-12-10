@@ -413,6 +413,12 @@ function generateUUID() {
     });
 }
 
+function extractUsernameFromEmail(email) {
+    // Extract username from email (part before @)
+    // Example: mario.rossi@cesaris.edu.it -> mario.rossi
+    return email.split('@')[0];
+}
+
 function getOrCreateSessionId() {
     let sessionId = localStorage.getItem('sessionId');
     if (!sessionId) {
@@ -455,5 +461,6 @@ window.formatDate = formatDate;
 window.calculateReadingTime = calculateReadingTime;
 window.truncateText = truncateText;
 window.generateUUID = generateUUID;
+window.extractUsernameFromEmail = extractUsernameFromEmail;
 
 console.log('✅ Main.js caricato con successo');

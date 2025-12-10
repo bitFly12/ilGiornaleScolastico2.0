@@ -161,8 +161,8 @@
                     if (!profile) {
                         console.log('Creating new profile for user:', authData.user.id);
                         
-                        // Extract username from email
-                        const username = email.split('@')[0];
+                        // Extract username from email using utility function
+                        const username = window.extractUsernameFromEmail ? window.extractUsernameFromEmail(email) : email.split('@')[0];
                         
                         // Try to insert profile directly (RLS should allow this)
                         const { data: newProfile, error: insertError } = await supabaseClient

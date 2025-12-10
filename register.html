@@ -105,8 +105,8 @@
             submitBtn.textContent = 'Registrazione in corso...';
             
             try {
-                // Extract username from email (before @)
-                const username = email.split('@')[0];
+                // Extract username from email (before @) using utility function
+                const username = window.extractUsernameFromEmail ? window.extractUsernameFromEmail(email) : email.split('@')[0];
                 
                 // Get current site URL for redirect after email confirmation
                 const siteUrl = window.location.origin;
@@ -118,8 +118,7 @@
                     options: {
                         emailRedirectTo: `${siteUrl}/login.html`,
                         data: {
-                            username: username,
-                            email: email
+                            username: username
                         }
                     }
                 });

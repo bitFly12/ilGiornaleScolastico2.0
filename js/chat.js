@@ -117,6 +117,11 @@ function createMessageElement(msg) {
     const timeAgo = formatTimeAgo(new Date(msg.created_at));
 
     // Parse and highlight mentions
+    // Note: Multiple fallbacks for backwards compatibility with old data
+    // - msg.content: Current schema (correct)
+    // - msg.message: Legacy field name (deprecated)
+    // - msg.messaggio: Old Italian field name (deprecated)
+    // TODO: Remove legacy fallbacks after data migration
     const messageText = highlightMentions(msg.content || msg.message || msg.messaggio || '');
 
     let reactionsHTML = '';
