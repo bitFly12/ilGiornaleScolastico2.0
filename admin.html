@@ -192,6 +192,9 @@
 
         // Check authentication and admin role
         async function checkAdminAccess() {
+            let userData = null;
+            let role = null;
+            
             try {
                 // Wait a moment for Supabase session to be ready
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -205,14 +208,14 @@
                 }
                 
                 // Get full user data with profile
-                const userData = await getCurrentUser();
+                userData = await getCurrentUser();
                 if (!userData || !userData.profile) {
                     window.location.href = 'login.html?redirect=admin.html';
                     return false;
                 }
 
                 currentUser = userData;
-                const role = userData.profile.ruolo;
+                role = userData.profile.ruolo;
 
                 // Only allow caporedattore and docente
                 if (role !== 'caporedattore' && role !== 'docente') {
@@ -226,8 +229,11 @@
                 return false;
             }
 
-            document.getElementById('adminInfo').textContent = 
-                `Benvenuto, ${userData.profile.nome_visualizzato || userData.profile.username} (${role})`;
+            // Update UI with admin info (userData and role are now in scope)
+            if (userData && userData.profile) {
+                document.getElementById('adminInfo').textContent = 
+                    `Benvenuto, ${userData.profile.nome_visualizzato || userData.profile.username} (${role})`;
+            }
 
             return true;
         }
@@ -384,9 +390,9 @@
         // Change user role with dropdown
         async function changeUserRole(userId, currentRole) {
             // Get current user to prevent self-role-change
-            const currentUser = JSON.parse(localStorage.getItem('userId'));
+            const currentUserId = localStorage.getItem('userId');
             
-            if (userId === currentUser) {
+            if (userId === currentUserId) {
                 alert('❌ Non puoi cambiare il tuo stesso ruolo!');
                 return;
             }
