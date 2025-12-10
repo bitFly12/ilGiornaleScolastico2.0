@@ -78,8 +78,9 @@ async function loadChatMessages() {
             .from('chat_messages')
             .select(`
                 *,
-                user:profili_utenti!chat_messages_user_id_fkey(username, nome_visualizzato)
+                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
+            .eq('is_deleted', false)
             .order('created_at', { ascending: true })
             .limit(100);
 
@@ -358,7 +359,7 @@ async function sendMessage() {
             ])
             .select(`
                 *,
-                user:profili_utenti!chat_messages_user_id_fkey(username, nome_visualizzato)
+                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .single();
 

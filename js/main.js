@@ -133,27 +133,91 @@ function initNewsletterForm() {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('newsletterEmail').value;
+            const emailInput = document.getElementById('newsletterEmail');
+            const email = emailInput.value.trim();
             
             if (!validateEmail(email)) {
                 showMessage(message, 'Inserisci un indirizzo email valido', 'error');
                 return;
             }
             
-            // Save to localStorage (in production, this would be an API call)
-            let subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]');
+            try {
+                // Save to Supabase database
+                if (window.supabaseClient) {
+                    const { data, error } = await window.supabaseClient
+                        .from('iscrizioni_newsletter')
+                        .insert([{ email: email }])
+                        .select();
+                    
+                    if (error) {
+                        // Check if already subscribed (unique constraint violation)
+                        if (error.code === '23505') {
+                            showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
+                            form.reset();
+                            return;
+                        }
+                        throw error;
+                    }
+                    
+                    // Successfully subscribed
+                    showMessage(message, '✅ Iscrizione completata! Controlla la tua email per confermare.', 'success');
+                    form.reset();
+                    
+                    // Send confirmation email via Edge Function (if available)
+                    try {
+                        await sendNewsletterConfirmation(email);
+                    } catch (emailError) {
+                        console.error('Error sending confirmation email:', emailError);
+                        // Don't show error to user, subscription was successful
+                    }
+                } else {
+                    // Fallback to localStorage if Supabase not available
+                    let subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]');
+                    
+                    if (subscribers.includes(email)) {
+                        showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
+                        return;
+                    }
+                    
+                    subscribers.push(email);
+                    localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers));
+                    showMessage(message, '✅ Iscrizione completata! Grazie!', 'success');
+                    form.reset();
+                }
+            } catch (error) {
+                console.error('Newsletter subscription error:', error);
+                showMessage(message, '❌ Errore durante l\'iscrizione. Riprova più tardi.', 'error');
+            }
+        });
+    }
+}
+
+// Send newsletter confirmation email
+async function sendNewsletterConfirmation(email) {
+    // Call Supabase Edge Function to send confirmation email via Resend
+    try {
+        if (window.supabaseClient && window.supabaseClient.functions) {
+            const { data, error } = await window.supabaseClient.functions.invoke('send-newsletter-confirmation', {
+                body: { email: email }
+            });
             
-            if (subscribers.includes(email)) {
-                showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
-                return;
+            if (error) {
+                console.error('Error calling edge function:', error);
+                return { success: false, error: error.message };
             }
             
-            subscribers.push(email);
-            localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers));
-            
-            showMessage(message, '✅ Iscrizione completata! Grazie!', 'success');
-            form.reset();
-        });
+            console.log('Confirmation email sent successfully:', data);
+            return { success: true, data };
+        } else {
+            // Edge function not available
+            console.log('[Newsletter] Edge function not deployed yet.');
+            console.log(`[Newsletter] Confirmation email should be sent to: ${email}`);
+            console.log('[Newsletter] Deploy the edge function: supabase functions deploy send-newsletter-confirmation');
+            return { success: true, message: 'Edge function not deployed' };
+        }
+    } catch (error) {
+        console.error('Error sending confirmation email:', error);
+        return { success: false, error: error.message };
     }
 }
 

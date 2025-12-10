@@ -45,16 +45,62 @@
         </div>
     </footer>
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script>
-        if (window.AppState && window.AppState.isAuthenticated) {
-            document.getElementById('profileContent').innerHTML = `
-                <h2>Benvenuto, ${window.AppState.user.name}!</h2>
-                <p><strong>Email:</strong> ${window.AppState.user.email}</p>
-                <p><strong>Ruolo:</strong> ${window.AppState.user.role}</p>
-                <button onclick="window.logout()" class="btn btn-danger">Logout</button>
-            `;
+        // Check authentication and load profile
+        async function loadProfile() {
+            try {
+                // Wait for Supabase to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check if user is authenticated
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    // Not authenticated, show login prompt
+                    document.getElementById('profileContent').innerHTML = `
+                        <p>Effettua il login per vedere il tuo profilo.</p>
+                        <a href="login.html?redirect=profilo.html" class="btn btn-primary">Accedi</a>
+                    `;
+                    return;
+                }
+                
+                // User is authenticated, get profile data
+                const userEmail = user.email || localStorage.getItem('userEmail');
+                const username = localStorage.getItem('username') || user.email.split('@')[0];
+                const userRole = localStorage.getItem('userRole') || 'utente';
+                
+                // Display profile
+                document.getElementById('profileContent').innerHTML = `
+                    <h2>Benvenuto, ${username}!</h2>
+                    <p><strong>Email:</strong> ${userEmail}</p>
+                    <p><strong>Ruolo:</strong> ${userRole}</p>
+                    <button onclick="handleLogout()" class="btn btn-danger">Logout</button>
+                `;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('profileContent').innerHTML = `
+                    <p>Errore nel caricamento del profilo.</p>
+                    <a href="login.html?redirect=profilo.html" class="btn btn-primary">Accedi</a>
+                `;
+            }
         }
+        
+        async function handleLogout() {
+            if (window.logout) {
+                await window.logout();
+            } else {
+                // Fallback logout
+                await window.supabaseClient.auth.signOut();
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // Load profile on page load
+        loadProfile();
     </script>
 </body>
 </html>
