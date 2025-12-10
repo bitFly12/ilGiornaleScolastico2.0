@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilo - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link active">Profilo</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" style="padding: 3rem 1rem; max-width: 800px; margin: 0 auto;">
+        <div class="card" style="padding: 2rem;">
+            <h1 style="color: var(--primary); margin-bottom: 2rem;">👤 Il Tuo Profilo</h1>
+            
+            <div id="profileContent">
+                <p>Effettua il login per vedere il tuo profilo.</p>
+                <a href="login.html" class="btn btn-primary">Accedi</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Check authentication and load profile
+        async function loadProfile() {
+            try {
+                // Wait for Supabase to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check if user is authenticated
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    // Not authenticated, show login prompt
+                    document.getElementById('profileContent').innerHTML = `
+                        <p>Effettua il login per vedere il tuo profilo.</p>
+                        <a href="login.html?redirect=profilo.html" class="btn btn-primary">Accedi</a>
+                    `;
+                    return;
+                }
+                
+                // User is authenticated, get profile data
+                const userEmail = user.email || localStorage.getItem('userEmail');
+                const username = localStorage.getItem('username') || user.email.split('@')[0];
+                const userRole = localStorage.getItem('userRole') || 'utente';
+                
+                // Display profile
+                document.getElementById('profileContent').innerHTML = `
+                    <h2>Benvenuto, ${username}!</h2>
+                    <p><strong>Email:</strong> ${userEmail}</p>
+                    <p><strong>Ruolo:</strong> ${userRole}</p>
+                    <button onclick="handleLogout()" class="btn btn-danger">Logout</button>
+                `;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('profileContent').innerHTML = `
+                    <p>Errore nel caricamento del profilo.</p>
+                    <a href="login.html?redirect=profilo.html" class="btn btn-primary">Accedi</a>
+                `;
+            }
+        }
+        
+        async function handleLogout() {
+            if (window.logout) {
+                await window.logout();
+            } else {
+                // Fallback logout
+                await window.supabaseClient.auth.signOut();
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // Load profile on page load
+        loadProfile();
+    </script>
+</body>
+</html>
