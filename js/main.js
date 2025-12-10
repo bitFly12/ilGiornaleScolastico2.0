@@ -128,13 +128,25 @@ function initDailyQuote() {
 function initNewsletterForm() {
     const form = document.getElementById('newsletterForm');
     const message = document.getElementById('newsletterMessage');
+    const emailInput = document.getElementById('newsletterEmail');
     
     if (form) {
+        // Check if user is logged in and auto-fill email
+        checkAndFillUserEmail();
+        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const emailInput = document.getElementById('newsletterEmail');
-            const email = emailInput.value.trim();
+            let email = emailInput ? emailInput.value.trim() : '';
+            
+            // If no email input field (logged in user), get from localStorage
+            if (!email) {
+                email = localStorage.getItem('userEmail');
+                if (!email) {
+                    showMessage(message, '❌ Devi essere loggato per iscriverti alla newsletter', 'error');
+                    return;
+                }
+            }
             
             if (!validateEmail(email)) {
                 showMessage(message, 'Inserisci un indirizzo email valido', 'error');
@@ -153,7 +165,7 @@ function initNewsletterForm() {
                         // Check if already subscribed (unique constraint violation)
                         if (error.code === '23505') {
                             showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
-                            form.reset();
+                            if (form) form.reset();
                             return;
                         }
                         throw error;
@@ -161,7 +173,7 @@ function initNewsletterForm() {
                     
                     // Successfully subscribed
                     showMessage(message, '✅ Iscrizione completata! Controlla la tua email per confermare.', 'success');
-                    form.reset();
+                    if (form) form.reset();
                     
                     // Send confirmation email via Edge Function (if available)
                     try {
@@ -182,13 +194,32 @@ function initNewsletterForm() {
                     subscribers.push(email);
                     localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers));
                     showMessage(message, '✅ Iscrizione completata! Grazie!', 'success');
-                    form.reset();
+                    if (form) form.reset();
                 }
             } catch (error) {
                 console.error('Newsletter subscription error:', error);
                 showMessage(message, '❌ Errore durante l\'iscrizione. Riprova più tardi.', 'error');
             }
         });
+    }
+}
+
+// Check if user is logged in and fill email automatically
+async function checkAndFillUserEmail() {
+    const emailInput = document.getElementById('newsletterEmail');
+    
+    if (emailInput && window.supabaseClient) {
+        try {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            if (user && user.email) {
+                // User is logged in, hide email input and show message
+                emailInput.value = user.email;
+                emailInput.disabled = true;
+                emailInput.placeholder = user.email + ' (email dal tuo account)';
+            }
+        } catch (error) {
+            console.error('Error checking user:', error);
+        }
     }
 }
 

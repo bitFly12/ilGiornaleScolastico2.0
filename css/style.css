@@ -771,6 +771,88 @@ img {
     color: var(--text-dark);
 }
 
+/* Dark mode: Footer */
+.dark-mode .footer {
+    background-color: #1a1a1a;
+    color: #d1d5db;
+    border-top: 1px solid #374151;
+}
+
+.dark-mode .footer a {
+    color: #60a5fa;
+}
+
+.dark-mode .footer-bottom {
+    border-top-color: #374151;
+}
+
+/* Dark mode: Chat */
+.dark-mode .chat-header {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a);
+}
+
+.dark-mode .chat-messages {
+    background-color: #1a1a1a;
+    border-color: #374151;
+}
+
+.dark-mode .message {
+    color: #e5e7eb;
+}
+
+.dark-mode .message-text {
+    color: #f3f4f6;
+}
+
+.dark-mode .message-author {
+    color: #d1d5db;
+}
+
+.dark-mode .message-time {
+    color: #9ca3af;
+}
+
+.dark-mode .chat-input-container {
+    background-color: #2d2d2d;
+    border-top-color: #374151;
+}
+
+.dark-mode .chat-input {
+    background-color: #1a1a1a;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+.dark-mode .chat-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Dark mode: Newsletter and other widgets */
+.dark-mode .newsletter-widget {
+    background-color: var(--bg-card);
+    color: var(--text-dark);
+}
+
+.dark-mode .newsletter-form input {
+    background-color: #1a1a1a;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+.dark-mode .newsletter-form input::placeholder {
+    color: #9ca3af;
+}
+
+/* Dark mode: Buttons */
+.dark-mode .btn-secondary {
+    background-color: #374151;
+    color: #f3f4f6;
+}
+
+.dark-mode .btn-secondary:hover {
+    background-color: #4b5563;
+}
+
 /* ================================================
    ANIMATIONS
    ================================================ */
