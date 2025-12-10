@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutti gli Articoli - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .articles-header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        .articles-header h1 {
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .filters-bar {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            background: white;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: var(--radius-full);
+            font-family: var(--font-body);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .results-info {
+            color: var(--neutral);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .filters-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                    <span>☰</span>
+                </button>
+                
+                <nav>
+                    <ul class="nav-menu" id="navMenu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link active">Articoli</a></li>
+                        <li class="nav-item"><a href="categorie.html" class="nav-link">Categorie</a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link">Chat</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
+                        <li class="nav-item"><a href="login.html" class="btn btn-primary btn-sm">Login</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="articles-header">
+        <h1>📰 Tutti gli Articoli</h1>
+        <p>Esplora tutte le storie del Giornale Cesaris</p>
+    </div>
+
+    <main class="container">
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label for="categoryFilter"><strong>Categoria:</strong></label>
+                <select id="categoryFilter" class="filter-select">
+                    <option value="all">Tutte</option>
+                    <option value="Attualità">Attualità</option>
+                    <option value="Sport">Sport</option>
+                    <option value="Cultura">Cultura</option>
+                    <option value="Tecnologia">Tecnologia</option>
+                    <option value="Scienza">Scienza</option>
+                    <option value="Viaggi">Viaggi</option>
+                    <option value="Orientamento">Orientamento</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="sortFilter"><strong>Ordina per:</strong></label>
+                <select id="sortFilter" class="filter-select">
+                    <option value="date">Più Recenti</option>
+                    <option value="views">Più Visti</option>
+                    <option value="title">Titolo A-Z</option>
+                </select>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Cerca articoli...">
+            </div>
+        </div>
+
+        <!-- Results Info -->
+        <div class="results-info" id="resultsInfo">
+            Mostrando tutti gli articoli
+        </div>
+
+        <!-- Articles Grid -->
+        <div class="articles-grid" id="articlesGrid">
+            <!-- Articles will be loaded here -->
+        </div>
+
+        <!-- Pagination -->
+        <nav class="pagination" id="pagination">
+            <!-- Pagination will be generated dynamically -->
+        </nav>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Giornale Cesaris</h4>
+                    <p>Il portale ufficiale del giornale scolastico del Cesaris.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Link Rapidi</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="candidatura.html">Diventa Reporter</a></li>
+                        <li><a href="guidelines.html">Linee Guida</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/articles.js"></script>
+    <script>
+        let filteredArticles = [...window.sampleArticles];
+        let currentPage = 1;
+        const articlesPerPage = 9;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            displayArticles();
+            setupFilters();
+        });
+        
+        function setupFilters() {
+            // Category filter
+            document.getElementById('categoryFilter').addEventListener('change', (e) => {
+                filterArticles();
+            });
+            
+            // Sort filter
+            document.getElementById('sortFilter').addEventListener('change', (e) => {
+                filterArticles();
+            });
+            
+            // Search input
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterArticles();
+                }, 300);
+            });
+        }
+        
+        function filterArticles() {
+            const category = document.getElementById('categoryFilter').value;
+            const sortBy = document.getElementById('sortFilter').value;
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            
+            // Start with all articles
+            let articles = [...window.sampleArticles];
+            
+            // Filter by category
+            if (category !== 'all') {
+                articles = articles.filter(a => a.categoria === category);
+            }
+            
+            // Filter by search
+            if (searchQuery) {
+                articles = articles.filter(a => 
+                    a.titolo.toLowerCase().includes(searchQuery) ||
+                    a.sommario.toLowerCase().includes(searchQuery) ||
+                    a.contenuto.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            // Sort
+            switch (sortBy) {
+                case 'date':
+                    articles.sort((a, b) => new Date(b.data_pubblicazione) - new Date(a.data_pubblicazione));
+                    break;
+                case 'views':
+                    articles.sort((a, b) => b.visualizzazioni - a.visualizzazioni);
+                    break;
+                case 'title':
+                    articles.sort((a, b) => a.titolo.localeCompare(b.titolo));
+                    break;
+            }
+            
+            filteredArticles = articles;
+            currentPage = 1;
+            displayArticles();
+            updateResultsInfo();
+        }
+        
+        function displayArticles() {
+            const startIndex = (currentPage - 1) * articlesPerPage;
+            const endIndex = startIndex + articlesPerPage;
+            const articlesToShow = filteredArticles.slice(startIndex, endIndex);
+            
+            const container = document.getElementById('articlesGrid');
+            container.innerHTML = '';
+            
+            if (articlesToShow.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--neutral);"><h3>Nessun articolo trovato</h3><p>Prova a modificare i filtri di ricerca</p></div>';
+                return;
+            }
+            
+            articlesToShow.forEach(article => {
+                const card = createArticleCard(article);
+                container.appendChild(card);
+            });
+            
+            updatePagination();
+        }
+        
+        function createArticleCard(article) {
+            const card = document.createElement('div');
+            card.className = 'card fade-in';
+            
+            const date = new Date(article.data_pubblicazione);
+            const formattedDate = date.toLocaleDateString('it-IT', { 
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            card.innerHTML = `
+                <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                     alt="${article.titolo}" 
+                     class="card-img"
+                     onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+                <div class="card-body">
+                    <span style="font-size: 0.875rem; color: var(--primary); font-weight: 600; text-transform: uppercase; display: block; margin-bottom: 0.5rem;">${article.categoria}</span>
+                    <h3 class="card-title">${article.titolo}</h3>
+                    <p class="card-text">${truncateText(article.sommario, 120)}</p>
+                    <div class="card-meta">
+                        <span>👤 ${article.autore.nome}</span>
+                        <span>📅 ${formattedDate}</span>
+                        <span>📖 ${article.reading_time} min</span>
+                        <span>👁️ ${article.visualizzazioni}</span>
+                    </div>
+                    <a href="articolo.html?id=${article.id}" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Leggi Articolo</a>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            pagination.innerHTML = '';
+            
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.className = 'page-num';
+                button.textContent = i;
+                button.dataset.page = i;
+                
+                if (i === currentPage) {
+                    button.classList.add('active');
+                }
+                
+                button.addEventListener('click', () => {
+                    currentPage = i;
+                    displayArticles();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                
+                pagination.appendChild(button);
+            }
+        }
+        
+        function updateResultsInfo() {
+            const info = document.getElementById('resultsInfo');
+            const total = filteredArticles.length;
+            const category = document.getElementById('categoryFilter').value;
+            const searchQuery = document.getElementById('searchInput').value;
+            
+            let text = `Mostrando ${total} articol${total === 1 ? 'o' : 'i'}`;
+            
+            if (category !== 'all') {
+                text += ` nella categoria "${category}"`;
+            }
+            
+            if (searchQuery) {
+                text += ` per "${searchQuery}"`;
+            }
+            
+            info.textContent = text;
+        }
+        
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+        
+        function createPlaceholderImage(category) {
+            const colors = {
+                'Attualità': '#0033A0',
+                'Sport': '#10B981',
+                'Cultura': '#EC4899',
+                'Tecnologia': '#FFD700',
+                'Scienza': '#6366F1',
+                'Viaggi': '#F59E0B',
+                'Orientamento': '#8B5CF6',
+                'default': '#6B7280'
+            };
+            
+            const emoji = {
+                'Attualità': '📰',
+                'Sport': '⚽',
+                'Cultura': '🎭',
+                'Tecnologia': '💻',
+                'Scienza': '🔬',
+                'Viaggi': '✈️',
+                'Orientamento': '🎓',
+                'default': '📝'
+            };
+            
+            const color = colors[category] || colors.default;
+            const icon = emoji[category] || emoji.default;
+            
+            const svg = `
+                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="400" height="300" fill="${color}"/>
+                    <text x="50%" y="50%" font-size="80" text-anchor="middle" dy=".3em">${icon}</text>
+                </svg>
+            `;
+            
+            return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+        }
+    </script>
+</body>
+</html>

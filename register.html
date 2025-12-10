@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .alert.show {
+            display: block;
+        }
+        .alert-error {
+            background-color: #FEE2E2;
+            color: var(--error);
+            border-left: 4px solid var(--error);
+        }
+        .alert-success {
+            background-color: #D1FAE5;
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+    </style>
+</head>
+<body>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+        <div style="background: var(--bg-card); padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); max-width: 450px; width: 100%;">
+            <h1 style="text-align: center; color: var(--primary);">Registrazione</h1>
+            <p style="text-align: center; color: var(--neutral); margin-bottom: 2rem;">Crea il tuo account con l'email @cesaris.edu.it</p>
+            
+            <div id="alertBox" class="alert"></div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Email Scolastica</label>
+                    <input type="email" id="email" class="form-input" placeholder="nome.cognome@cesaris.edu.it" required>
+                    <small style="color: var(--neutral); font-size: 0.875rem;">Il tuo username sarà la parte prima di @</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" minlength="6" required>
+                    <small style="color: var(--neutral); font-size: 0.875rem;">Minimo 6 caratteri</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Conferma Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Registrati</button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 1.5rem;">
+                Hai già un account? <a href="login.html" style="color: var(--primary);">Accedi</a>
+            </p>
+            
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
+                <a href="index.html" style="color: var(--neutral); font-size: 0.875rem;">
+                    ← Torna alla Home
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            // Validate email domain
+            if (!email.toLowerCase().endsWith('@cesaris.edu.it')) {
+                showAlert('Utilizza la tua email @cesaris.edu.it per registrarti', 'error');
+                return;
+            }
+            
+            // Validate password match
+            if (password !== confirmPassword) {
+                showAlert('Le password non corrispondono', 'error');
+                return;
+            }
+            
+            // Validate password length
+            if (password.length < 6) {
+                showAlert('La password deve essere di almeno 6 caratteri', 'error');
+                return;
+            }
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registrazione in corso...';
+            
+            try {
+                // Extract username from email (before @)
+                const username = email.split('@')[0];
+                
+                // Get current site URL for redirect after email confirmation
+                const siteUrl = window.location.origin;
+                
+                // Real Supabase registration with email confirmation redirect
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        emailRedirectTo: `${siteUrl}/login.html`,
+                        data: {
+                            username: username
+                        }
+                    }
+                });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                if (data.user) {
+                    // Create user profile via RPC call
+                    try {
+                        const { error: profileError } = await supabaseClient.rpc('create_user_profile', {
+                            user_id: data.user.id,
+                            user_email: data.user.email
+                        });
+                        
+                        if (profileError) {
+                            console.error('Profile creation error:', profileError);
+                            // Don't fail registration, profile can be created on first login
+                        }
+                    } catch (profileErr) {
+                        console.error('Profile creation failed:', profileErr);
+                        // Don't fail registration
+                    }
+                    
+                    showAlert('✅ Registrazione completata! Controlla la tua email per confermare l\'account. Il tuo username sarà: ' + username, 'success');
+                    
+                    setTimeout(() => {
+                        showAlert('📧 Ti abbiamo inviato un\'email di conferma. Dopo la conferma, torna qui per effettuare il login.', 'success');
+                    }, 3000);
+                    
+                    // Disable form
+                    document.getElementById('registerForm').reset();
+                    submitBtn.textContent = 'Controlla la tua email';
+                } else {
+                    throw new Error('Registrazione fallita');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                let errorMessage = 'Errore durante la registrazione';
+                
+                if (error.message.includes('already registered')) {
+                    errorMessage = 'Questa email è già registrata. Prova ad effettuare il login.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showAlert('❌ ' + errorMessage, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Registrati';
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} show`;
+        }
+    </script>
+</body>
+</html>
