@@ -206,6 +206,12 @@
     </style>
 </head>
 <body>
+    <!-- Global Page Loader -->
+    <div class="page-loader" id="page-loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Caricamento pagina...</div>
+    </div>
+    
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -271,5 +277,20 @@
     <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/chat.js"></script>
+    
+    <!-- Page Loader Script -->
+    <script>
+        // Note: Page loader for chat is removed by chat.js after messages load
+        // This ensures chat doesn't show until messages are ready
+        
+        // Fallback: remove loader after 15 seconds if chat init fails
+        setTimeout(function() {
+            const loader = document.getElementById('page-loader');
+            if (loader && loader.style.display !== 'none') {
+                console.warn('Chat init took too long, removing loader');
+                loader.style.display = 'none';
+            }
+        }, 15000);
+    </script>
 </body>
 </html>

@@ -290,7 +290,7 @@ const SupabaseAPI = {
                     {
                         article_id: articleId,
                         user_id: user.id,
-                        contenuto: contenuto,
+                        content: contenuto,  // Schema uses 'content', not 'contenuto'
                         parent_comment_id: parentCommentId
                     }
                 ])
@@ -368,12 +368,14 @@ const SupabaseAPI = {
                 .from('chat_messages')
                 .select(`
                     *,
-                    sender:profili_utenti!chat_messages_sender_id_fkey(
+                    user:profili_utenti!chat_messages_user_id_fkey(
                         id,
+                        username,
                         nome_visualizzato,
                         avatar_url
                     )
                 `)
+                .eq('is_deleted', false)
                 .order('created_at', { ascending: false })
                 .limit(limit);
 
@@ -392,12 +394,22 @@ const SupabaseAPI = {
                 throw new Error('You must be logged in to send messages');
             }
 
+            // Get user profile for author_name
+            const { data: profile } = await supabase
+                .from('profili_utenti')
+                .select('nome_visualizzato, username')
+                .eq('id', user.id)
+                .single();
+            
+            const authorName = profile?.nome_visualizzato || profile?.username || 'Anonimo';
+
             const { data, error } = await supabase
                 .from('chat_messages')
                 .insert([
                     {
-                        sender_id: user.id,
-                        message: message,
+                        user_id: user.id,
+                        author_name: authorName,
+                        content: message,
                         message_type: 'text'
                     }
                 ])

@@ -528,40 +528,14 @@ function getOrCreateSessionId() {
 }
 
 // ================================================
-// Export Functions
+// Export Auth Helper Functions
 // ================================================
+// Note: Full SupabaseAPI is defined in supabase-api.js
+// These are legacy functions kept for backwards compatibility
 
-window.SupabaseAPI = {
-    // Auth
-    signUpWithEmail,
-    signInWithEmail,
-    signOut,
-    getCurrentUser,
-    
-    // Articles
-    getArticles,
-    getArticleById,
-    searchArticles,
-    createArticle,
-    addArticleReaction,
-    removeArticleReaction,
-    getArticleReactions,
-    
-    // Chat
-    getChatMessages,
-    sendChatMessage,
-    subscribeToChatMessages,
-    addChatReaction,
-    
-    // Comments
-    getArticleComments,
-    addComment,
-    
-    // Reporter
-    submitReporterCandidature,
-    
-    // Newsletter
-    subscribeToNewsletter
-};
+window.signUpWithEmail = signUpWithEmail;
+window.signInWithEmail = signInWithEmail;
+window.signOut = signOut;
+window.getCurrentUser = getCurrentUser;
 
-console.log('✅ Supabase API functions loaded');
+console.log('✅ Supabase config loaded - Auth helpers exported');

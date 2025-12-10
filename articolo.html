@@ -278,46 +278,65 @@
             loadArticleDetail(articleId);
         }
         
-        function loadArticleDetail(id) {
-            const article = window.getArticleById(id);
-            
-            if (!article) {
-                document.getElementById('articleContent').innerHTML = `
-                    <div style="text-align: center; padding: 4rem 0;">
-                        <h2>Articolo non trovato</h2>
-                        <p>L'articolo che stai cercando non esiste.</p>
-                        <a href="index.html" class="btn btn-primary">Torna alla Home</a>
+        async function loadArticleDetail(id) {
+            try {
+                // Load article from Supabase with author info
+                const { data: article, error } = await window.supabaseClient
+                    .from('articoli')
+                    .select(`
+                        *,
+                        autore:profili_utenti!fk_articoli_autore(
+                            username,
+                            nome_visualizzato
+                        )
+                    `)
+                    .eq('id', id)
+                    .single();
+                
+                if (error || !article) {
+                    console.error('Error loading article:', error);
+                    document.getElementById('articleContent').innerHTML = `
+                        <div style="text-align: center; padding: 4rem 0;">
+                            <h2>Articolo non trovato</h2>
+                            <p>L'articolo che stai cercando non esiste.</p>
+                            <a href="index.html" class="btn btn-primary">Torna alla Home</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Increment views in database
+                await window.supabaseClient
+                    .from('articoli')
+                    .update({ visualizzazioni: (article.visualizzazioni || 0) + 1 })
+                    .eq('id', id);
+                
+                // Format date
+                const date = new Date(article.data_pubblicazione || article.created_at);
+                const formattedDate = date.toLocaleDateString('it-IT', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                // Get author name with fallback
+                const authorName = article.autore?.nome_visualizzato || article.autore?.username || 'Autore Sconosciuto';
+                
+                // Render article
+                const container = document.getElementById('articleContent');
+                container.innerHTML = `
+                    <div class="article-header">
+                        <span class="article-category">${article.categoria || 'Generale'}</span>
+                        <h1 class="article-title">${article.titolo}</h1>
+                        <p class="article-summary">${article.sommario || ''}</p>
+                        
+                        <div class="article-meta">
+                            <span class="meta-item">👤 ${authorName}</span>
+                            <span class="meta-item">📅 ${formattedDate}</span>
+                            <span class="meta-item">📖 ${article.reading_time || 5} min di lettura</span>
+                            <span class="meta-item">👁️ ${(article.visualizzazioni || 0) + 1} visualizzazioni</span>
+                        </div>
                     </div>
-                `;
-                return;
-            }
-            
-            // Increment views
-            article.visualizzazioni++;
-            
-            // Format date
-            const date = new Date(article.data_pubblicazione);
-            const formattedDate = date.toLocaleDateString('it-IT', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            
-            // Render article
-            const container = document.getElementById('articleContent');
-            container.innerHTML = `
-                <div class="article-header">
-                    <span class="article-category">${article.categoria}</span>
-                    <h1 class="article-title">${article.titolo}</h1>
-                    <p class="article-summary">${article.sommario}</p>
-                    
-                    <div class="article-meta">
-                        <span class="meta-item">👤 ${article.autore.nome}</span>
-                        <span class="meta-item">📅 ${formattedDate}</span>
-                        <span class="meta-item">📖 ${article.reading_time} min di lettura</span>
-                        <span class="meta-item">👁️ ${article.visualizzazioni} visualizzazioni</span>
-                    </div>
-                </div>
                 
                 <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
                      alt="${article.titolo}" 
@@ -336,39 +355,85 @@
             `;
             
             // Load reactions
-            loadReactions(id);
+            loadReactions(articleId);
             
-            // Load comments
-            if (window.AppState && window.AppState.isAuthenticated) {
-                loadComments(id);
-                document.getElementById('commentForm').classList.remove('hidden');
-            }
+            // Check authentication and load comments
+            checkAuthAndLoadComments(articleId);
             
             // Load related articles
-            loadRelatedArticles(article.categoria, id);
+            loadRelatedArticles(article.categoria, articleId);
+            
+            } catch (error) {
+                console.error('Error in loadArticleDetail:', error);
+                document.getElementById('articleContent').innerHTML = `
+                    <div style="text-align: center; padding: 4rem 0;">
+                        <h2>Errore nel caricamento</h2>
+                        <p>Si è verificato un errore nel caricamento dell'articolo.</p>
+                        <a href="index.html" class="btn btn-primary">Torna alla Home</a>
+                    </div>
+                `;
+            }
         }
         
-        function loadReactions(articleId) {
-            const reactions = JSON.parse(localStorage.getItem(`reactions_${articleId}`) || '{"like":0,"love":0,"wow":0,"sad":0}');
-            const userReaction = localStorage.getItem(`userReaction_${articleId}`);
-            
-            const buttons = document.querySelectorAll('.reaction-btn');
-            buttons.forEach(btn => {
-                const reaction = btn.getAttribute('data-reaction');
-                const countSpan = btn.querySelector('.count');
-                countSpan.textContent = reactions[reaction] || 0;
+        async function checkAuthAndLoadComments(articleId) {
+            try {
+                // Wait for Supabase session to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
                 
-                if (userReaction === reaction) {
-                    btn.classList.add('active');
+                const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+                
+                if (user && !error) {
+                    // User is authenticated
+                    loadComments(articleId);
+                    document.getElementById('commentForm').classList.remove('hidden');
+                    document.getElementById('commentsList').innerHTML = '<p style="text-align: center; color: var(--neutral); padding: 1rem;">Caricamento commenti...</p>';
+                } else {
+                    // Not authenticated
+                    document.getElementById('commentsList').innerHTML = `
+                        <p style="text-align: center; color: var(--neutral); padding: 2rem;">
+                            <a href="login.html?redirect=${encodeURIComponent(window.location.href)}" class="btn btn-primary">
+                                Effettua il login
+                            </a> per vedere e lasciare commenti
+                        </p>
+                    `;
                 }
+            } catch (error) {
+                console.error('Error checking auth:', error);
+            }
+        }
+        
+        async function loadReactions(articleId) {
+            try {
+                // Check if user is authenticated
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
                 
-                btn.addEventListener('click', () => {
-                    if (userReaction) {
-                        reactions[userReaction]--;
-                        localStorage.removeItem(`userReaction_${articleId}`);
+                const reactions = JSON.parse(localStorage.getItem(`reactions_${articleId}`) || '{"like":0,"love":0,"wow":0,"sad":0}');
+                const userReaction = localStorage.getItem(`userReaction_${articleId}`);
+                
+                const buttons = document.querySelectorAll('.reaction-btn');
+                buttons.forEach(btn => {
+                    const reaction = btn.getAttribute('data-reaction');
+                    const countSpan = btn.querySelector('.count');
+                    countSpan.textContent = reactions[reaction] || 0;
+                    
+                    if (userReaction === reaction) {
+                        btn.classList.add('active');
                     }
                     
-                    if (userReaction !== reaction) {
+                    btn.addEventListener('click', async () => {
+                        // Check auth before allowing reaction
+                        if (!user) {
+                            alert('Devi effettuare il login per lasciare una reazione');
+                            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+                            return;
+                        }
+                        
+                        if (userReaction) {
+                            reactions[userReaction]--;
+                            localStorage.removeItem(`userReaction_${articleId}`);
+                        }
+                        
+                        if (userReaction !== reaction) {
                         reactions[reaction]++;
                         localStorage.setItem(`userReaction_${articleId}`, reaction);
                         btn.classList.add('active');

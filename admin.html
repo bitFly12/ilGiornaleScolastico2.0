@@ -192,24 +192,48 @@
 
         // Check authentication and admin role
         async function checkAdminAccess() {
-            const userData = await getCurrentUser();
-            if (!userData || !userData.profile) {
+            let userData = null;
+            let role = null;
+            
+            try {
+                // Wait a moment for Supabase session to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check Supabase auth (use window.supabaseClient for consistency)
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    window.location.href = 'login.html?redirect=admin.html';
+                    return false;
+                }
+                
+                // Get full user data with profile
+                userData = await getCurrentUser();
+                if (!userData || !userData.profile) {
+                    window.location.href = 'login.html?redirect=admin.html';
+                    return false;
+                }
+
+                currentUser = userData;
+                role = userData.profile.ruolo;
+
+                // Only allow caporedattore and docente
+                if (role !== 'caporedattore' && role !== 'docente') {
+                    alert('⛔ Accesso negato. Solo gli amministratori possono accedere a questa pagina.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error checking admin access:', error);
                 window.location.href = 'login.html?redirect=admin.html';
                 return false;
             }
 
-            currentUser = userData;
-            const role = userData.profile.ruolo;
-
-            // Only allow caporedattore and docente
-            if (role !== 'caporedattore' && role !== 'docente') {
-                alert('⛔ Accesso negato. Solo gli amministratori possono accedere a questa pagina.');
-                window.location.href = 'index.html';
-                return false;
+            // Update UI with admin info (userData and role are now in scope)
+            if (userData && userData.profile) {
+                document.getElementById('adminInfo').textContent = 
+                    `Benvenuto, ${userData.profile.nome_visualizzato || userData.profile.username} (${role})`;
             }
-
-            document.getElementById('adminInfo').textContent = 
-                `Benvenuto, ${userData.profile.nome_visualizzato || userData.profile.username} (${role})`;
 
             return true;
         }
@@ -258,7 +282,7 @@
                     .from('articoli')
                     .select(`
                         *,
-                        autore:profili_utenti!articoli_autore_id_fkey(username, nome_visualizzato)
+                        autore:profili_utenti!fk_articoli_autore(username, nome_visualizzato)
                     `)
                     .order('created_at', { ascending: false });
 
@@ -366,9 +390,9 @@
         // Change user role with dropdown
         async function changeUserRole(userId, currentRole) {
             // Get current user to prevent self-role-change
-            const currentUser = JSON.parse(localStorage.getItem('userId'));
+            const currentUserId = localStorage.getItem('userId');
             
-            if (userId === currentUser) {
+            if (userId === currentUserId) {
                 alert('❌ Non puoi cambiare il tuo stesso ruolo!');
                 return;
             }
@@ -406,19 +430,27 @@
                 }
 
                 try {
-                    const { error } = await supabase
+                    const { data, error } = await supabase
                         .from('profili_utenti')
                         .update({ ruolo: newRole })
-                        .eq('id', userId);
+                        .eq('id', userId)
+                        .select();
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Role update error:', error);
+                        alert('❌ Errore: ' + (error.message || 'Impossibile aggiornare il ruolo'));
+                        return;
+                    }
 
-                    alert('✅ Ruolo aggiornato con successo');
+                    console.log('Role updated successfully:', data);
+                    alert('✅ Ruolo aggiornato con successo a: ' + newRole);
                     modal.remove();
-                    loadAllUsers();
+                    
+                    // Reload users to show updated role
+                    await loadAllUsers();
                 } catch (error) {
                     console.error('Error updating role:', error);
-                    alert('❌ Errore nell\'aggiornamento del ruolo');
+                    alert('❌ Errore nell\'aggiornamento del ruolo: ' + error.message);
                 }
             };
         }

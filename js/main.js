@@ -44,18 +44,34 @@ document.addEventListener('DOMContentLoaded', () => {
 // MOBILE MENU
 // ================================================
 function initMobileMenu() {
-    const menuToggle = document.getElementById('menuToggle');
-    const navMenu = document.getElementById('navMenu');
+    const menuToggle = document.querySelector('.mobile-menu-toggle, .menu-toggle, #menuToggle');
+    const navMenu = document.querySelector('nav ul, .nav-menu, #navMenu');
+    const navLinks = navMenu ? navMenu.querySelectorAll('li a') : [];
     
     if (menuToggle && navMenu) {
-        menuToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navMenu.classList.toggle('mobile-menu-open');
+        });
+        
+        // Close menu when clicking a link
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('mobile-menu-open');
+            });
         });
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             if (!menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
-                navMenu.classList.remove('active');
+                navMenu.classList.remove('mobile-menu-open');
+            }
+        });
+        
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && navMenu.classList.contains('mobile-menu-open')) {
+                navMenu.classList.remove('mobile-menu-open');
             }
         });
     }
@@ -128,32 +144,136 @@ function initDailyQuote() {
 function initNewsletterForm() {
     const form = document.getElementById('newsletterForm');
     const message = document.getElementById('newsletterMessage');
+    const emailInput = document.getElementById('newsletterEmail');
     
     if (form) {
+        // Check if user is logged in and auto-fill email
+        checkAndFillUserEmail();
+        
+        // Check if user is already subscribed
+        checkNewsletterSubscription();
+        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('newsletterEmail').value;
+            let email = emailInput ? emailInput.value.trim() : '';
+            
+            // If no email input field (logged in user), get from localStorage
+            if (!email) {
+                email = localStorage.getItem('userEmail');
+                if (!email) {
+                    showMessage(message, '❌ Devi essere loggato per iscriverti alla newsletter', 'error');
+                    return;
+                }
+            }
             
             if (!validateEmail(email)) {
                 showMessage(message, 'Inserisci un indirizzo email valido', 'error');
                 return;
             }
             
-            // Save to localStorage (in production, this would be an API call)
-            let subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]');
+            try {
+                // Save to Supabase database
+                if (window.supabaseClient) {
+                    const { data, error } = await window.supabaseClient
+                        .from('iscrizioni_newsletter')
+                        .insert([{ email: email }])
+                        .select();
+                    
+                    if (error) {
+                        // Check if already subscribed (unique constraint violation)
+                        if (error.code === '23505') {
+                            showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
+                            if (form) form.reset();
+                            return;
+                        }
+                        throw error;
+                    }
+                    
+                    // Send confirmation email via Edge Function (if available)
+                    const emailResult = await sendNewsletterConfirmation(email);
+                    
+                    // Successfully subscribed - show appropriate message
+                    if (emailResult.skipEmail) {
+                        showMessage(message, '✅ Iscrizione completata! (Email di conferma non inviata - configurazione in corso)', 'success');
+                        console.info('💡 Newsletter subscription saved. Email confirmation skipped (Edge Function not configured).');
+                    } else {
+                        showMessage(message, '✅ Iscrizione completata! Controlla la tua email per confermare.', 'success');
+                    }
+                    if (form) form.reset();
+                } else {
+                    // Fallback to localStorage if Supabase not available
+                    let subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]');
+                    
+                    if (subscribers.includes(email)) {
+                        showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
+                        return;
+                    }
+                    
+                    subscribers.push(email);
+                    localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers));
+                    showMessage(message, '✅ Iscrizione completata! Grazie!', 'success');
+                    if (form) form.reset();
+                }
+            } catch (error) {
+                console.error('Newsletter subscription error:', error);
+                showMessage(message, '❌ Errore durante l\'iscrizione. Riprova più tardi.', 'error');
+            }
+        });
+    }
+}
+
+// Check if user is logged in and fill email automatically
+async function checkAndFillUserEmail() {
+    const emailInput = document.getElementById('newsletterEmail');
+    
+    if (emailInput && window.supabaseClient) {
+        try {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            if (user && user.email) {
+                // User is logged in, hide email input and show message
+                emailInput.value = user.email;
+                emailInput.disabled = true;
+                emailInput.placeholder = user.email + ' (email dal tuo account)';
+            }
+        } catch (error) {
+            console.error('Error checking user:', error);
+        }
+    }
+}
+
+// Send newsletter confirmation email
+async function sendNewsletterConfirmation(email) {
+    // Call Supabase Edge Function to send confirmation email via Resend
+    try {
+        if (window.supabaseClient && window.supabaseClient.functions) {
+            const { data, error } = await window.supabaseClient.functions.invoke('send-newsletter-confirmation', {
+                body: { email: email }
+            });
             
-            if (subscribers.includes(email)) {
-                showMessage(message, 'Sei già iscritto alla newsletter!', 'info');
-                return;
+            if (error) {
+                console.error('Error calling edge function:', error);
+                console.warn('⚠️ Edge Function error. Newsletter subscription saved but confirmation email not sent.');
+                console.info('ℹ️ To fix: Deploy the Edge Function using: supabase functions deploy send-newsletter-confirmation');
+                console.info('ℹ️ See NEWSLETTER_CORS_FIX.md for detailed instructions');
+                // Return success anyway - subscription is saved in database
+                return { success: true, skipEmail: true };
             }
             
-            subscribers.push(email);
-            localStorage.setItem('newsletterSubscribers', JSON.stringify(subscribers));
-            
-            showMessage(message, '✅ Iscrizione completata! Grazie!', 'success');
-            form.reset();
-        });
+            console.log('Confirmation email sent successfully:', data);
+            return { success: true, data };
+        } else {
+            // Edge function not available
+            console.log('[Newsletter] Edge function not deployed yet.');
+            console.log(`[Newsletter] Confirmation email should be sent to: ${email}`);
+            console.log('[Newsletter] Deploy the edge function: supabase functions deploy send-newsletter-confirmation');
+            return { success: true, message: 'Edge function not deployed' };
+        }
+    } catch (error) {
+        console.error('Error sending confirmation email:', error);
+        console.warn('⚠️ Email sending failed but subscription is saved. See NEWSLETTER_CORS_FIX.md for fix.');
+        // Return success - subscription is saved even if email fails
+        return { success: true, skipEmail: true };
     }
 }
 
@@ -172,6 +292,71 @@ function showMessage(element, text, type) {
     setTimeout(() => {
         element.classList.add('hidden');
     }, 5000);
+}
+
+// Check if user is already subscribed to newsletter
+async function checkNewsletterSubscription() {
+    const form = document.getElementById('newsletterForm');
+    const formContainer = form?.parentElement;
+    
+    if (!form || !window.supabaseClient) return;
+    
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user || !user.email) return;
+        
+        // Check if already subscribed
+        const { data, error } = await window.supabaseClient
+            .from('iscrizioni_newsletter')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+        
+        if (data && !error) {
+            // User is subscribed, show different message
+            if (formContainer) {
+                formContainer.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 2rem; border-radius: 12px; text-align: center;">
+                        <h3 style="margin: 0 0 0.5rem 0;">✅ Già Iscritto!</h3>
+                        <p style="margin: 0 0 1rem 0;">Sei già iscritto alla nostra newsletter.</p>
+                        <p style="margin: 0; font-size: 0.875rem; opacity: 0.9;">Gestisci la tua iscrizione nelle <a href="impostazioni.html" style="color: white; text-decoration: underline;">impostazioni</a></p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking newsletter subscription:', error);
+    }
+}
+
+// Unsubscribe from newsletter (for settings page)
+async function unsubscribeNewsletter() {
+    if (!window.supabaseClient) {
+        alert('❌ Errore: Supabase non disponibile');
+        return false;
+    }
+    
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user || !user.email) {
+            alert('❌ Devi essere loggato');
+            return false;
+        }
+        
+        const { error } = await window.supabaseClient
+            .from('iscrizioni_newsletter')
+            .delete()
+            .eq('email', user.email);
+        
+        if (error) throw error;
+        
+        alert('✅ Disiscrizione completata con successo!');
+        return true;
+    } catch (error) {
+        console.error('Error unsubscribing:', error);
+        alert('❌ Errore durante la disiscrizione: ' + error.message);
+        return false;
+    }
 }
 
 // ================================================
@@ -209,6 +394,97 @@ function initPagination() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         });
+    }
+}
+
+function renderPagination(currentPage, totalPages) {
+    const pagination = document.getElementById('pagination');
+    if (!pagination) return;
+    
+    // Clear existing pagination
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) {
+        // Hide pagination if only one page
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'flex';
+    
+    // Previous button
+    if (currentPage > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'page-num';
+        prevBtn.textContent = '← Precedente';
+        prevBtn.onclick = () => changePage(currentPage - 1);
+        pagination.appendChild(prevBtn);
+    }
+    
+    // Page numbers with smart ellipsis
+    const maxButtons = 7; // Show max 7 page buttons
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    // Adjust if near boundaries
+    if (currentPage <= 3) {
+        endPage = Math.min(totalPages, maxButtons - 1);
+    }
+    if (currentPage >= totalPages - 2) {
+        startPage = Math.max(1, totalPages - (maxButtons - 2));
+    }
+    
+    // First page
+    if (startPage > 1) {
+        const firstBtn = document.createElement('button');
+        firstBtn.className = 'page-num';
+        firstBtn.textContent = '1';
+        firstBtn.onclick = () => changePage(1);
+        pagination.appendChild(firstBtn);
+        
+        if (startPage > 2) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.padding = '0 0.5rem';
+            ellipsis.style.color = 'var(--neutral)';
+            pagination.appendChild(ellipsis);
+        }
+    }
+    
+    // Page buttons
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `page-num ${i === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.setAttribute('data-page', i);
+        pageBtn.onclick = () => changePage(i);
+        pagination.appendChild(pageBtn);
+    }
+    
+    // Last page
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.padding = '0 0.5rem';
+            ellipsis.style.color = 'var(--neutral)';
+            pagination.appendChild(ellipsis);
+        }
+        
+        const lastBtn = document.createElement('button');
+        lastBtn.className = 'page-num';
+        lastBtn.textContent = totalPages;
+        lastBtn.onclick = () => changePage(totalPages);
+        pagination.appendChild(lastBtn);
+    }
+    
+    // Next button
+    if (currentPage < totalPages) {
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'page-num';
+        nextBtn.textContent = 'Successivo →';
+        nextBtn.onclick = () => changePage(currentPage + 1);
+        pagination.appendChild(nextBtn);
     }
 }
 
@@ -252,19 +528,50 @@ function saveUserPreferences() {
 // ================================================
 // AUTHENTICATION
 // ================================================
-function checkAuth() {
-    // Check if user is logged in (in production, verify JWT or session)
-    const userSession = localStorage.getItem('userSession');
-    
-    if (userSession) {
-        try {
-            AppState.user = JSON.parse(userSession);
-            AppState.isAuthenticated = true;
-            updateUIForAuthenticatedUser();
-        } catch (e) {
-            console.error('Error parsing user session:', e);
-            logout();
+async function checkAuth() {
+    try {
+        // Check if user is logged in via Supabase
+        if (window.supabaseClient) {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            
+            if (user) {
+                // User is authenticated via Supabase
+                AppState.isAuthenticated = true;
+                
+                // Try to get profile from localStorage first (faster)
+                const cachedProfile = localStorage.getItem('userProfile');
+                if (cachedProfile) {
+                    try {
+                        AppState.user = JSON.parse(cachedProfile);
+                        AppState.user.id = user.id;
+                        AppState.user.email = user.email;
+                    } catch (e) {
+                        console.error('Error parsing cached profile:', e);
+                    }
+                }
+                
+                updateUIForAuthenticatedUser();
+                return;
+            }
         }
+        
+        // Fallback: Check localStorage (for backwards compatibility)
+        const userSession = localStorage.getItem('userSession');
+        const isAuthenticated = localStorage.getItem('isAuthenticated');
+        
+        if (userSession && isAuthenticated === 'true') {
+            try {
+                AppState.user = JSON.parse(userSession);
+                AppState.isAuthenticated = true;
+                updateUIForAuthenticatedUser();
+            } catch (e) {
+                console.error('Error parsing user session:', e);
+                logout();
+            }
+        }
+    } catch (error) {
+        console.error('Error checking auth:', error);
+        AppState.isAuthenticated = false;
     }
 }
 
@@ -307,24 +614,63 @@ function login(email, password) {
     return { success: true, user };
 }
 
-function logout() {
+async function logout() {
+    try {
+        // Sign out from Supabase
+        if (window.supabaseClient) {
+            await window.supabaseClient.auth.signOut();
+        }
+    } catch (error) {
+        console.error('Error signing out:', error);
+    }
+    
+    // Clear local state
     AppState.user = null;
     AppState.isAuthenticated = false;
+    
+    // Clear all localStorage items
     localStorage.removeItem('userSession');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    
     window.location.href = 'index.html';
 }
 
 // ================================================
 // ACCESS CONTROL
 // ================================================
-function initAccessControl() {
+async function initAccessControl() {
     // Check if current page requires authentication
-    const protectedPages = ['chat.html', 'profilo.html', 'dashboard.html', 'editor.html'];
+    const protectedPages = ['chat.html', 'profilo.html', 'dashboard.html', 'editor.html', 'admin.html'];
     const currentPage = window.location.pathname.split('/').pop();
     
-    if (protectedPages.includes(currentPage) && !AppState.isAuthenticated) {
-        // Redirect to login
-        window.location.href = `login.html?redirect=${currentPage}`;
+    if (protectedPages.includes(currentPage)) {
+        try {
+            // Wait for Supabase to be ready
+            if (!window.supabaseClient) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Check Supabase auth
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            
+            if (!user) {
+                // Not authenticated, redirect to login
+                window.location.href = `login.html?redirect=${currentPage}`;
+                return;
+            }
+            
+            // User is authenticated
+            AppState.isAuthenticated = true;
+        } catch (error) {
+            console.error('Error checking access:', error);
+            // On error, redirect to login
+            window.location.href = `login.html?redirect=${currentPage}`;
+        }
     }
 }
 
@@ -413,6 +759,12 @@ function generateUUID() {
     });
 }
 
+function extractUsernameFromEmail(email) {
+    // Extract username from email (part before @)
+    // Example: mario.rossi@cesaris.edu.it -> mario.rossi
+    return email.split('@')[0];
+}
+
 function getOrCreateSessionId() {
     let sessionId = localStorage.getItem('sessionId');
     if (!sessionId) {
@@ -455,5 +807,6 @@ window.formatDate = formatDate;
 window.calculateReadingTime = calculateReadingTime;
 window.truncateText = truncateText;
 window.generateUUID = generateUUID;
+window.extractUsernameFromEmail = extractUsernameFromEmail;
 
 console.log('✅ Main.js caricato con successo');

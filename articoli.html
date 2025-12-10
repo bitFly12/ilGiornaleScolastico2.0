@@ -192,18 +192,42 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script src="js/articles.js"></script>
     <script>
-        let filteredArticles = [...window.sampleArticles];
+        let filteredArticles = [];
+        let allArticles = [];
         let currentPage = 1;
         const articlesPerPage = 9;
         
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadArticlesFromSupabase();
             displayArticles();
             setupFilters();
         });
+        
+        // Load articles from Supabase
+        async function loadArticlesFromSupabase() {
+            if (window.SupabaseAPI) {
+                const result = await window.SupabaseAPI.getArticles({ limit: 1000 });
+                if (result.success && result.data) {
+                    allArticles = result.data;
+                    filteredArticles = [...allArticles];
+                } else {
+                    console.error('Error loading articles:', result.error);
+                    allArticles = [];
+                    filteredArticles = [];
+                }
+            } else {
+                console.error('SupabaseAPI not initialized');
+                allArticles = [];
+                filteredArticles = [];
+            }
+        }
         
         function setupFilters() {
             // Category filter
@@ -233,7 +257,7 @@
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             
             // Start with all articles
-            let articles = [...window.sampleArticles];
+            let articles = [...allArticles];
             
             // Filter by category
             if (category !== 'all') {

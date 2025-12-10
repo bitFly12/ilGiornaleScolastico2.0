@@ -5,23 +5,33 @@
 let allUsers = [];
 let currentUser = null;
 let selectedMentionIndex = 0;
+let realtimeInterval = null;
+let lastMessageId = null;
 
 // ================================================
 // Initialize Chat
 // ================================================
 async function initChat() {
     try {
-        // Get current user
-        currentUser = await SupabaseAPI.getCurrentUser();
-        if (!currentUser) {
+        // Wait a moment for Supabase session to be ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get current user from Supabase auth (use window.supabaseClient for consistency)
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        
+        if (!user) {
+            // No authenticated user, redirect to login
             window.location.href = 'login.html?redirect=chat.html';
             return;
         }
+        
+        // Store as currentUser
+        currentUser = user;
 
         // Load all users for mentions
         await loadAllUsers();
 
-        // Load chat messages
+        // Load chat messages (this will hide the page loader when complete)
         await loadChatMessages();
 
         // Update online count
@@ -32,8 +42,102 @@ async function initChat() {
 
         // Setup send button
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        
+        // Start real-time message updates
+        startRealtimeUpdates();
     } catch (error) {
         console.error('Error initializing chat:', error);
+        // Hide loader on error
+        hidePageLoader();
+        // On error, redirect to login
+        window.location.href = 'login.html?redirect=chat.html';
+    }
+}
+
+// Hide page loader
+function hidePageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 300);
+    }
+}
+
+// ================================================
+// Real-Time Message Updates
+// ================================================
+function startRealtimeUpdates() {
+    // Poll for new messages every 3 seconds
+    realtimeInterval = setInterval(checkForNewMessages, 3000);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', stopRealtimeUpdates);
+}
+
+function stopRealtimeUpdates() {
+    if (realtimeInterval) {
+        clearInterval(realtimeInterval);
+        realtimeInterval = null;
+    }
+}
+
+async function checkForNewMessages() {
+    try {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        
+        // Build query to fetch new messages
+        let query = supabase
+            .from('chat_messages')
+            .select(`
+                *,
+                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
+            `)
+            .eq('is_deleted', false)
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        // Only fetch messages newer than last known message
+        if (lastMessageId) {
+            query = query.gt('id', lastMessageId);
+        }
+        
+        const { data: newMessages, error } = await query;
+        
+        if (error) throw error;
+        
+        if (newMessages && newMessages.length > 0) {
+            // Reverse to show oldest first
+            newMessages.reverse();
+            
+            // Check if user is at bottom of chat
+            const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight ||
+                              container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            
+            // Add new messages
+            newMessages.forEach(msg => {
+                // Check if message already exists
+                const existingMsg = document.querySelector(`[data-message-id="${msg.id}"]`);
+                if (!existingMsg) {
+                    const messageEl = createMessageElement(msg);
+                    container.appendChild(messageEl);
+                    
+                    // Update last message ID
+                    if (!lastMessageId || msg.id > lastMessageId) {
+                        lastMessageId = msg.id;
+                    }
+                }
+            });
+            
+            // Auto-scroll if user was at bottom
+            if (isAtBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking for new messages:', error);
     }
 }
 
@@ -57,23 +161,70 @@ async function loadAllUsers() {
 }
 
 // ================================================
+// Show Loading State
+// ================================================
+function showChatLoading() {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    
+    // Create loading element
+    const loadingEl = document.createElement('div');
+    loadingEl.id = 'chatLoadingState';
+    loadingEl.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; text-align: center;';
+    loadingEl.innerHTML = `
+        <div style="width: 50px; height: 50px; border: 4px solid #e5e7eb; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+        <p style="color: var(--neutral); font-size: 1rem; margin: 0;">Caricamento messaggi in corso...</p>
+        <style>
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+    
+    // Keep pinned message
+    const pinnedMsg = container.querySelector('.pinned-messages');
+    container.innerHTML = '';
+    if (pinnedMsg) {
+        container.appendChild(pinnedMsg);
+    }
+    container.appendChild(loadingEl);
+}
+
+// ================================================
+// Hide Loading State
+// ================================================
+function hideChatLoading() {
+    const loadingEl = document.getElementById('chatLoadingState');
+    if (loadingEl) {
+        loadingEl.remove();
+    }
+}
+
+// ================================================
 // Load Chat Messages from Supabase
 // ================================================
 async function loadChatMessages() {
     const container = document.getElementById('chatMessages');
     if (!container) return;
 
+    // Show loading state
+    showChatLoading();
+
     try {
         const { data: messages, error } = await supabase
             .from('chat_messages')
             .select(`
                 *,
-                user:profili_utenti!chat_messages_user_id_fkey(username, nome_visualizzato)
+                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
+            .eq('is_deleted', false)
             .order('created_at', { ascending: true })
             .limit(100);
 
         if (error) throw error;
+
+        // Hide loading state
+        hideChatLoading();
 
         // Keep pinned message
         const pinnedMsg = container.querySelector('.pinned-messages');
@@ -87,6 +238,11 @@ async function loadChatMessages() {
             messages.forEach(msg => {
                 const messageEl = createMessageElement(msg);
                 container.appendChild(messageEl);
+                
+                // Track last message ID for real-time updates
+                if (!lastMessageId || msg.id > lastMessageId) {
+                    lastMessageId = msg.id;
+                }
             });
         } else {
             // Show welcome message
@@ -98,8 +254,13 @@ async function loadChatMessages() {
 
         // Scroll to bottom
         container.scrollTop = container.scrollHeight;
+        
+        // Hide page loader now that chat is fully loaded
+        hidePageLoader();
     } catch (error) {
         console.error('Error loading messages:', error);
+        // Hide loader even on error
+        hidePageLoader();
     }
 }
 
@@ -117,7 +278,12 @@ function createMessageElement(msg) {
     const timeAgo = formatTimeAgo(new Date(msg.created_at));
 
     // Parse and highlight mentions
-    const messageText = highlightMentions(msg.messaggio || msg.message);
+    // Note: Multiple fallbacks for backwards compatibility with old data
+    // - msg.content: Current schema (correct)
+    // - msg.message: Legacy field name (deprecated)
+    // - msg.messaggio: Old Italian field name (deprecated)
+    // TODO: Remove legacy fallbacks after data migration
+    const messageText = highlightMentions(msg.content || msg.message || msg.messaggio || '');
 
     let reactionsHTML = '';
     if (msg.reactions && Object.keys(msg.reactions).length > 0) {
@@ -314,27 +480,50 @@ function insertMention(username, startPos) {
 // ================================================
 // Send Message
 // ================================================
+let isSendingMessage = false; // Prevent rapid-fire sending
+
 async function sendMessage() {
     const input = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
     const message = input.value.trim();
 
-    if (!message || !currentUser) return;
+    if (!message || !currentUser || isSendingMessage) return;
+
+    // Prevent rapid clicks
+    isSendingMessage = true;
+    
+    // Disable send button
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        sendBtn.style.cursor = 'not-allowed';
+        sendBtn.textContent = 'Invio...';
+    }
 
     try {
+        // Get user profile for author_name
+        const { data: profile } = await supabase
+            .from('profili_utenti')
+            .select('nome_visualizzato, username')
+            .eq('id', currentUser.id)
+            .single();
+        
+        const authorName = profile?.nome_visualizzato || profile?.username || 'Anonimo';
+        
         // Insert message into Supabase
-        // Using 'messaggio' column (Italian standard for consistency)
         const { data, error } = await supabase
             .from('chat_messages')
             .insert([
                 {
                     user_id: currentUser.id,
-                    messaggio: message,
-                    message: message // Compatibility with existing code
+                    author_name: authorName,
+                    content: message,
+                    message_type: 'text'
                 }
             ])
             .select(`
                 *,
-                user:profili_utenti!chat_messages_user_id_fkey(username, nome_visualizzato)
+                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .single();
 
@@ -353,6 +542,17 @@ async function sendMessage() {
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Errore nell\'invio del messaggio');
+    } finally {
+        // Re-enable send button after a short delay
+        setTimeout(() => {
+            isSendingMessage = false;
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = '1';
+                sendBtn.style.cursor = 'pointer';
+                sendBtn.textContent = 'Invia';
+            }
+        }, 500); // 500ms cooldown to prevent spam
     }
 }
 

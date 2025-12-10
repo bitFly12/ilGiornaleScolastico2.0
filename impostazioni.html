@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impostazioni - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .settings-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .settings-header {
+            margin-bottom: 2rem;
+        }
+        
+        .settings-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .settings-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .settings-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 0.5rem;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--bg-light);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info {
+            flex: 1;
+        }
+        
+        .setting-label {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-dark);
+        }
+        
+        .setting-description {
+            font-size: 0.875rem;
+            color: var(--neutral);
+        }
+        
+        .setting-control {
+            margin-left: 2rem;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background-color: #d1d5db;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background-color: var(--success);
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+        
+        select.form-select,
+        input.form-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            min-width: 200px;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--error);
+        }
+        
+        @media (max-width: 768px) {
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .setting-control {
+                margin-left: 0;
+                margin-top: 1rem;
+                width: 100%;
+            }
+            
+            select.form-select,
+            input.form-input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo-link">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                    <span>☰</span>
+                </button>
+                
+                <nav>
+                    <ul class="nav-menu" id="navMenu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
+                        <li class="nav-item"><a href="impostazioni.html" class="nav-link active">Impostazioni</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1>⚙️ Impostazioni</h1>
+            <p style="color: var(--neutral);">Personalizza la tua esperienza sul Giornale Scolastico</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <!-- Appearance Section -->
+        <div class="settings-section">
+            <h2>🎨 Aspetto</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Tema</div>
+                    <div class="setting-description">Scegli tra tema chiaro, scuro o automatico</div>
+                </div>
+                <div class="setting-control">
+                    <select id="themeSelect" class="form-select">
+                        <option value="light">☀️ Chiaro</option>
+                        <option value="dark">🌙 Scuro</option>
+                        <option value="auto">🔄 Automatico</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Dimensione Font</div>
+                    <div class="setting-description">Regola la dimensione del testo</div>
+                </div>
+                <div class="setting-control">
+                    <select id="fontSizeSelect" class="form-select">
+                        <option value="small">Piccolo</option>
+                        <option value="medium">Medio</option>
+                        <option value="large">Grande</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Animazioni</div>
+                    <div class="setting-description">Attiva o disattiva le animazioni dell'interfaccia</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="animationsToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="settings-section">
+            <h2>🔔 Notifiche</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Notifiche Browser</div>
+                    <div class="setting-description">Ricevi notifiche per nuovi articoli e messaggi</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="browserNotificationsToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Iscrizione Newsletter</div>
+                    <div class="setting-description" id="newsletterStatus">Gestisci la tua iscrizione alla newsletter</div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary btn-sm" id="newsletterManageBtn" onclick="manageNewsletter()">Verifica</button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Notifiche Chat</div>
+                    <div class="setting-description">Ricevi notifiche per nuovi messaggi in chat</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="chatNotificationsToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Section -->
+        <div class="settings-section">
+            <h2>🔒 Privacy</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Profilo Pubblico</div>
+                    <div class="setting-description">Rendi visibile il tuo profilo agli altri utenti</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="publicProfileToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Mostra Email</div>
+                    <div class="setting-description">Mostra la tua email nel profilo pubblico</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="showEmailToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Statistiche di Lettura</div>
+                    <div class="setting-description">Consenti il tracciamento delle statistiche di lettura</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="readingStatsToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="settings-section">
+            <h2>📚 Contenuto</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Articoli per Pagina</div>
+                    <div class="setting-description">Numero di articoli mostrati per pagina</div>
+                </div>
+                <div class="setting-control">
+                    <select id="articlesPerPageSelect" class="form-select">
+                        <option value="6">6 articoli</option>
+                        <option value="12">12 articoli</option>
+                        <option value="24">24 articoli</option>
+                        <option value="48">48 articoli</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Autoplay Video</div>
+                    <div class="setting-description">Riproduzione automatica dei video negli articoli</div>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="autoplayToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Lingua Preferita</div>
+                    <div class="setting-description">Seleziona la tua lingua preferita</div>
+                </div>
+                <div class="setting-control">
+                    <select id="languageSelect" class="form-select">
+                        <option value="it">🇮🇹 Italiano</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="fr">🇫🇷 Français</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Section (Admin/Reporter only) -->
+        <div class="settings-section" id="accountSection" style="display: none;">
+            <h2>👤 Account</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Cambia Password</div>
+                    <div class="setting-description">Aggiorna la tua password</div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary btn-sm" onclick="changePassword()">Cambia</button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Sessioni Attive</div>
+                    <div class="setting-description">Gestisci i dispositivi connessi al tuo account</div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary btn-sm" onclick="viewSessions()">Visualizza</button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Esporta Dati</div>
+                    <div class="setting-description">Scarica una copia dei tuoi dati</div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary btn-sm" onclick="exportData()">Esporta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone (Admin only) -->
+        <div class="settings-section" id="dangerSection" style="display: none; border: 2px solid var(--error);">
+            <h2 style="color: var(--error);">⚠️ Zona Pericolosa</h2>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Reset Impostazioni</div>
+                    <div class="setting-description">Ripristina tutte le impostazioni ai valori predefiniti</div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary btn-sm" onclick="resetSettings()">Reset</button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Elimina Account</div>
+                    <div class="setting-description">Elimina permanentemente il tuo account e tutti i dati</div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-sm" style="background-color: var(--error); color: white;" onclick="deleteAccount()">Elimina</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-api.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        // Settings state
+        const settings = {
+            theme: 'light',
+            fontSize: 'medium',
+            animations: true,
+            browserNotifications: false,
+            emailNotifications: true,
+            chatNotifications: true,
+            publicProfile: true,
+            showEmail: false,
+            readingStats: true,
+            articlesPerPage: 12,
+            autoplay: false,
+            language: 'it'
+        };
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('userSettings');
+            if (saved) {
+                Object.assign(settings, JSON.parse(saved));
+            }
+            applySettings();
+        }
+
+        // Apply settings to UI
+        function applySettings() {
+            // Theme
+            document.getElementById('themeSelect').value = settings.theme;
+            if (settings.theme === 'dark' || (settings.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.body.classList.add('dark-mode');
+            }
+            
+            // Font size
+            document.getElementById('fontSizeSelect').value = settings.fontSize;
+            document.documentElement.style.fontSize = settings.fontSize === 'small' ? '14px' : settings.fontSize === 'large' ? '18px' : '16px';
+            
+            // Toggles
+            setToggle('animationsToggle', settings.animations);
+            setToggle('browserNotificationsToggle', settings.browserNotifications);
+            setToggle('emailNotificationsToggle', settings.emailNotifications);
+            setToggle('chatNotificationsToggle', settings.chatNotifications);
+            setToggle('publicProfileToggle', settings.publicProfile);
+            setToggle('showEmailToggle', settings.showEmail);
+            setToggle('readingStatsToggle', settings.readingStats);
+            setToggle('autoplayToggle', settings.autoplay);
+            
+            // Selects
+            document.getElementById('articlesPerPageSelect').value = settings.articlesPerPage;
+            document.getElementById('languageSelect').value = settings.language;
+            
+            // Animations
+            if (!settings.animations) {
+                document.body.style.setProperty('--transition-speed', '0s');
+            }
+        }
+
+        // Save settings
+        function saveSettings() {
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+            showAlert('✅ Impostazioni salvate con successo!', 'success');
+        }
+
+        // Helper function to set toggle state
+        function setToggle(id, active) {
+            const toggle = document.getElementById(id);
+            if (active) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        // Initialize toggles
+        function initToggles() {
+            const toggles = document.querySelectorAll('.toggle-switch');
+            toggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    updateSetting(this.id);
+                });
+            });
+        }
+
+        // Initialize selects
+        function initSelects() {
+            document.getElementById('themeSelect').addEventListener('change', (e) => {
+                settings.theme = e.target.value;
+                applyTheme();
+                saveSettings();
+            });
+            
+            document.getElementById('fontSizeSelect').addEventListener('change', (e) => {
+                settings.fontSize = e.target.value;
+                applySettings();
+                saveSettings();
+            });
+            
+            document.getElementById('articlesPerPageSelect').addEventListener('change', (e) => {
+                settings.articlesPerPage = parseInt(e.target.value);
+                saveSettings();
+            });
+            
+            document.getElementById('languageSelect').addEventListener('change', (e) => {
+                settings.language = e.target.value;
+                saveSettings();
+            });
+        }
+
+        // Update setting from toggle
+        function updateSetting(toggleId) {
+            const isActive = document.getElementById(toggleId).classList.contains('active');
+            
+            switch(toggleId) {
+                case 'animationsToggle':
+                    settings.animations = isActive;
+                    break;
+                case 'browserNotificationsToggle':
+                    settings.browserNotifications = isActive;
+                    if (isActive) {
+                        requestNotificationPermission();
+                    }
+                    break;
+                case 'emailNotificationsToggle':
+                    settings.emailNotifications = isActive;
+                    break;
+                case 'chatNotificationsToggle':
+                    settings.chatNotifications = isActive;
+                    break;
+                case 'publicProfileToggle':
+                    settings.publicProfile = isActive;
+                    break;
+                case 'showEmailToggle':
+                    settings.showEmail = isActive;
+                    break;
+                case 'readingStatsToggle':
+                    settings.readingStats = isActive;
+                    break;
+                case 'autoplayToggle':
+                    settings.autoplay = isActive;
+                    break;
+            }
+            
+            saveSettings();
+        }
+
+        // Apply theme
+        function applyTheme() {
+            const theme = settings.theme;
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else if (theme === 'light') {
+                document.body.classList.remove('dark-mode');
+            } else { // auto
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+            }
+        }
+
+        // Request notification permission
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    showAlert('✅ Notifiche attivate!', 'success');
+                } else {
+                    showAlert('❌ Permesso notifiche negato', 'error');
+                    settings.browserNotifications = false;
+                    setToggle('browserNotificationsToggle', false);
+                }
+            }
+        }
+
+        // Account functions
+        function changePassword() {
+            alert('Funzionalità in arrivo: Cambio password tramite email');
+        }
+
+        function viewSessions() {
+            alert('Funzionalità in arrivo: Visualizza sessioni attive');
+        }
+
+        function exportData() {
+            alert('Funzionalità in arrivo: Esporta i tuoi dati');
+        }
+
+        function resetSettings() {
+            if (confirm('Sei sicuro di voler ripristinare tutte le impostazioni?')) {
+                localStorage.removeItem('userSettings');
+                location.reload();
+            }
+        }
+
+        function deleteAccount() {
+            const confirmed = prompt('Sei ASSOLUTAMENTE SICURO? Scrivi "ELIMINA" per confermare');
+            if (confirmed === 'ELIMINA') {
+                alert('Funzionalità in arrivo: Eliminazione account');
+            }
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+
+        // Manage newsletter subscription
+        async function manageNewsletter() {
+            const statusEl = document.getElementById('newsletterStatus');
+            const btnEl = document.getElementById('newsletterManageBtn');
+            
+            if (!window.supabaseClient) {
+                alert('❌ Supabase non disponibile');
+                return;
+            }
+            
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user || !user.email) {
+                    alert('❌ Devi essere loggato');
+                    return;
+                }
+                
+                // Check subscription status
+                const { data, error } = await window.supabaseClient
+                    .from('iscrizioni_newsletter')
+                    .select('*')
+                    .eq('email', user.email)
+                    .single();
+                
+                if (data && !error) {
+                    // User is subscribed
+                    if (confirm('Sei attualmente iscritto alla newsletter. Vuoi disiscriverti?')) {
+                        const { error: deleteError } = await window.supabaseClient
+                            .from('iscrizioni_newsletter')
+                            .delete()
+                            .eq('email', user.email);
+                        
+                        if (deleteError) throw deleteError;
+                        
+                        statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
+                        btnEl.textContent = 'Verifica';
+                        showAlert('✅ Disiscrizione completata!', 'success');
+                    }
+                } else {
+                    // User is not subscribed
+                    statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
+                    alert('ℹ️ Non sei iscritto alla newsletter. Puoi iscriverti dalla homepage.');
+                }
+            } catch (error) {
+                console.error('Error managing newsletter:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+
+        // Check user role and show/hide sections
+        async function checkUserRole() {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) {
+                    const profile = await SupabaseAPI.getUserProfile(user.id);
+                    if (profile.success) {
+                        const role = profile.data.ruolo;
+                        
+                        // Show account section for all logged in users
+                        document.getElementById('accountSection').style.display = 'block';
+                        
+                        // Show danger section only for admin roles
+                        if (role === 'caporedattore' || role === 'docente') {
+                            document.getElementById('dangerSection').style.display = 'block';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking user role:', error);
+            }
+        }
+
+        // Check newsletter subscription status on load
+        async function checkNewsletterSubscriptionStatus() {
+            if (!window.supabaseClient) return;
+            
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user || !user.email) return;
+                
+                const { data } = await window.supabaseClient
+                    .from('iscrizioni_newsletter')
+                    .select('*')
+                    .eq('email', user.email)
+                    .single();
+                
+                const statusEl = document.getElementById('newsletterStatus');
+                const btnEl = document.getElementById('newsletterManageBtn');
+                
+                if (data) {
+                    statusEl.textContent = '✅ Iscritto - Clicca per disiscriverti';
+                    btnEl.textContent = 'Gestisci';
+                } else {
+                    statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
+                    btnEl.textContent = 'Verifica';
+                }
+            } catch (error) {
+                console.error('Error checking newsletter status:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            initToggles();
+            initSelects();
+            checkUserRole();
+            checkNewsletterSubscriptionStatus();
+            // initAuth() is not needed here - it's handled by main.js
+            if (typeof initMobileMenu === 'function') {
+                initMobileMenu();
+            }
+        });
+    </script>
+</body>
+</html>

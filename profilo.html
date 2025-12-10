@@ -6,6 +6,98 @@
     <title>Profilo - Giornale Cesaris</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .profile-sidebar {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            height: fit-content;
+        }
+        .profile-main {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .stat-card {
+            background: var(--bg-primary);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .stat-label {
+            color: var(--neutral);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .activity-item {
+            border-left: 3px solid var(--primary);
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .achievement-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -19,20 +111,21 @@
                     <ul class="nav-menu">
                         <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
                         <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link">Chat</a></li>
                         <li class="nav-item"><a href="profilo.html" class="nav-link active">Profilo</a></li>
+                        <li class="nav-item"><a href="impostazioni.html" class="nav-link">⚙️ Impostazioni</a></li>
                     </ul>
                 </nav>
+                <button class="btn btn-icon" onclick="toggleDarkMode()">🌙</button>
             </div>
         </div>
     </header>
 
-    <main class="container" style="padding: 3rem 1rem; max-width: 800px; margin: 0 auto;">
-        <div class="card" style="padding: 2rem;">
-            <h1 style="color: var(--primary); margin-bottom: 2rem;">👤 Il Tuo Profilo</h1>
-            
-            <div id="profileContent">
-                <p>Effettua il login per vedere il tuo profilo.</p>
-                <a href="login.html" class="btn btn-primary">Accedi</a>
+    <main class="profile-container">
+        <div id="profileContent">
+            <div style="text-align: center; padding: 4rem 2rem;">
+                <h2>Caricamento profilo...</h2>
+                <p>Se non sei loggato, verrai reindirizzato alla pagina di login.</p>
             </div>
         </div>
     </main>
@@ -40,21 +133,293 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                <p>&copy; 2024 Giornale Scolastico Cesaris.</p>
+                <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
             </div>
         </div>
     </footer>
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-api.js"></script>
     <script src="js/main.js"></script>
     <script>
-        if (window.AppState && window.AppState.isAuthenticated) {
-            document.getElementById('profileContent').innerHTML = `
-                <h2>Benvenuto, ${window.AppState.user.name}!</h2>
-                <p><strong>Email:</strong> ${window.AppState.user.email}</p>
-                <p><strong>Ruolo:</strong> ${window.AppState.user.role}</p>
-                <button onclick="window.logout()" class="btn btn-danger">Logout</button>
+        // Enhanced profile with role-specific features
+        async function loadEnhancedProfile() {
+            try {
+                // Wait for Supabase to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check authentication
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    window.location.href = 'login.html?redirect=profilo.html';
+                    return;
+                }
+                
+                // Get full profile
+                const profile = await SupabaseAPI.getUserProfile(user.id);
+                if (!profile.success) {
+                    showError();
+                    return;
+                }
+                
+                const userData = profile.data;
+                const role = userData.ruolo;
+                
+                // Render profile based on role
+                renderProfileHeader(userData);
+                renderProfileContent(userData, role);
+                
+            } catch (error) {
+                console.error('Error loading enhanced profile:', error);
+                showError();
+            }
+        }
+        
+        function renderProfileHeader(userData) {
+            const roleEmojis = {
+                'utente': '👤',
+                'reporter': '✍️',
+                'docente': '👨‍🏫',
+                'caporedattore': '👔'
+            };
+            
+            const roleNames = {
+                'utente': 'Utente',
+                'reporter': 'Reporter',
+                'docente': 'Docente',
+                'caporedattore': 'Caporedattore'
+            };
+            
+            const emoji = roleEmojis[userData.ruolo] || '👤';
+            const roleName = roleNames[userData.ruolo] || 'Utente';
+            
+            return `
+                <div class="profile-header">
+                    <div class="profile-avatar">${emoji}</div>
+                    <h1>${userData.nome_visualizzato || userData.username}</h1>
+                    <p style="opacity: 0.9; margin: 0.5rem 0;">${userData.email}</p>
+                    <div class="badge badge-primary" style="display: inline-block; margin-top: 1rem;">
+                        ${roleName}
+                    </div>
+                </div>
             `;
         }
+        
+        async function renderProfileContent(userData, role) {
+            const container = document.getElementById('profileContent');
+            
+            let html = renderProfileHeader(userData);
+            
+            html += `<div class="profile-grid">`;
+            
+            // Sidebar
+            html += `
+                <div class="profile-sidebar">
+                    <h3>Informazioni Personali</h3>
+                    <div style="margin-top: 1.5rem;">
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Email:</strong><br>
+                            ${userData.email}
+                        </p>
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Username:</strong><br>
+                            ${userData.username}
+                        </p>
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Nome visualizzato:</strong><br>
+                            ${userData.nome_visualizzato || 'Non impostato'}
+                        </p>
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Ruolo:</strong><br>
+                            <span class="badge badge-primary">${userData.ruolo}</span>
+                        </p>
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Membro da:</strong><br>
+                            ${new Date(userData.created_at).toLocaleDateString('it-IT')}
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <a href="impostazioni.html" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">⚙️ Impostazioni</a>
+                        <button onclick="handleLogout()" class="btn btn-error" style="width: 100%;">🚪 Logout</button>
+                    </div>
+                </div>
+            `;
+            
+            // Main content - role-specific
+            html += `<div class="profile-main">`;
+            
+            if (role === 'reporter' || role === 'docente' || role === 'caporedattore') {
+                html += await renderReporterContent(userData);
+            } else if (role === 'utente') {
+                html += await renderUserContent(userData);
+            }
+            
+            html += `</div></div>`;
+            
+            container.innerHTML = html;
+        }
+        
+        async function renderReporterContent(userData) {
+            // Get reporter statistics
+            const articlesResult = await SupabaseAPI.getArticles({ limit: 100 });
+            const myArticles = articlesResult.success ? 
+                articlesResult.data.filter(a => a.autore_id === userData.id) : [];
+            
+            const publishedArticles = myArticles.filter(a => a.stato === 'pubblicato').length;
+            const draftArticles = myArticles.filter(a => a.stato === 'bozza').length;
+            const totalViews = myArticles.reduce((sum, a) => sum + (a.visualizzazioni || 0), 0);
+            
+            return `
+                <h2 style="margin-bottom: 1.5rem;">📊 Le Tue Statistiche</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${myArticles.length}</div>
+                        <div class="stat-label">Articoli Totali</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${publishedArticles}</div>
+                        <div class="stat-label">Pubblicati</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${draftArticles}</div>
+                        <div class="stat-label">Bozze</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${totalViews}</div>
+                        <div class="stat-label">Visualizzazioni</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <a href="dashboard.html" class="btn btn-primary" style="width: 100%;">
+                        ✍️ Scrivi un Nuovo Articolo
+                    </a>
+                </div>
+                
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">📝 Ultimi Articoli</h3>
+                ${renderRecentArticles(myArticles.slice(0, 5))}
+                
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">🏆 Obiettivi</h3>
+                ${renderAchievements(myArticles.length, totalViews)}
+            `;
+        }
+        
+        async function renderUserContent(userData) {
+            return `
+                <h2 style="margin-bottom: 1.5rem;">👤 Benvenuto!</h2>
+                
+                <div style="background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Diventa un Reporter!</h3>
+                    <p style="margin-bottom: 1.5rem;">
+                        Vuoi scrivere articoli per il giornale scolastico? Candidati per diventare un reporter!
+                    </p>
+                    <a href="candidatura.html" class="btn btn-primary">📝 Candidati Ora</a>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem;">📚 Le Tue Letture</h3>
+                <p style="color: var(--neutral); margin-bottom: 1rem;">
+                    Esplora gli articoli scritti dai nostri reporter!
+                </p>
+                <a href="articoli.html" class="btn btn-secondary">Vai agli Articoli</a>
+                
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">💬 Chat Comunitaria</h3>
+                <p style="color: var(--neutral); margin-bottom: 1rem;">
+                    Partecipa alle discussioni con altri studenti!
+                </p>
+                <a href="chat.html" class="btn btn-secondary">Apri Chat</a>
+            `;
+        }
+        
+        function renderRecentArticles(articles) {
+            if (articles.length === 0) {
+                return '<p style="color: var(--neutral);">Non hai ancora scritto articoli.</p>';
+            }
+            
+            return articles.map(article => `
+                <div class="activity-item">
+                    <h4 style="margin-bottom: 0.5rem;">${article.titolo}</h4>
+                    <p style="color: var(--neutral); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        ${article.sommario || ''}
+                    </p>
+                    <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.875rem;">
+                        <span class="badge badge-${article.stato === 'pubblicato' ? 'success' : 'warning'}">
+                            ${article.stato}
+                        </span>
+                        <span style="color: var(--neutral);">
+                            👁️ ${article.visualizzazioni || 0} visualizzazioni
+                        </span>
+                        <a href="articolo.html?id=${article.id}" style="margin-left: auto;">Leggi →</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderAchievements(articleCount, totalViews) {
+            const achievements = [];
+            
+            if (articleCount >= 1) {
+                achievements.push({ icon: '🎯', name: 'Primo Articolo', desc: 'Hai pubblicato il tuo primo articolo!' });
+            }
+            if (articleCount >= 5) {
+                achievements.push({ icon: '⭐', name: 'Scrittore Attivo', desc: '5 articoli pubblicati' });
+            }
+            if (articleCount >= 10) {
+                achievements.push({ icon: '🏆', name: 'Reporter Esperto', desc: '10 articoli pubblicati' });
+            }
+            if (totalViews >= 100) {
+                achievements.push({ icon: '👥', name: 'Popolare', desc: '100+ visualizzazioni totali' });
+            }
+            if (totalViews >= 500) {
+                achievements.push({ icon: '🔥', name: 'Virale', desc: '500+ visualizzazioni totali' });
+            }
+            
+            if (achievements.length === 0) {
+                return '<p style="color: var(--neutral);">Continua a scrivere per sbloccare obiettivi!</p>';
+            }
+            
+            return `
+                <div class="badge-list">
+                    ${achievements.map(a => `
+                        <div class="achievement-badge">
+                            <span>${a.icon}</span>
+                            <div>
+                                <div style="font-weight: bold;">${a.name}</div>
+                                <div style="font-size: 0.75rem; opacity: 0.9;">${a.desc}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function showError() {
+            document.getElementById('profileContent').innerHTML = `
+                <div style="text-align: center; padding: 4rem 2rem;">
+                    <h2 style="color: var(--error);">❌ Errore</h2>
+                    <p>Impossibile caricare il profilo. Riprova più tardi.</p>
+                    <a href="login.html?redirect=profilo.html" class="btn btn-primary" style="margin-top: 1rem;">
+                        Accedi Nuovamente
+                    </a>
+                </div>
+            `;
+        }
+        
+        async function handleLogout() {
+            if (confirm('Sei sicuro di voler uscire?')) {
+                await window.supabaseClient.auth.signOut();
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEnhancedProfile();
+        });
     </script>
 </body>
 </html>

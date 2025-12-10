@@ -49,6 +49,50 @@
     --z-dropdown: 1000;
     --z-modal: 2000;
     --z-toast: 3000;
+    --z-loader: 9999;
+}
+
+/* ================================================
+   PAGE LOADER (Global Loading Screen)
+   ================================================ */
+.page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.98);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-loader);
+    transition: opacity 0.3s ease;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e7eb;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loader-text {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: var(--neutral);
+    font-weight: 500;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Dark Mode Variables */
@@ -771,6 +815,88 @@ img {
     color: var(--text-dark);
 }
 
+/* Dark mode: Footer */
+.dark-mode .footer {
+    background-color: #1a1a1a;
+    color: #d1d5db;
+    border-top: 1px solid #374151;
+}
+
+.dark-mode .footer a {
+    color: #60a5fa;
+}
+
+.dark-mode .footer-bottom {
+    border-top-color: #374151;
+}
+
+/* Dark mode: Chat */
+.dark-mode .chat-header {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a);
+}
+
+.dark-mode .chat-messages {
+    background-color: #1a1a1a;
+    border-color: #374151;
+}
+
+.dark-mode .message {
+    color: #e5e7eb;
+}
+
+.dark-mode .message-text {
+    color: #f3f4f6;
+}
+
+.dark-mode .message-author {
+    color: #d1d5db;
+}
+
+.dark-mode .message-time {
+    color: #9ca3af;
+}
+
+.dark-mode .chat-input-container {
+    background-color: #2d2d2d;
+    border-top-color: #374151;
+}
+
+.dark-mode .chat-input {
+    background-color: #1a1a1a;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+.dark-mode .chat-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Dark mode: Newsletter and other widgets */
+.dark-mode .newsletter-widget {
+    background-color: var(--bg-card);
+    color: var(--text-dark);
+}
+
+.dark-mode .newsletter-form input {
+    background-color: #1a1a1a;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+.dark-mode .newsletter-form input::placeholder {
+    color: #9ca3af;
+}
+
+/* Dark mode: Buttons */
+.dark-mode .btn-secondary {
+    background-color: #374151;
+    color: #f3f4f6;
+}
+
+.dark-mode .btn-secondary:hover {
+    background-color: #4b5563;
+}
+
 /* ================================================
    ANIMATIONS
    ================================================ */
@@ -800,4 +926,554 @@ img {
     width: 40px;
     height: 40px;
     animation: spin 1s linear infinite;
+}
+
+/* ================================================
+   ENHANCED DARK MODE IMPROVEMENTS
+   ================================================ */
+
+/* Dark mode: Article cards - ensure text is visible */
+.dark-mode .article-card {
+    background-color: #2d2d2d;
+    border-color: #4b5563;
+}
+
+.dark-mode .article-card h3,
+.dark-mode .article-card .article-title {
+    color: #f9fafb !important;
+}
+
+.dark-mode .article-card p,
+.dark-mode .article-card .article-summary,
+.dark-mode .article-card .article-meta {
+    color: #d1d5db !important;
+}
+
+.dark-mode .article-card .article-category {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+/* Dark mode: Buttons and links */
+.dark-mode .btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.dark-mode .btn-secondary {
+    background-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode a {
+    color: #60a5fa;
+}
+
+.dark-mode a:hover {
+    color: #93c5fd;
+}
+
+/* Dark mode: Forms and inputs */
+.dark-mode input[type="text"],
+.dark-mode input[type="email"],
+.dark-mode input[type="password"],
+.dark-mode input[type="number"],
+.dark-mode select,
+.dark-mode textarea {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* Dark mode: Chat pinned messages */
+.dark-mode .pinned-message {
+    background-color: #374151;
+    border-left-color: #60a5fa;
+    color: #f9fafb;
+}
+
+.dark-mode .pinned-message-text {
+    color: #e5e7eb;
+}
+
+.dark-mode .pin-icon {
+    color: #fbbf24;
+}
+
+/* Dark mode: Pagination */
+.dark-mode .pagination button,
+.dark-mode .page-num {
+    background-color: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+}
+
+.dark-mode .pagination button:hover,
+.dark-mode .page-num:hover {
+    background-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode .pagination button.active,
+.dark-mode .page-num.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Dark mode: Tables */
+.dark-mode table {
+    background-color: #1f2937;
+    color: #f9fafb;
+}
+
+.dark-mode th {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+.dark-mode tr {
+    border-bottom-color: #4b5563;
+}
+
+.dark-mode tr:hover {
+    background-color: #374151;
+}
+
+/* Dark mode: Alerts and notifications */
+.dark-mode .alert {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+.dark-mode .alert-success {
+    background-color: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #6ee7b7;
+}
+
+.dark-mode .alert-error {
+    background-color: rgba(220, 38, 38, 0.2);
+    border-color: #dc2626;
+    color: #fca5a5;
+}
+
+/* Dark mode: Code blocks and pre */
+.dark-mode code,
+.dark-mode pre {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+
+/* Dark mode: Headings */
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+    color: #f9fafb;
+}
+
+/* Dark mode: Reporter banner on homepage */
+.dark-mode #reporterQuickAccess h2 {
+    color: white !important;
+}
+
+.dark-mode #reporterQuickAccess p {
+    color: #f0fdf4 !important;
+}
+
+/* Dark mode: Profile page */
+.dark-mode .profile-header {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .profile-stats {
+    background-color: #374151;
+}
+
+.dark-mode .stat-label {
+    color: #9ca3af;
+}
+
+.dark-mode .stat-value {
+    color: #f9fafb;
+}
+
+/* Dark mode: Settings page */
+.dark-mode .settings-section {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .setting-item {
+    border-bottom-color: #4b5563;
+}
+
+.dark-mode .setting-label {
+    color: #f9fafb;
+}
+
+.dark-mode .setting-description {
+    color: #9ca3af;
+}
+
+/* Dark mode: Toggle switch */
+.dark-mode .toggle-switch {
+    background-color: #4b5563;
+}
+
+.dark-mode .toggle-switch.active {
+    background-color: #10b981;
+}
+
+/* Dark mode: Ensure white text doesn't disappear on white backgrounds */
+.dark-mode .text-white {
+    color: #f9fafb !important;
+}
+
+/* Dark mode: Card overlays */
+.dark-mode .card-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3));
+}
+
+/* Dark mode: Dropdown menus */
+.dark-mode .dropdown-menu {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .dropdown-item {
+    color: #d1d5db;
+}
+
+.dark-mode .dropdown-item:hover {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+/* Dark mode: Badges */
+.dark-mode .badge {
+    background-color: #374151;
+    color: #d1d5db;
+}
+
+.dark-mode .badge-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.dark-mode .badge-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.dark-mode .badge-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.dark-mode .badge-error {
+    background-color: #dc2626;
+    color: white;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile Navigation Toggle */
+.menu-toggle,
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: var(--text-dark);
+}
+
+@media (max-width: 768px) {
+    /* Mobile Menu Toggle Visible */
+    .menu-toggle,
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    /* Hide desktop navigation */
+    nav ul {
+        display: none;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: white;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+        flex-direction: column;
+        padding: 2rem 1rem;
+        transition: right 0.3s ease;
+        z-index: 1000;
+    }
+    
+    nav ul.mobile-menu-open {
+        display: flex;
+        right: 0;
+    }
+    
+    nav ul li {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+    
+    nav ul li a {
+        display: block;
+        padding: 0.75rem 1rem;
+        width: 100%;
+    }
+    
+    /* Typography */
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    h3 {
+        font-size: 1.25rem;
+    }
+    
+    /* Container padding */
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    /* Grids become single column */
+    .grid,
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    /* Article cards */
+    .article-card {
+        margin-bottom: 1rem;
+    }
+    
+    .article-title {
+        font-size: 1.5rem;
+    }
+    
+    /* Forms */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-input,
+    .form-textarea,
+    .form-select {
+        width: 100%;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Buttons */
+    .btn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin: 0.25rem 0;
+    }
+    
+    /* Tables scroll horizontally */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 600px;
+    }
+    
+    /* Article detail page */
+    .article-container {
+        padding: 0 1rem;
+    }
+    
+    .article-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .article-image {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        object-fit: cover;
+    }
+    
+    /* Reaction buttons */
+    .reactions {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .reaction-btn {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 80px;
+    }
+    
+    /* Chat interface */
+    .chat-container {
+        height: calc(100vh - 120px);
+    }
+    
+    .chat-messages {
+        padding: 0.5rem;
+    }
+    
+    .message-bubble {
+        max-width: 85%;
+    }
+    
+    /* Dashboard */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    /* Modal */
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        margin: 1rem auto;
+        padding: 1.5rem;
+    }
+    
+    /* Footer */
+    .footer-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    
+    /* Settings page */
+    .settings-section {
+        padding: 1rem;
+    }
+    
+    /* Profile page */
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        margin-bottom: 1rem;
+    }
+    
+    /* Pagination */
+    .pagination {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .page-btn {
+        min-width: 40px;
+        padding: 0.5rem;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 0.75rem;
+    }
+    
+    /* Touch targets - minimum 44px */
+    a, button, input, select, textarea {
+        min-height: 44px;
+    }
+    
+    /* Prevent text size adjust */
+    body {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+    }
+    
+    /* Hero section */
+    .hero {
+        padding: 2rem 1rem;
+    }
+    
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    /* Navigation tabs */
+    .nav-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+    }
+    
+    .nav-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+    
+    .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.9375rem;
+    }
+    
+    .article-title {
+        font-size: 1.25rem;
+    }
+    
+    .stat-card h3 {
+        font-size: 1.5rem;
+    }
 }
