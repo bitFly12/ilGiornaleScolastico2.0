@@ -190,17 +190,17 @@ function initNewsletterForm() {
                         throw error;
                     }
                     
-                    // Successfully subscribed
-                    showMessage(message, '✅ Iscrizione completata! Controlla la tua email per confermare.', 'success');
-                    if (form) form.reset();
-                    
                     // Send confirmation email via Edge Function (if available)
-                    try {
-                        await sendNewsletterConfirmation(email);
-                    } catch (emailError) {
-                        console.error('Error sending confirmation email:', emailError);
-                        // Don't show error to user, subscription was successful
+                    const emailResult = await sendNewsletterConfirmation(email);
+                    
+                    // Successfully subscribed - show appropriate message
+                    if (emailResult.skipEmail) {
+                        showMessage(message, '✅ Iscrizione completata! (Email di conferma non inviata - configurazione in corso)', 'success');
+                        console.info('💡 Newsletter subscription saved. Email confirmation skipped (Edge Function not configured).');
+                    } else {
+                        showMessage(message, '✅ Iscrizione completata! Controlla la tua email per confermare.', 'success');
                     }
+                    if (form) form.reset();
                 } else {
                     // Fallback to localStorage if Supabase not available
                     let subscribers = JSON.parse(localStorage.getItem('newsletterSubscribers') || '[]');
@@ -253,7 +253,11 @@ async function sendNewsletterConfirmation(email) {
             
             if (error) {
                 console.error('Error calling edge function:', error);
-                return { success: false, error: error.message };
+                console.warn('⚠️ Edge Function error. Newsletter subscription saved but confirmation email not sent.');
+                console.info('ℹ️ To fix: Deploy the Edge Function using: supabase functions deploy send-newsletter-confirmation');
+                console.info('ℹ️ See NEWSLETTER_CORS_FIX.md for detailed instructions');
+                // Return success anyway - subscription is saved in database
+                return { success: true, skipEmail: true };
             }
             
             console.log('Confirmation email sent successfully:', data);
@@ -267,7 +271,9 @@ async function sendNewsletterConfirmation(email) {
         }
     } catch (error) {
         console.error('Error sending confirmation email:', error);
-        return { success: false, error: error.message };
+        console.warn('⚠️ Email sending failed but subscription is saved. See NEWSLETTER_CORS_FIX.md for fix.');
+        // Return success - subscription is saved even if email fails
+        return { success: true, skipEmail: true };
     }
 }
 
