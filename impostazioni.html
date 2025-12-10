@@ -247,13 +247,11 @@
             
             <div class="setting-item">
                 <div class="setting-info">
-                    <div class="setting-label">Email Newsletter</div>
-                    <div class="setting-description">Ricevi aggiornamenti via email</div>
+                    <div class="setting-label">Iscrizione Newsletter</div>
+                    <div class="setting-description" id="newsletterStatus">Gestisci la tua iscrizione alla newsletter</div>
                 </div>
                 <div class="setting-control">
-                    <div class="toggle-switch active" id="emailNotificationsToggle">
-                        <div class="toggle-slider"></div>
-                    </div>
+                    <button class="btn btn-secondary btn-sm" id="newsletterManageBtn" onclick="manageNewsletter()">Verifica</button>
                 </div>
             </div>
             
@@ -646,6 +644,55 @@
             }, 5000);
         }
 
+        // Manage newsletter subscription
+        async function manageNewsletter() {
+            const statusEl = document.getElementById('newsletterStatus');
+            const btnEl = document.getElementById('newsletterManageBtn');
+            
+            if (!window.supabaseClient) {
+                alert('❌ Supabase non disponibile');
+                return;
+            }
+            
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user || !user.email) {
+                    alert('❌ Devi essere loggato');
+                    return;
+                }
+                
+                // Check subscription status
+                const { data, error } = await window.supabaseClient
+                    .from('iscrizioni_newsletter')
+                    .select('*')
+                    .eq('email', user.email)
+                    .single();
+                
+                if (data && !error) {
+                    // User is subscribed
+                    if (confirm('Sei attualmente iscritto alla newsletter. Vuoi disiscriverti?')) {
+                        const { error: deleteError } = await window.supabaseClient
+                            .from('iscrizioni_newsletter')
+                            .delete()
+                            .eq('email', user.email);
+                        
+                        if (deleteError) throw deleteError;
+                        
+                        statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
+                        btnEl.textContent = 'Verifica';
+                        showAlert('✅ Disiscrizione completata!', 'success');
+                    }
+                } else {
+                    // User is not subscribed
+                    statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
+                    alert('ℹ️ Non sei iscritto alla newsletter. Puoi iscriverti dalla homepage.');
+                }
+            } catch (error) {
+                console.error('Error managing newsletter:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+
         // Check user role and show/hide sections
         async function checkUserRole() {
             try {
@@ -669,12 +716,42 @@
             }
         }
 
+        // Check newsletter subscription status on load
+        async function checkNewsletterSubscriptionStatus() {
+            if (!window.supabaseClient) return;
+            
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user || !user.email) return;
+                
+                const { data } = await window.supabaseClient
+                    .from('iscrizioni_newsletter')
+                    .select('*')
+                    .eq('email', user.email)
+                    .single();
+                
+                const statusEl = document.getElementById('newsletterStatus');
+                const btnEl = document.getElementById('newsletterManageBtn');
+                
+                if (data) {
+                    statusEl.textContent = '✅ Iscritto - Clicca per disiscriverti';
+                    btnEl.textContent = 'Gestisci';
+                } else {
+                    statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
+                    btnEl.textContent = 'Verifica';
+                }
+            } catch (error) {
+                console.error('Error checking newsletter status:', error);
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
             initToggles();
             initSelects();
             checkUserRole();
+            checkNewsletterSubscriptionStatus();
             // initAuth() is not needed here - it's handled by main.js
             if (typeof initMobileMenu === 'function') {
                 initMobileMenu();

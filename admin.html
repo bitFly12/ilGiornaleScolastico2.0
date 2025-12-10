@@ -430,19 +430,27 @@
                 }
 
                 try {
-                    const { error } = await supabase
+                    const { data, error } = await supabase
                         .from('profili_utenti')
                         .update({ ruolo: newRole })
-                        .eq('id', userId);
+                        .eq('id', userId)
+                        .select();
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Role update error:', error);
+                        alert('❌ Errore: ' + (error.message || 'Impossibile aggiornare il ruolo'));
+                        return;
+                    }
 
-                    alert('✅ Ruolo aggiornato con successo');
+                    console.log('Role updated successfully:', data);
+                    alert('✅ Ruolo aggiornato con successo a: ' + newRole);
                     modal.remove();
-                    loadAllUsers();
+                    
+                    // Reload users to show updated role
+                    await loadAllUsers();
                 } catch (error) {
                     console.error('Error updating role:', error);
-                    alert('❌ Errore nell\'aggiornamento del ruolo');
+                    alert('❌ Errore nell\'aggiornamento del ruolo: ' + error.message);
                 }
             };
         }

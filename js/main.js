@@ -150,6 +150,9 @@ function initNewsletterForm() {
         // Check if user is logged in and auto-fill email
         checkAndFillUserEmail();
         
+        // Check if user is already subscribed
+        checkNewsletterSubscription();
+        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -283,6 +286,71 @@ function showMessage(element, text, type) {
     setTimeout(() => {
         element.classList.add('hidden');
     }, 5000);
+}
+
+// Check if user is already subscribed to newsletter
+async function checkNewsletterSubscription() {
+    const form = document.getElementById('newsletterForm');
+    const formContainer = form?.parentElement;
+    
+    if (!form || !window.supabaseClient) return;
+    
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user || !user.email) return;
+        
+        // Check if already subscribed
+        const { data, error } = await window.supabaseClient
+            .from('iscrizioni_newsletter')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+        
+        if (data && !error) {
+            // User is subscribed, show different message
+            if (formContainer) {
+                formContainer.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 2rem; border-radius: 12px; text-align: center;">
+                        <h3 style="margin: 0 0 0.5rem 0;">✅ Già Iscritto!</h3>
+                        <p style="margin: 0 0 1rem 0;">Sei già iscritto alla nostra newsletter.</p>
+                        <p style="margin: 0; font-size: 0.875rem; opacity: 0.9;">Gestisci la tua iscrizione nelle <a href="impostazioni.html" style="color: white; text-decoration: underline;">impostazioni</a></p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking newsletter subscription:', error);
+    }
+}
+
+// Unsubscribe from newsletter (for settings page)
+async function unsubscribeNewsletter() {
+    if (!window.supabaseClient) {
+        alert('❌ Errore: Supabase non disponibile');
+        return false;
+    }
+    
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user || !user.email) {
+            alert('❌ Devi essere loggato');
+            return false;
+        }
+        
+        const { error } = await window.supabaseClient
+            .from('iscrizioni_newsletter')
+            .delete()
+            .eq('email', user.email);
+        
+        if (error) throw error;
+        
+        alert('✅ Disiscrizione completata con successo!');
+        return true;
+    } catch (error) {
+        console.error('Error unsubscribing:', error);
+        alert('❌ Errore durante la disiscrizione: ' + error.message);
+        return false;
+    }
 }
 
 // ================================================

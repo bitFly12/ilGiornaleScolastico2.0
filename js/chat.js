@@ -31,7 +31,7 @@ async function initChat() {
         // Load all users for mentions
         await loadAllUsers();
 
-        // Load chat messages
+        // Load chat messages (this will hide the page loader when complete)
         await loadChatMessages();
 
         // Update online count
@@ -47,8 +47,21 @@ async function initChat() {
         startRealtimeUpdates();
     } catch (error) {
         console.error('Error initializing chat:', error);
+        // Hide loader on error
+        hidePageLoader();
         // On error, redirect to login
         window.location.href = 'login.html?redirect=chat.html';
+    }
+}
+
+// Hide page loader
+function hidePageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 300);
     }
 }
 
@@ -241,8 +254,13 @@ async function loadChatMessages() {
 
         // Scroll to bottom
         container.scrollTop = container.scrollHeight;
+        
+        // Hide page loader now that chat is fully loaded
+        hidePageLoader();
     } catch (error) {
         console.error('Error loading messages:', error);
+        // Hide loader even on error
+        hidePageLoader();
     }
 }
 
