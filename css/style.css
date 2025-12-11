@@ -740,21 +740,7 @@ img {
         display: block;
     }
     
-    .nav-menu {
-        position: fixed;
-        top: 60px;
-        left: -100%;
-        width: 100%;
-        background-color: var(--bg-card);
-        flex-direction: column;
-        padding: var(--spacing-lg);
-        box-shadow: var(--shadow-lg);
-        transition: var(--transition);
-    }
-    
-    .nav-menu.active {
-        left: 0;
-    }
+    /* Note: Mobile nav menu styling is handled below in the complete mobile responsive section */
     
     .grid-2,
     .grid-3,
