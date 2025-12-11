@@ -1395,7 +1395,7 @@ async function reportMessage() {
     
     try {
         // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) {
             showToast('Devi essere loggato per segnalare', '❌');
             closeActionsMenu();
@@ -1403,7 +1403,7 @@ async function reportMessage() {
         }
         
         // Save report to database
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
             .from('content_reports')
             .insert({
                 reported_by: user.id,

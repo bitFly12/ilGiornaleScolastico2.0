@@ -539,6 +539,12 @@ function declineTerms() {
 // ================================================
 // UTILITIES
 // ================================================
+
+// Mobile detection helper
+function isMobileDevice() {
+    return window.innerWidth <= 768 || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
@@ -595,6 +601,7 @@ window.calculateReadingTime = calculateReadingTime;
 window.truncateText = truncateText;
 window.generateUUID = generateUUID;
 window.extractUsernameFromEmail = extractUsernameFromEmail;
+window.isMobileDevice = isMobileDevice;
 
 // ================================================
 // QUALITY OF LIFE FEATURES (50+ Features)
@@ -1186,8 +1193,7 @@ function initQuickActions() {
     menu.appendChild(shareBtn);
     
     // Only add keyboard shortcuts button on desktop (not mobile)
-    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
-    if (!isMobile) {
+    if (!isMobileDevice()) {
         const shortcutsBtn = document.createElement('button');
         shortcutsBtn.title = 'Scorciatoie';
         shortcutsBtn.textContent = '⌨️';
@@ -1219,9 +1225,8 @@ function showKeyboardShortcutsOnce() {
 
 // Hide chat bubble on mobile to prevent overlap with FAB
 function hideChatBubbleOnMobile() {
-    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
     const chatBubble = document.getElementById('chatBubble');
-    if (chatBubble && isMobile) {
+    if (chatBubble && isMobileDevice()) {
         chatBubble.style.display = 'none';
     }
 }

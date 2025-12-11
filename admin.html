@@ -1020,7 +1020,12 @@
         function toggleSiteSetting(key, value) {
             siteSettings[key] = value;
             saveAllSettings();
-            showToast(`Impostazione ${key} aggiornata`, 'success');
+            // Use window.showToast which is exported from main.js, with fallback to alert
+            if (typeof window.showToast === 'function') {
+                window.showToast(`Impostazione ${key} aggiornata`, 'success');
+            } else {
+                console.log(`Impostazione ${key} aggiornata`);
+            }
         }
         
         function saveSetting(key, value) {
