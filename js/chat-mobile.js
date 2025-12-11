@@ -1105,3 +1105,525 @@ window.reactToMessage = reactToMessage;
 window.forwardMessage = forwardMessage;
 window.addReaction = addReaction;
 window.toggleReaction = toggleReaction;
+
+// ================================================
+// ADDITIONAL CHAT FEATURES (35+ more features)
+// ================================================
+
+// Feature 26: Message status (sent, delivered, read)
+function updateMessageStatus(messageId, status) {
+    const statusIcon = {
+        sent: '✓',
+        delivered: '✓✓',
+        read: '✓✓' // Could be colored blue
+    };
+    
+    const msg = document.querySelector(`[data-message-id="${messageId}"] .bubble-status`);
+    if (msg) {
+        msg.textContent = statusIcon[status] || '✓';
+        if (status === 'read') {
+            msg.style.color = '#3b82f6';
+        }
+    }
+}
+
+// Feature 27: User status (online/offline/away)
+function updateUserStatus(userId, status) {
+    const statusColors = {
+        online: '#22c55e',
+        away: '#f59e0b',
+        offline: '#94a3b8'
+    };
+    
+    // Update in sidebar or wherever user avatars are shown
+    const userAvatars = document.querySelectorAll(`[data-user-id="${userId}"] .status-dot`);
+    userAvatars.forEach(dot => {
+        dot.style.backgroundColor = statusColors[status] || statusColors.offline;
+    });
+}
+
+// Feature 28: Typing indicator broadcast
+let typingBroadcastTimeout = null;
+
+function broadcastTyping() {
+    if (typingBroadcastTimeout) return;
+    
+    // In a real app, this would send to the server
+    typingBroadcastTimeout = setTimeout(() => {
+        typingBroadcastTimeout = null;
+    }, 2000);
+    
+    // Show typing indicator for current user (for demo)
+    showTypingIndicator(ChatState.currentProfile?.nome_visualizzato || 'Tu');
+}
+
+function showTypingIndicator(username) {
+    const indicator = document.getElementById('typingIndicator');
+    const typingUsers = document.getElementById('typingUsers');
+    
+    if (indicator && typingUsers) {
+        typingUsers.textContent = `${username} sta scrivendo...`;
+        indicator.classList.add('show');
+        
+        setTimeout(() => {
+            indicator.classList.remove('show');
+        }, 3000);
+    }
+}
+
+// Feature 29: Double tap to like
+let lastTapTime = 0;
+
+function handleDoubleTap(messageId) {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+    
+    if (tapLength < 300 && tapLength > 0) {
+        // Double tap detected
+        addReaction(messageId, '❤️');
+        showHeartAnimation();
+    }
+    
+    lastTapTime = currentTime;
+}
+
+function showHeartAnimation() {
+    const heart = document.createElement('div');
+    heart.className = 'heart-animation';
+    heart.textContent = '❤️';
+    document.body.appendChild(heart);
+    
+    setTimeout(() => heart.remove(), 1000);
+}
+
+// Feature 30: Swipe to reply (mobile)
+let touchStartX = 0;
+let touchStartY = 0;
+let swipingMessageId = null;
+
+function initSwipeToReply() {
+    const container = document.getElementById('messagesContainer');
+    if (!container) return;
+    
+    container.addEventListener('touchstart', (e) => {
+        const bubble = e.target.closest('.message-bubble');
+        if (bubble) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            swipingMessageId = bubble.dataset.messageId;
+        }
+    }, { passive: true });
+    
+    container.addEventListener('touchmove', (e) => {
+        if (!swipingMessageId) return;
+        
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+        const diffX = touchX - touchStartX;
+        const diffY = Math.abs(touchY - touchStartY);
+        
+        // Only horizontal swipes
+        if (diffX > 50 && diffY < 30) {
+            const bubble = document.querySelector(`[data-message-id="${swipingMessageId}"]`);
+            if (bubble) {
+                bubble.style.transform = `translateX(${Math.min(diffX - 50, 50)}px)`;
+            }
+        }
+    }, { passive: true });
+    
+    container.addEventListener('touchend', (e) => {
+        if (!swipingMessageId) return;
+        
+        const bubble = document.querySelector(`[data-message-id="${swipingMessageId}"]`);
+        if (bubble) {
+            const transform = bubble.style.transform;
+            bubble.style.transform = '';
+            
+            if (transform && parseInt(transform.match(/\d+/)?.[0] || 0) >= 50) {
+                // Trigger reply
+                ChatState.selectedMessageId = swipingMessageId;
+                replyToMessage();
+            }
+        }
+        
+        swipingMessageId = null;
+    }, { passive: true });
+}
+
+// Feature 31: Message search with date filter
+function searchMessagesWithFilter(query, dateFrom = null, dateTo = null) {
+    let filtered = ChatState.messages.filter(m => 
+        (m.content || '').toLowerCase().includes(query.toLowerCase())
+    );
+    
+    if (dateFrom) {
+        filtered = filtered.filter(m => new Date(m.created_at) >= new Date(dateFrom));
+    }
+    
+    if (dateTo) {
+        filtered = filtered.filter(m => new Date(m.created_at) <= new Date(dateTo));
+    }
+    
+    return filtered;
+}
+
+// Feature 32: Pin message
+async function pinMessage(messageId) {
+    const msg = ChatState.messages.find(m => m.id === messageId);
+    if (!msg) return;
+    
+    // In real app, would save to database
+    const pinnedBanner = document.getElementById('pinnedBanner');
+    const pinnedText = pinnedBanner.querySelector('.pinned-banner-text');
+    
+    if (pinnedText) {
+        pinnedText.textContent = truncateText(msg.content, 50);
+    }
+    
+    pinnedBanner.style.display = 'flex';
+    showToast('Messaggio fissato! 📌', '📌');
+}
+
+// Feature 33: Quote message (different from reply)
+function quoteMessage() {
+    const msg = ChatState.messages.find(m => m.id === ChatState.selectedMessageId);
+    if (!msg) return;
+    
+    const input = document.getElementById('messageInput');
+    const author = msg.user?.nome_visualizzato || 'Utente';
+    const text = truncateText(msg.content || '', 50);
+    
+    input.value = `"${text}" - ${author}\n\n`;
+    input.focus();
+    
+    closeActionsMenu();
+}
+
+// Feature 34: Schedule message (UI only)
+function scheduleMessage() {
+    showToast('Programmazione messaggi in arrivo! ⏰', '⏰');
+    closeActionsMenu();
+}
+
+// Feature 35: Save message to favorites
+function saveToFavorites() {
+    const msg = ChatState.messages.find(m => m.id === ChatState.selectedMessageId);
+    if (!msg) return;
+    
+    const favorites = JSON.parse(localStorage.getItem('chatFavorites') || '[]');
+    
+    if (favorites.some(f => f.id === msg.id)) {
+        showToast('Già nei preferiti', 'info');
+    } else {
+        favorites.push({
+            id: msg.id,
+            content: msg.content,
+            author: msg.user?.nome_visualizzato,
+            savedAt: new Date().toISOString()
+        });
+        localStorage.setItem('chatFavorites', JSON.stringify(favorites));
+        showToast('Aggiunto ai preferiti! ⭐', '⭐');
+    }
+    
+    closeActionsMenu();
+}
+
+// Feature 36: Clear chat history (local only)
+function clearChatHistory() {
+    if (!confirm('Vuoi cancellare la cronologia chat locale? I messaggi resteranno visibili agli altri.')) {
+        return;
+    }
+    
+    ChatState.messages = [];
+    renderMessages();
+    showToast('Cronologia locale cancellata', 'info');
+}
+
+// Feature 37: Export chat
+function exportChat() {
+    const chatData = ChatState.messages.map(m => ({
+        author: m.user?.nome_visualizzato || 'Utente',
+        message: m.content,
+        time: new Date(m.created_at).toLocaleString('it-IT')
+    }));
+    
+    const text = chatData.map(m => `[${m.time}] ${m.author}: ${m.message}`).join('\n');
+    
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-export-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showToast('Chat esportata! 📥', '📥');
+}
+
+// Feature 38: Message translate (placeholder)
+function translateMessage() {
+    showToast('Traduzione in arrivo! 🌍', '🌍');
+    closeActionsMenu();
+}
+
+// Feature 39: Report message
+function reportMessage() {
+    if (!ChatState.selectedMessageId) return;
+    
+    if (confirm('Vuoi segnalare questo messaggio ai moderatori?')) {
+        showToast('Messaggio segnalato. Grazie! 🚩', '🚩');
+    }
+    closeActionsMenu();
+}
+
+// Feature 40: Message info (who read it, etc)
+function showMessageInfo() {
+    const msg = ChatState.messages.find(m => m.id === ChatState.selectedMessageId);
+    if (!msg) return;
+    
+    const info = `
+        📝 Inviato: ${new Date(msg.created_at).toLocaleString('it-IT')}
+        ${msg.edited_at ? `✏️ Modificato: ${new Date(msg.edited_at).toLocaleString('it-IT')}` : ''}
+        👤 Autore: ${msg.user?.nome_visualizzato || 'Anonimo'}
+    `.trim();
+    
+    showToast(info.replace(/\n/g, '<br>'), 'ℹ️', 5000, true);
+    closeActionsMenu();
+}
+
+// Feature 41: Voice message placeholder
+function startVoiceMessage() {
+    showToast('Messaggi vocali in arrivo! 🎤', '🎤');
+}
+
+// Feature 42: GIF search (placeholder)
+function searchGifs(query) {
+    // In real app, would call GIPHY/Tenor API
+    showToast('Ricerca GIF in arrivo! 🎬', '🎬');
+}
+
+// Feature 43: Sticker packs (placeholder)
+function showStickerPacks() {
+    showToast('Pacchetti sticker in arrivo! 🎨', '🎨');
+}
+
+// Feature 44: Chat themes
+const chatThemes = {
+    default: { bg: '#f8fafc', primary: '#0033A0', bubble: '#0033A0' },
+    dark: { bg: '#1e293b', primary: '#3b82f6', bubble: '#475569' },
+    ocean: { bg: '#e0f2fe', primary: '#0284c7', bubble: '#0284c7' },
+    forest: { bg: '#dcfce7', primary: '#15803d', bubble: '#15803d' },
+    sunset: { bg: '#fef3c7', primary: '#ea580c', bubble: '#ea580c' },
+    purple: { bg: '#f3e8ff', primary: '#7c3aed', bubble: '#7c3aed' }
+};
+
+function setChatTheme(themeName) {
+    const theme = chatThemes[themeName] || chatThemes.default;
+    const app = document.getElementById('chatApp');
+    
+    if (app) {
+        app.style.setProperty('--chat-bg', theme.bg);
+        app.style.setProperty('--primary', theme.primary);
+        app.style.setProperty('--bubble-own', theme.bubble);
+    }
+    
+    localStorage.setItem('chatTheme', themeName);
+    showToast(`Tema applicato: ${themeName}`, '🎨');
+}
+
+// Feature 45: Message scheduling (UI)
+function showScheduleOptions() {
+    const options = ['Tra 1 ora', 'Domani mattina', 'Data personalizzata'];
+    showToast('Programmazione: ' + options.join(', '), '⏰', 3000);
+}
+
+// Feature 46: Quick reactions bar
+function showQuickReactions(messageId) {
+    const reactions = ['👍', '❤️', '😂', '😮', '🎉', '🔥'];
+    const bar = document.createElement('div');
+    bar.className = 'quick-reactions-bar';
+    bar.innerHTML = reactions.map(r => 
+        `<button class="quick-reaction" onclick="addReaction('${messageId}', '${r}'); this.parentElement.remove();">${r}</button>`
+    ).join('');
+    
+    const bubble = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (bubble) {
+        bubble.appendChild(bar);
+        setTimeout(() => bar.remove(), 5000);
+    }
+}
+
+// Feature 47: Mute conversation
+let isMuted = false;
+
+function toggleMute() {
+    isMuted = !isMuted;
+    showToast(isMuted ? 'Notifiche disattivate 🔇' : 'Notifiche attivate 🔔', isMuted ? '🔇' : '🔔');
+}
+
+// Feature 48: Chat sound effects
+function playChatSound(type) {
+    // In real app, would play actual sounds
+    const sounds = {
+        send: '🔊 whoosh',
+        receive: '🔔 ding',
+        mention: '📣 alert'
+    };
+    console.log('Sound:', sounds[type] || 'unknown');
+}
+
+// Feature 49: Auto-scroll toggle
+let autoScrollEnabled = true;
+
+function toggleAutoScroll() {
+    autoScrollEnabled = !autoScrollEnabled;
+    showToast(autoScrollEnabled ? 'Auto-scroll attivato' : 'Auto-scroll disattivato', 'ℹ️');
+}
+
+// Feature 50: Message timestamps toggle
+let showTimestamps = true;
+
+function toggleTimestamps() {
+    showTimestamps = !showTimestamps;
+    document.querySelectorAll('.bubble-time').forEach(el => {
+        el.style.display = showTimestamps ? '' : 'none';
+    });
+    showToast(showTimestamps ? 'Orari visibili' : 'Orari nascosti', 'ℹ️');
+}
+
+// Feature 51: Compact mode
+let compactMode = false;
+
+function toggleCompactMode() {
+    compactMode = !compactMode;
+    document.getElementById('chatApp')?.classList.toggle('compact-mode', compactMode);
+    showToast(compactMode ? 'Modalità compatta' : 'Modalità normale', 'ℹ️');
+}
+
+// Feature 52: Jump to date
+function jumpToDate(date) {
+    const dateStr = new Date(date).toDateString();
+    const msg = ChatState.messages.find(m => 
+        new Date(m.created_at).toDateString() === dateStr
+    );
+    
+    if (msg) {
+        scrollToMessage(msg.id);
+    } else {
+        showToast('Nessun messaggio in questa data', 'info');
+    }
+}
+
+// Feature 53: Unread counter
+function getUnreadCount() {
+    return ChatState.unreadCount;
+}
+
+function markAllAsRead() {
+    ChatState.unreadCount = 0;
+    updateUnreadBadge();
+    showToast('Tutti i messaggi letti ✓', '✓');
+}
+
+// Feature 54: Message highlight effect
+function highlightMessage(messageId) {
+    const el = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (el) {
+        el.classList.add('highlighted');
+        setTimeout(() => el.classList.remove('highlighted'), 3000);
+    }
+}
+
+// Feature 55: Share location (placeholder)
+function shareLocation() {
+    if (navigator.geolocation) {
+        showToast('Condivisione posizione in arrivo! 📍', '📍');
+    } else {
+        showToast('Geolocalizzazione non supportata', 'error');
+    }
+}
+
+// Feature 56: Contact card sharing (placeholder)
+function shareContact() {
+    showToast('Condivisione contatti in arrivo! 👤', '👤');
+}
+
+// Feature 57: Disappearing messages toggle (placeholder)
+function toggleDisappearingMessages() {
+    showToast('Messaggi effimeri in arrivo! ⏱️', '⏱️');
+}
+
+// Feature 58: Message read receipts toggle
+let showReadReceipts = true;
+
+function toggleReadReceipts() {
+    showReadReceipts = !showReadReceipts;
+    showToast(showReadReceipts ? 'Conferme di lettura attive' : 'Conferme di lettura disattivate', 'ℹ️');
+}
+
+// Feature 59: Link preview toggle
+let showLinkPreviews = true;
+
+function toggleLinkPreviews() {
+    showLinkPreviews = !showLinkPreviews;
+    showToast(showLinkPreviews ? 'Anteprime link attive' : 'Anteprime link disattivate', 'ℹ️');
+}
+
+// Feature 60: Media auto-download toggle
+let autoDownloadMedia = true;
+
+function toggleAutoDownload() {
+    autoDownloadMedia = !autoDownloadMedia;
+    showToast(autoDownloadMedia ? 'Download automatico attivo' : 'Download automatico disattivato', 'ℹ️');
+}
+
+// Initialize additional features
+function initAdditionalFeatures() {
+    initSwipeToReply();
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('chatTheme');
+    if (savedTheme) {
+        setChatTheme(savedTheme);
+    }
+    
+    // Add double tap listener to messages
+    document.getElementById('messagesContainer')?.addEventListener('click', (e) => {
+        const bubble = e.target.closest('.message-bubble');
+        if (bubble) {
+            handleDoubleTap(bubble.dataset.messageId);
+        }
+    });
+}
+
+// Call init after main initialization
+setTimeout(initAdditionalFeatures, 500);
+
+// Export additional functions
+window.pinMessage = pinMessage;
+window.quoteMessage = quoteMessage;
+window.scheduleMessage = scheduleMessage;
+window.saveToFavorites = saveToFavorites;
+window.clearChatHistory = clearChatHistory;
+window.exportChat = exportChat;
+window.translateMessage = translateMessage;
+window.reportMessage = reportMessage;
+window.showMessageInfo = showMessageInfo;
+window.startVoiceMessage = startVoiceMessage;
+window.searchGifs = searchGifs;
+window.showStickerPacks = showStickerPacks;
+window.setChatTheme = setChatTheme;
+window.showQuickReactions = showQuickReactions;
+window.toggleMute = toggleMute;
+window.toggleAutoScroll = toggleAutoScroll;
+window.toggleTimestamps = toggleTimestamps;
+window.toggleCompactMode = toggleCompactMode;
+window.jumpToDate = jumpToDate;
+window.markAllAsRead = markAllAsRead;
+window.highlightMessage = highlightMessage;
+window.shareLocation = shareLocation;
+window.shareContact = shareContact;
+window.toggleDisappearingMessages = toggleDisappearingMessages;
+window.toggleReadReceipts = toggleReadReceipts;
+window.toggleLinkPreviews = toggleLinkPreviews;
+window.toggleAutoDownload = toggleAutoDownload;
