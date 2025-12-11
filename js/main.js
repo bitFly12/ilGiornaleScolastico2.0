@@ -47,22 +47,49 @@ function initMobileMenu() {
     const navLinks = navMenu ? navMenu.querySelectorAll('li a') : [];
     
     if (menuToggle && navMenu) {
+        // Create overlay for mobile menu
+        let overlay = document.querySelector('.mobile-menu-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'mobile-menu-overlay';
+            document.body.appendChild(overlay);
+        }
+        
         menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            navMenu.classList.toggle('mobile-menu-open');
+            e.preventDefault();
+            const isOpen = navMenu.classList.toggle('mobile-menu-open');
+            overlay.classList.toggle('active', isOpen);
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+            menuToggle.innerHTML = isOpen ? '<span>✕</span>' : '<span>☰</span>';
+        });
+        
+        // Close menu when clicking overlay
+        overlay.addEventListener('click', () => {
+            navMenu.classList.remove('mobile-menu-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+            menuToggle.innerHTML = '<span>☰</span>';
         });
         
         // Close menu when clicking a link
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
                 navMenu.classList.remove('mobile-menu-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                menuToggle.innerHTML = '<span>☰</span>';
             });
         });
         
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (!menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
+            if (navMenu.classList.contains('mobile-menu-open') && 
+                !menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
                 navMenu.classList.remove('mobile-menu-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                menuToggle.innerHTML = '<span>☰</span>';
             }
         });
         
@@ -70,6 +97,9 @@ function initMobileMenu() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && navMenu.classList.contains('mobile-menu-open')) {
                 navMenu.classList.remove('mobile-menu-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                menuToggle.innerHTML = '<span>☰</span>';
             }
         });
     }
@@ -1151,20 +1181,49 @@ function initQuickActions() {
     shareBtn.textContent = '📤';
     shareBtn.addEventListener('click', () => shareArticle(document.title, window.location.href));
     
-    // Shortcuts button
-    const shortcutsBtn = document.createElement('button');
-    shortcutsBtn.title = 'Scorciatoie';
-    shortcutsBtn.textContent = '⌨️';
-    shortcutsBtn.addEventListener('click', showKeyboardShortcuts);
-    
     menu.appendChild(searchBtn);
     menu.appendChild(chatBtn);
     menu.appendChild(shareBtn);
-    menu.appendChild(shortcutsBtn);
+    
+    // Only add keyboard shortcuts button on desktop (not mobile)
+    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+    if (!isMobile) {
+        const shortcutsBtn = document.createElement('button');
+        shortcutsBtn.title = 'Scorciatoie';
+        shortcutsBtn.textContent = '⌨️';
+        shortcutsBtn.addEventListener('click', showKeyboardShortcuts);
+        menu.appendChild(shortcutsBtn);
+        
+        // Show shortcuts popup once per device (only on PC)
+        showKeyboardShortcutsOnce();
+    }
     
     fab.appendChild(mainBtn);
     fab.appendChild(menu);
     document.body.appendChild(fab);
+    
+    // Hide the chat bubble on mobile since FAB has chat option
+    hideChatBubbleOnMobile();
+}
+
+// Show keyboard shortcuts popup once per device (PC only)
+function showKeyboardShortcutsOnce() {
+    const hasSeenShortcuts = localStorage.getItem('hasSeenKeyboardShortcuts');
+    if (!hasSeenShortcuts) {
+        setTimeout(() => {
+            showKeyboardShortcuts();
+            localStorage.setItem('hasSeenKeyboardShortcuts', 'true');
+        }, 3000);
+    }
+}
+
+// Hide chat bubble on mobile to prevent overlap with FAB
+function hideChatBubbleOnMobile() {
+    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+    const chatBubble = document.getElementById('chatBubble');
+    if (chatBubble && isMobile) {
+        chatBubble.style.display = 'none';
+    }
 }
 
 function toggleFabMenu() {

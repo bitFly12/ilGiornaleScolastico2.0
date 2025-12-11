@@ -1119,11 +1119,13 @@ a:hover {
     .menu-toggle,
     .mobile-menu-toggle {
         display: block;
+        position: relative;
+        z-index: 1001;
     }
     
-    /* Hide desktop navigation */
-    nav ul {
-        display: none;
+    /* Mobile navigation slide-in menu */
+    nav ul,
+    nav .nav-menu {
         position: fixed;
         top: 0;
         right: -100%;
@@ -1132,25 +1134,56 @@ a:hover {
         background: white;
         box-shadow: -2px 0 10px rgba(0,0,0,0.1);
         flex-direction: column;
-        padding: 2rem 1rem;
+        padding: 4rem 1rem 2rem;
         transition: right 0.3s ease;
         z-index: 1000;
+        display: flex !important;
+        list-style: none;
+        gap: 0.5rem;
     }
     
-    nav ul.mobile-menu-open {
-        display: flex;
+    nav ul.mobile-menu-open,
+    nav .nav-menu.mobile-menu-open {
         right: 0;
     }
     
-    nav ul li {
+    nav ul li,
+    nav .nav-menu li {
         width: 100%;
-        margin: 0.5rem 0;
+        margin: 0.25rem 0;
     }
     
-    nav ul li a {
+    nav ul li a,
+    nav .nav-menu li a {
         display: block;
         padding: 0.75rem 1rem;
         width: 100%;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    nav ul li a:hover,
+    nav .nav-menu li a:hover {
+        background: var(--bg-light);
+    }
+    
+    /* Mobile menu overlay */
+    .mobile-menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-menu-overlay.active {
+        opacity: 1;
+        visibility: visible;
     }
     
     /* Typography */
@@ -2485,6 +2518,11 @@ a:hover {
     
     .qol-search-footer {
         display: none;
+    }
+    
+    /* Hide chat bubble on mobile since FAB has chat option */
+    .chat-bubble {
+        display: none !important;
     }
     
     .qol-fab {

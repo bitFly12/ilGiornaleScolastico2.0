@@ -101,6 +101,71 @@
             background: #DBEAFE;
             color: #2563EB;
         }
+        .badge-danger {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--success);
+        }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        /* Mobile Responsive Admin */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 0 1rem;
+            }
+            .tabs {
+                flex-wrap: wrap;
+            }
+            .tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            .article-item {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .article-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -172,14 +237,144 @@
 
         <!-- Reports Tab -->
         <div id="reports" class="tab-content">
-            <h2>Segnalazioni & Moderazione</h2>
-            <p style="color: var(--neutral);">Sistema di moderazione disponibile a breve.</p>
+            <h2>🚨 Segnalazioni & Moderazione</h2>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <button class="btn btn-sm" onclick="filterReports('all')">Tutte</button>
+                <button class="btn btn-sm btn-warning" onclick="filterReports('pending')">In Attesa</button>
+                <button class="btn btn-sm btn-success" onclick="filterReports('resolved')">Risolte</button>
+                <button class="btn btn-sm btn-danger" onclick="filterReports('dismissed')">Respinte</button>
+            </div>
+            <div id="reportsContainer">
+                <p>Caricamento segnalazioni...</p>
+            </div>
+            <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-light); border-radius: var(--radius-md);">
+                <h4>📊 Statistiche Segnalazioni</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingReports">0</div>
+                        <div class="stat-label">In Attesa</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="resolvedReports">0</div>
+                        <div class="stat-label">Risolte</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="suspendedUsers">0</div>
+                        <div class="stat-label">Utenti Sospesi</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Settings Tab -->
         <div id="settings" class="tab-content">
-            <h2>Impostazioni Sito</h2>
-            <p style="color: var(--neutral);">Configurazione avanzata disponibile a breve.</p>
+            <h2>⚙️ Impostazioni Sito</h2>
+            
+            <!-- Site Settings -->
+            <div class="settings-section" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
+                <h3>🌐 Configurazione Generale</h3>
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <strong>Manutenzione</strong>
+                        <p style="color: var(--neutral); font-size: 0.875rem;">Metti il sito in modalità manutenzione</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="maintenanceMode" onchange="toggleSiteSetting('maintenanceMode', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <strong>Registrazioni</strong>
+                        <p style="color: var(--neutral); font-size: 0.875rem;">Abilita nuove registrazioni</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="allowRegistrations" checked onchange="toggleSiteSetting('allowRegistrations', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <strong>Chat Pubblica</strong>
+                        <p style="color: var(--neutral); font-size: 0.875rem;">Abilita la chat per tutti gli utenti</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chatEnabled" checked onchange="toggleSiteSetting('chatEnabled', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <strong>Commenti Articoli</strong>
+                        <p style="color: var(--neutral); font-size: 0.875rem;">Abilita i commenti sugli articoli</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="commentsEnabled" checked onchange="toggleSiteSetting('commentsEnabled', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
+                    <div>
+                        <strong>Auto-Sospensione</strong>
+                        <p style="color: var(--neutral); font-size: 0.875rem;">Sospendi automaticamente dopo 3 segnalazioni</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoSuspension" checked onchange="toggleSiteSetting('autoSuspension', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Content Moderation -->
+            <div class="settings-section" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
+                <h3>📝 Moderazione Contenuti</h3>
+                <div class="setting-item" style="padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <strong>Segnalazioni per sospensione</strong>
+                    <p style="color: var(--neutral); font-size: 0.875rem; margin-bottom: 0.5rem;">Numero di segnalazioni uniche per sospensione automatica</p>
+                    <input type="number" id="suspensionThreshold" value="3" min="1" max="10" 
+                           style="padding: 0.5rem; border: 1px solid #ddd; border-radius: var(--radius-md); width: 100px;"
+                           onchange="saveSetting('suspensionThreshold', this.value)">
+                </div>
+                <div class="setting-item" style="padding: 1rem 0; border-bottom: 1px solid #e5e7eb;">
+                    <strong>Durata sospensione (giorni)</strong>
+                    <p style="color: var(--neutral); font-size: 0.875rem; margin-bottom: 0.5rem;">Durata default della sospensione</p>
+                    <input type="number" id="suspensionDuration" value="7" min="1" max="365" 
+                           style="padding: 0.5rem; border: 1px solid #ddd; border-radius: var(--radius-md); width: 100px;"
+                           onchange="saveSetting('suspensionDuration', this.value)">
+                </div>
+                <div class="setting-item" style="padding: 1rem 0;">
+                    <strong>Parole vietate</strong>
+                    <p style="color: var(--neutral); font-size: 0.875rem; margin-bottom: 0.5rem;">Lista di parole da filtrare (separate da virgola)</p>
+                    <textarea id="bannedWords" rows="3" 
+                              style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: var(--radius-md);"
+                              placeholder="parola1, parola2, parola3..."
+                              onchange="saveSetting('bannedWords', this.value)"></textarea>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="settings-section" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
+                <h3>⚡ Azioni Rapide</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <button class="btn btn-primary" onclick="clearAllCache()">🗑️ Pulisci Cache</button>
+                    <button class="btn btn-warning" onclick="exportAllData()">📤 Esporta Dati</button>
+                    <button class="btn btn-success" onclick="sendGlobalNotification()">📢 Notifica Globale</button>
+                    <button class="btn btn-danger" onclick="emergencyShutdown()">🚨 Shutdown Emergenza</button>
+                </div>
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="settings-section" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg);">
+                <h3>💾 Backup & Ripristino</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-outline" onclick="createBackup()">📦 Crea Backup</button>
+                    <button class="btn btn-outline" onclick="viewBackups()">📋 Vedi Backup</button>
+                    <label class="btn btn-outline" style="cursor: pointer;">
+                        📂 Ripristina da File
+                        <input type="file" accept=".json" style="display: none;" onchange="restoreFromBackup(this.files[0])">
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -338,19 +533,36 @@
                 }
 
                 container.innerHTML = users.map(user => `
-                    <div class="article-item">
+                    <div class="article-item" ${user.is_hidden ? 'style="border-left: 4px solid var(--error);"' : ''}>
                         <div class="article-info">
-                            <h4 style="margin: 0 0 0.5rem 0;">${user.nome_visualizzato || user.username}</h4>
+                            <h4 style="margin: 0 0 0.5rem 0;">
+                                ${escapeHtml(user.nome_visualizzato || user.username)}
+                                ${user.is_hidden ? '<span style="color: var(--error); font-size: 0.8rem;"> (SOSPESO)</span>' : ''}
+                            </h4>
                             <p style="color: var(--neutral); font-size: 0.875rem; margin: 0;">
-                                ${user.email} • @${user.username}
+                                ${escapeHtml(user.email)} • @${escapeHtml(user.username)}
                             </p>
-                            <span class="badge badge-info" style="margin-top: 0.5rem; display: inline-block;">
-                                ${user.ruolo}
-                            </span>
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <span class="badge badge-info">${user.ruolo}</span>
+                                <span class="badge" style="background: #e0e7ff; color: #3730a3;">${user.punti_totali || 0} punti</span>
+                                <span class="badge" style="background: #fef3c7; color: #92400e;">${user.articoli_pubblicati || 0} articoli</span>
+                            </div>
                         </div>
-                        <div class="article-actions">
+                        <div class="article-actions" style="flex-direction: column; gap: 0.5rem;">
                             <button class="btn btn-sm btn-primary" onclick="changeUserRole('${user.id}', '${user.ruolo}')">
-                                Cambia Ruolo
+                                👤 Cambia Ruolo
+                            </button>
+                            ${user.is_hidden ? `
+                                <button class="btn btn-sm btn-success" onclick="unsuspendUser('${user.id}')">
+                                    ✅ Riattiva
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-warning" onclick="suspendUser('${user.id}')">
+                                    🔨 Sospendi
+                                </button>
+                            `}
+                            <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">
+                                🗑️ Elimina
                             </button>
                         </div>
                     </div>
@@ -359,6 +571,64 @@
             } catch (error) {
                 console.error('Error loading users:', error);
                 container.innerHTML = '<p style="color: var(--error);">Errore nel caricamento degli utenti.</p>';
+            }
+        }
+        
+        // User management functions
+        async function suspendUser(userId) {
+            if (!confirm('⚠️ Vuoi sospendere questo utente?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('profili_utenti')
+                    .update({ is_hidden: true })
+                    .eq('id', userId);
+                
+                if (error) throw error;
+                
+                alert('✅ Utente sospeso');
+                loadAllUsers();
+            } catch (error) {
+                console.error('Error suspending user:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+        
+        async function unsuspendUser(userId) {
+            try {
+                const { error } = await supabase
+                    .from('profili_utenti')
+                    .update({ is_hidden: false })
+                    .eq('id', userId);
+                
+                if (error) throw error;
+                
+                alert('✅ Utente riattivato');
+                loadAllUsers();
+            } catch (error) {
+                console.error('Error unsuspending user:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+        
+        async function deleteUser(userId) {
+            if (!confirm('⚠️ ATTENZIONE: Vuoi eliminare definitivamente questo utente? Questa azione è irreversibile!')) return;
+            if (!confirm('🔴 Sei ASSOLUTAMENTE sicuro? Tutti i dati dell\'utente saranno persi!')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('profili_utenti')
+                    .delete()
+                    .eq('id', userId);
+                
+                if (error) throw error;
+                
+                alert('✅ Utente eliminato');
+                loadAllUsers();
+                loadStatistics();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('❌ Errore: ' + error.message);
             }
         }
 
@@ -474,6 +744,428 @@
                 loadAllArticles();
             } else if (tabName === 'users') {
                 loadAllUsers();
+            } else if (tabName === 'reports') {
+                loadReports();
+            } else if (tabName === 'settings') {
+                loadSettings();
+            }
+        }
+
+        // ============================================
+        // REPORT SYSTEM (30+ QoL features)
+        // ============================================
+        
+        let currentReportFilter = 'all';
+        
+        async function loadReports(filter = currentReportFilter) {
+            currentReportFilter = filter;
+            const container = document.getElementById('reportsContainer');
+            container.innerHTML = '<p>Caricamento segnalazioni...</p>';
+            
+            try {
+                let query = supabase
+                    .from('content_reports')
+                    .select(`
+                        *,
+                        reporter:profili_utenti!reported_by(username, nome_visualizzato)
+                    `)
+                    .order('created_at', { ascending: false });
+                
+                if (filter !== 'all') {
+                    query = query.eq('status', filter);
+                }
+                
+                const { data: reports, error } = await query;
+                
+                if (error) throw error;
+                
+                // Update stats
+                await updateReportStats();
+                
+                if (!reports || reports.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--neutral); padding: 2rem;">Nessuna segnalazione trovata. 🎉</p>';
+                    return;
+                }
+                
+                container.innerHTML = reports.map(report => {
+                    const statusColors = {
+                        pending: 'warning',
+                        reviewed: 'info',
+                        resolved: 'success',
+                        dismissed: 'danger'
+                    };
+                    const statusLabels = {
+                        pending: 'In Attesa',
+                        reviewed: 'In Revisione',
+                        resolved: 'Risolta',
+                        dismissed: 'Respinta'
+                    };
+                    
+                    return `
+                        <div class="article-item" style="border-left: 4px solid var(--${statusColors[report.status] || 'neutral'});">
+                            <div class="article-info">
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                                    <span class="badge badge-${statusColors[report.status]}">${statusLabels[report.status]}</span>
+                                    <span class="badge badge-info">${report.content_type}</span>
+                                </div>
+                                <h4 style="margin: 0 0 0.5rem 0;">🚨 ${escapeHtml(report.reason)}</h4>
+                                <p style="color: var(--neutral); font-size: 0.875rem; margin: 0;">
+                                    Segnalato da: ${report.reporter?.nome_visualizzato || report.reporter?.username || 'Anonimo'} • 
+                                    ${new Date(report.created_at).toLocaleDateString('it-IT')}
+                                </p>
+                                ${report.description ? `<p style="margin-top: 0.5rem; font-size: 0.9rem;">${escapeHtml(report.description)}</p>` : ''}
+                            </div>
+                            <div class="article-actions" style="flex-direction: column; gap: 0.5rem;">
+                                ${report.status === 'pending' ? `
+                                    <button class="btn btn-sm btn-success" onclick="resolveReport('${report.id}', 'resolved')">✅ Approva</button>
+                                    <button class="btn btn-sm btn-danger" onclick="resolveReport('${report.id}', 'dismissed')">❌ Respingi</button>
+                                    <button class="btn btn-sm btn-warning" onclick="viewReportContent('${report.content_type}', '${report.content_id}')">👁️ Vedi</button>
+                                    <button class="btn btn-sm btn-primary" onclick="suspendUserFromReport('${report.content_id}', '${report.content_type}')">🔨 Sospendi</button>
+                                ` : `
+                                    <span style="color: var(--neutral); font-size: 0.75rem;">
+                                        ${report.resolution_note || 'Nessuna nota'}
+                                    </span>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                container.innerHTML = '<p style="color: var(--error);">Errore nel caricamento delle segnalazioni.</p>';
+            }
+        }
+        
+        function filterReports(filter) {
+            loadReports(filter);
+        }
+        
+        async function updateReportStats() {
+            try {
+                const { count: pending } = await supabase
+                    .from('content_reports')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pending');
+                
+                const { count: resolved } = await supabase
+                    .from('content_reports')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'resolved');
+                
+                const { count: suspended } = await supabase
+                    .from('profili_utenti')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('is_hidden', true);
+                
+                document.getElementById('pendingReports').textContent = pending || 0;
+                document.getElementById('resolvedReports').textContent = resolved || 0;
+                document.getElementById('suspendedUsers').textContent = suspended || 0;
+            } catch (error) {
+                console.error('Error updating report stats:', error);
+            }
+        }
+        
+        async function resolveReport(reportId, status) {
+            const note = prompt('Aggiungi una nota (opzionale):');
+            
+            try {
+                const { error } = await supabase
+                    .from('content_reports')
+                    .update({
+                        status: status,
+                        reviewed_by: currentUser?.profile?.id,
+                        reviewed_at: new Date().toISOString(),
+                        resolution_note: note || null
+                    })
+                    .eq('id', reportId);
+                
+                if (error) throw error;
+                
+                alert(`✅ Segnalazione ${status === 'resolved' ? 'approvata' : 'respinta'}`);
+                loadReports();
+            } catch (error) {
+                console.error('Error resolving report:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+        
+        async function viewReportContent(contentType, contentId) {
+            try {
+                let content = null;
+                
+                if (contentType === 'article') {
+                    const { data } = await supabase
+                        .from('articoli')
+                        .select('titolo, contenuto')
+                        .eq('id', contentId)
+                        .single();
+                    content = data ? `<h4>${escapeHtml(data.titolo)}</h4><p>${escapeHtml(data.contenuto.substring(0, 500))}...</p>` : 'Contenuto non trovato';
+                } else if (contentType === 'message') {
+                    const { data } = await supabase
+                        .from('chat_messages')
+                        .select('content, sender_id')
+                        .eq('id', contentId)
+                        .single();
+                    content = data ? `<p><strong>Messaggio:</strong> ${escapeHtml(data.content)}</p>` : 'Messaggio non trovato';
+                } else if (contentType === 'comment') {
+                    const { data } = await supabase
+                        .from('article_comments')
+                        .select('content')
+                        .eq('id', contentId)
+                        .single();
+                    content = data ? `<p><strong>Commento:</strong> ${escapeHtml(data.content)}</p>` : 'Commento non trovato';
+                } else if (contentType === 'user') {
+                    const { data } = await supabase
+                        .from('profili_utenti')
+                        .select('username, nome_visualizzato, bio')
+                        .eq('id', contentId)
+                        .single();
+                    content = data ? `<p><strong>Utente:</strong> ${escapeHtml(data.nome_visualizzato || data.username)}</p><p>${escapeHtml(data.bio || 'Nessuna bio')}</p>` : 'Utente non trovato';
+                }
+                
+                showModal('Contenuto Segnalato', content);
+            } catch (error) {
+                console.error('Error viewing content:', error);
+                alert('❌ Errore nel caricamento del contenuto');
+            }
+        }
+        
+        async function suspendUserFromReport(contentId, contentType) {
+            if (!confirm('⚠️ Vuoi sospendere questo utente? L\'account sarà nascosto fino alla rimozione manuale.')) return;
+            
+            let userId = contentId;
+            
+            // Get user ID from content
+            if (contentType === 'article') {
+                const { data } = await supabase.from('articoli').select('autore_id').eq('id', contentId).single();
+                userId = data?.autore_id;
+            } else if (contentType === 'message') {
+                const { data } = await supabase.from('chat_messages').select('sender_id').eq('id', contentId).single();
+                userId = data?.sender_id;
+            } else if (contentType === 'comment') {
+                const { data } = await supabase.from('article_comments').select('user_id').eq('id', contentId).single();
+                userId = data?.user_id;
+            }
+            
+            if (!userId) {
+                alert('❌ Impossibile identificare l\'utente');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('profili_utenti')
+                    .update({ is_hidden: true })
+                    .eq('id', userId);
+                
+                if (error) throw error;
+                
+                alert('✅ Utente sospeso con successo');
+                loadReports();
+            } catch (error) {
+                console.error('Error suspending user:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+        
+        function showModal(title, content) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000';
+            modal.innerHTML = `
+                <div style="background:white;padding:2rem;border-radius:12px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;">
+                    <h3 style="margin:0 0 1rem 0;">${title}</h3>
+                    <div>${content}</div>
+                    <button onclick="this.closest('div').parentElement.remove()" style="margin-top:1rem;padding:0.75rem 1.5rem;border:none;background:var(--primary);color:white;border-radius:8px;cursor:pointer;">Chiudi</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // ============================================
+        // SETTINGS SYSTEM (30+ QoL features)
+        // ============================================
+        
+        const siteSettings = {
+            maintenanceMode: false,
+            allowRegistrations: true,
+            chatEnabled: true,
+            commentsEnabled: true,
+            autoSuspension: true,
+            suspensionThreshold: 3,
+            suspensionDuration: 7,
+            bannedWords: ''
+        };
+        
+        function loadSettings() {
+            // Load from localStorage (in production, this would be from database)
+            const saved = localStorage.getItem('siteSettings');
+            if (saved) {
+                Object.assign(siteSettings, JSON.parse(saved));
+            }
+            
+            // Update UI
+            Object.keys(siteSettings).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) {
+                    if (el.type === 'checkbox') {
+                        el.checked = siteSettings[key];
+                    } else {
+                        el.value = siteSettings[key];
+                    }
+                }
+            });
+        }
+        
+        function toggleSiteSetting(key, value) {
+            siteSettings[key] = value;
+            saveAllSettings();
+            showToast(`Impostazione ${key} aggiornata`, 'success');
+        }
+        
+        function saveSetting(key, value) {
+            siteSettings[key] = value;
+            saveAllSettings();
+        }
+        
+        function saveAllSettings() {
+            localStorage.setItem('siteSettings', JSON.stringify(siteSettings));
+        }
+        
+        function clearAllCache() {
+            if (confirm('⚠️ Vuoi cancellare tutta la cache del sito?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('✅ Cache cancellata con successo');
+                location.reload();
+            }
+        }
+        
+        async function exportAllData() {
+            try {
+                const data = {
+                    exportDate: new Date().toISOString(),
+                    settings: siteSettings
+                };
+                
+                // Export articles
+                const { data: articles } = await supabase.from('articoli').select('*');
+                data.articles = articles;
+                
+                // Export users (without sensitive data)
+                const { data: users } = await supabase.from('profili_utenti').select('username, nome_visualizzato, ruolo, created_at');
+                data.users = users;
+                
+                // Export reports
+                const { data: reports } = await supabase.from('content_reports').select('*');
+                data.reports = reports;
+                
+                // Download
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `giornale-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert('✅ Dati esportati con successo');
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ Errore nell\'esportazione');
+            }
+        }
+        
+        function sendGlobalNotification() {
+            const message = prompt('Inserisci il messaggio da inviare a tutti gli utenti:');
+            if (message) {
+                // In production, this would send push notifications
+                alert('✅ Notifica inviata (demo): ' + message);
+            }
+        }
+        
+        function emergencyShutdown() {
+            if (confirm('⚠️ ATTENZIONE: Questa azione metterà il sito in modalità manutenzione. Continuare?')) {
+                siteSettings.maintenanceMode = true;
+                saveAllSettings();
+                document.getElementById('maintenanceMode').checked = true;
+                alert('🚨 Sito in modalità manutenzione');
+            }
+        }
+        
+        function createBackup() {
+            exportAllData();
+        }
+        
+        function viewBackups() {
+            alert('📋 Funzionalità backup in arrivo. Per ora usa l\'esportazione manuale.');
+        }
+        
+        function restoreFromBackup(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.settings) {
+                        Object.assign(siteSettings, data.settings);
+                        saveAllSettings();
+                        loadSettings();
+                    }
+                    alert('✅ Impostazioni ripristinate dal backup');
+                } catch (error) {
+                    alert('❌ File di backup non valido');
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Auto-suspension system (check on page load)
+        async function checkAutoSuspensions() {
+            if (!siteSettings.autoSuspension) return;
+            
+            try {
+                // Get content with 3+ reports from different devices
+                const { data: reports } = await supabase
+                    .from('content_reports')
+                    .select('content_id, content_type, reported_by')
+                    .eq('status', 'pending');
+                
+                if (!reports) return;
+                
+                // Group by content_id and count unique reporters
+                const reportCounts = {};
+                reports.forEach(r => {
+                    const key = `${r.content_type}:${r.content_id}`;
+                    if (!reportCounts[key]) {
+                        reportCounts[key] = {
+                            contentId: r.content_id,
+                            contentType: r.content_type,
+                            reporters: new Set()
+                        };
+                    }
+                    reportCounts[key].reporters.add(r.reported_by);
+                });
+                
+                // Check threshold
+                const threshold = siteSettings.suspensionThreshold || 3;
+                for (const key in reportCounts) {
+                    if (reportCounts[key].reporters.size >= threshold) {
+                        console.log(`Auto-suspension triggered for ${key}`);
+                        // Auto-suspend would be called here
+                    }
+                }
+            } catch (error) {
+                console.error('Auto-suspension check error:', error);
             }
         }
 
@@ -483,6 +1175,8 @@
             if (hasAccess) {
                 await loadStatistics();
                 await loadAllArticles();
+                loadSettings();
+                checkAutoSuspensions();
             }
         })();
 

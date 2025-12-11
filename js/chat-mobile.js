@@ -1366,13 +1366,69 @@ function translateMessage() {
     closeActionsMenu();
 }
 
-// Feature 39: Report message
-function reportMessage() {
+// Feature 39: Report message - now saves to database
+async function reportMessage() {
     if (!ChatState.selectedMessageId) return;
     
-    if (confirm('Vuoi segnalare questo messaggio ai moderatori?')) {
-        showToast('Messaggio segnalato. Grazie! 🚩', '🚩');
+    const reasons = [
+        'Contenuto inappropriato',
+        'Spam o pubblicità',
+        'Linguaggio offensivo',
+        'Molestie o bullismo',
+        'Contenuto pericoloso',
+        'Altro'
+    ];
+    
+    const reasonIndex = prompt(
+        'Seleziona il motivo della segnalazione (1-6):\n' +
+        reasons.map((r, i) => `${i + 1}. ${r}`).join('\n')
+    );
+    
+    const idx = parseInt(reasonIndex) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= reasons.length) {
+        closeActionsMenu();
+        return;
     }
+    
+    const reason = reasons[idx];
+    const description = prompt('Descrivi il problema (opzionale):');
+    
+    try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            showToast('Devi essere loggato per segnalare', '❌');
+            closeActionsMenu();
+            return;
+        }
+        
+        // Save report to database
+        const { error } = await supabase
+            .from('content_reports')
+            .insert({
+                reported_by: user.id,
+                content_type: 'message',
+                content_id: ChatState.selectedMessageId,
+                reason: reason,
+                description: description || null,
+                status: 'pending'
+            });
+        
+        if (error) {
+            if (error.code === '23505') {
+                showToast('Hai già segnalato questo messaggio', '⚠️');
+            } else {
+                console.error('Report error:', error);
+                showToast('Errore nella segnalazione', '❌');
+            }
+        } else {
+            showToast('Messaggio segnalato. Grazie! 🚩', '🚩');
+        }
+    } catch (error) {
+        console.error('Report error:', error);
+        showToast('Errore nella segnalazione', '❌');
+    }
+    
     closeActionsMenu();
 }
 
