@@ -2004,3 +2004,494 @@ a:hover {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
 }
+
+/* ================================================
+   QUALITY OF LIFE FEATURES CSS
+   ================================================ */
+
+/* QoL Modal Base */
+.qol-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10vh 1rem;
+}
+
+.qol-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.qol-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 600px;
+    width: 100%;
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Quick Search Modal */
+.qol-search-modal {
+    overflow: hidden;
+}
+
+.qol-search-modal input {
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    font-size: 1.1rem;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    outline: none;
+}
+
+.qol-search-modal input::placeholder {
+    color: #9ca3af;
+}
+
+.qol-search-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.qol-search-hint {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.qol-search-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: var(--text-dark);
+    transition: background 0.2s;
+}
+
+.qol-search-item:hover,
+.qol-search-item.selected {
+    background: #f3f4f6;
+}
+
+.qol-search-item .icon {
+    font-size: 1.5rem;
+}
+
+.qol-search-footer {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #f9fafb;
+    font-size: 0.75rem;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Keyboard Shortcuts Modal */
+.qol-shortcuts-modal {
+    padding: 2rem;
+}
+
+.qol-shortcuts-modal h3 {
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+
+.shortcuts-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.shortcut-item kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.shortcut-item span:last-child {
+    color: #6b7280;
+}
+
+/* Toast Notifications */
+.qol-toast-container {
+    position: fixed;
+    top: 80px;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.qol-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    animation: toastSlideIn 0.3s ease;
+    min-width: 250px;
+}
+
+.qol-toast.hiding {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastSlideOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+
+.qol-toast-success { border-left: 4px solid #10b981; }
+.qol-toast-error { border-left: 4px solid #ef4444; }
+.qol-toast-warning { border-left: 4px solid #f59e0b; }
+.qol-toast-info { border-left: 4px solid #3b82f6; }
+
+.toast-icon { font-size: 1.25rem; }
+.toast-message { flex: 1; font-size: 0.9rem; }
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+/* Back to Top Button */
+.qol-back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    z-index: 99;
+    box-shadow: 0 4px 15px rgba(0,51,160,0.3);
+}
+
+.qol-back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.qol-back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,51,160,0.4);
+}
+
+/* Reading Progress Bar */
+.qol-reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--neon-blue));
+    width: 0%;
+    z-index: 9999;
+    transition: width 0.1s;
+}
+
+/* Quick Actions FAB */
+.qol-fab {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+}
+
+.qol-fab .fab-main {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--neon-blue));
+    color: white;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,51,160,0.4);
+    transition: all 0.3s ease;
+}
+
+.qol-fab .fab-main:hover {
+    transform: scale(1.1) rotate(15deg);
+}
+
+.qol-fab .fab-menu {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+}
+
+.qol-fab .fab-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.qol-fab .fab-menu button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.qol-fab .fab-menu button:hover {
+    transform: scale(1.1);
+}
+
+/* Text Selection Popup */
+.qol-selection-popup {
+    position: absolute;
+    display: flex;
+    gap: 0.5rem;
+    background: var(--text-dark);
+    padding: 0.5rem;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+.qol-selection-popup button {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.qol-selection-popup button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Share Modal */
+.qol-share-modal {
+    padding: 2rem;
+    text-align: center;
+}
+
+.qol-share-modal h3 {
+    margin-bottom: 1.5rem;
+}
+
+.share-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+}
+
+.share-btn.whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.share-btn.twitter {
+    background: #1DA1F2;
+    color: white;
+}
+
+.share-btn.copy {
+    background: #f3f4f6;
+    color: var(--text-dark);
+}
+
+/* Confetti */
+.qol-confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confettiFall 3s ease-out forwards;
+}
+
+@keyframes confettiFall {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Notification Bell */
+.qol-notification-bell {
+    position: relative;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: auto;
+    margin-right: 1rem;
+}
+
+.qol-notification-bell .bell-icon {
+    font-size: 1.25rem;
+}
+
+.qol-notification-bell .bell-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+}
+
+/* Tab Hidden - Pause animations */
+.tab-hidden * {
+    animation-play-state: paused !important;
+}
+
+/* Print Styles */
+@media print {
+    .qol-fab,
+    .qol-back-to-top,
+    .qol-notification-bell,
+    .chat-bubble,
+    .header,
+    .footer,
+    nav {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 10pt;
+        color: #666;
+    }
+}
+
+/* Responsive QoL Features */
+@media (max-width: 768px) {
+    .qol-toast-container {
+        left: 1rem;
+        right: 1rem;
+    }
+    
+    .qol-toast {
+        min-width: auto;
+    }
+    
+    .qol-search-footer {
+        display: none;
+    }
+    
+    .qol-fab {
+        bottom: 80px;
+    }
+    
+    .qol-back-to-top {
+        bottom: 140px;
+    }
+}

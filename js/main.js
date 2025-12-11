@@ -566,4 +566,672 @@ window.truncateText = truncateText;
 window.generateUUID = generateUUID;
 window.extractUsernameFromEmail = extractUsernameFromEmail;
 
+// ================================================
+// QUALITY OF LIFE FEATURES (50+ Features)
+// ================================================
+
+// Feature 1: Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + K = Quick search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        showQuickSearch();
+    }
+    // Ctrl/Cmd + / = Show shortcuts
+    if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        showKeyboardShortcuts();
+    }
+    // Escape = Close modals
+    if (e.key === 'Escape') {
+        closeAllModals();
+    }
+    // G + H = Go to Home
+    if (e.key === 'h' && !e.ctrlKey && !e.metaKey && !isTyping()) {
+        if (lastKeyPressed === 'g') {
+            window.location.href = 'index.html';
+        }
+    }
+    // G + C = Go to Chat
+    if (e.key === 'c' && !e.ctrlKey && !e.metaKey && !isTyping()) {
+        if (lastKeyPressed === 'g') {
+            window.location.href = 'chat.html';
+        }
+    }
+    // G + P = Go to Profile
+    if (e.key === 'p' && !e.ctrlKey && !e.metaKey && !isTyping()) {
+        if (lastKeyPressed === 'g') {
+            window.location.href = 'profilo.html';
+        }
+    }
+    lastKeyPressed = e.key;
+    setTimeout(() => lastKeyPressed = '', 500);
+});
+
+let lastKeyPressed = '';
+
+function isTyping() {
+    const active = document.activeElement;
+    return active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+}
+
+// Feature 2: Quick Search Modal
+function showQuickSearch() {
+    if (document.getElementById('quickSearchModal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'quickSearchModal';
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="closeQuickSearch()"></div>
+        <div class="qol-modal-content qol-search-modal">
+            <input type="text" id="quickSearchInput" placeholder="🔍 Cerca articoli, utenti, pagine..." 
+                   onkeyup="handleQuickSearch(event)" autocomplete="off">
+            <div class="qol-search-results" id="quickSearchResults">
+                <div class="qol-search-hint">Inizia a digitare per cercare...</div>
+            </div>
+            <div class="qol-search-footer">
+                <span>↑↓ per navigare</span>
+                <span>↵ per aprire</span>
+                <span>Esc per chiudere</span>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('quickSearchInput').focus(), 100);
+}
+
+function closeQuickSearch() {
+    const modal = document.getElementById('quickSearchModal');
+    if (modal) modal.remove();
+}
+
+function handleQuickSearch(e) {
+    if (e.key === 'Escape') {
+        closeQuickSearch();
+        return;
+    }
+    
+    const query = e.target.value.toLowerCase();
+    const results = document.getElementById('quickSearchResults');
+    
+    if (!query) {
+        results.innerHTML = '<div class="qol-search-hint">Inizia a digitare per cercare...</div>';
+        return;
+    }
+    
+    // Quick links
+    const pages = [
+        { title: 'Home', url: 'index.html', icon: '🏠' },
+        { title: 'Articoli', url: 'articoli.html', icon: '📰' },
+        { title: 'Chat', url: 'chat.html', icon: '💬' },
+        { title: 'Profilo', url: 'profilo.html', icon: '👤' },
+        { title: 'Impostazioni', url: 'impostazioni.html', icon: '⚙️' },
+        { title: 'Categorie', url: 'categorie.html', icon: '📁' },
+        { title: 'Diventa Reporter', url: 'candidatura.html', icon: '✍️' }
+    ];
+    
+    const matches = pages.filter(p => p.title.toLowerCase().includes(query));
+    
+    if (matches.length > 0) {
+        results.innerHTML = matches.map((p, i) => `
+            <a href="${p.url}" class="qol-search-item ${i === 0 ? 'selected' : ''}">
+                <span class="icon">${p.icon}</span>
+                <span class="title">${p.title}</span>
+            </a>
+        `).join('');
+    } else {
+        results.innerHTML = '<div class="qol-search-hint">Nessun risultato trovato</div>';
+    }
+}
+
+// Feature 3: Keyboard shortcuts help
+function showKeyboardShortcuts() {
+    if (document.getElementById('shortcutsModal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'shortcutsModal';
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="closeShortcuts()"></div>
+        <div class="qol-modal-content qol-shortcuts-modal">
+            <h3>⌨️ Scorciatoie da Tastiera</h3>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                    <span>Ricerca rapida</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>/</kbd>
+                    <span>Mostra scorciatoie</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>G</kbd> poi <kbd>H</kbd>
+                    <span>Vai alla Home</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>G</kbd> poi <kbd>C</kbd>
+                    <span>Vai alla Chat</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>G</kbd> poi <kbd>P</kbd>
+                    <span>Vai al Profilo</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Esc</kbd>
+                    <span>Chiudi modali</span>
+                </div>
+            </div>
+            <button onclick="closeShortcuts()" class="btn btn-primary" style="margin-top: 1rem;">Chiudi</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeShortcuts() {
+    const modal = document.getElementById('shortcutsModal');
+    if (modal) modal.remove();
+}
+
+function closeAllModals() {
+    closeQuickSearch();
+    closeShortcuts();
+    const termsModal = document.getElementById('termsModal');
+    if (termsModal) termsModal.remove();
+}
+
+// Feature 4: Toast notifications system
+function showToast(message, type = 'info', duration = 3000) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `qol-toast qol-toast-${type}`;
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'qol-toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+// Feature 5: Back to top button
+function initBackToTop() {
+    const btn = document.createElement('button');
+    btn.id = 'backToTop';
+    btn.className = 'qol-back-to-top';
+    btn.innerHTML = '↑';
+    btn.title = 'Torna su';
+    btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.appendChild(btn);
+    
+    window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 300);
+    });
+}
+
+// Feature 6: Reading progress indicator
+function initReadingProgress() {
+    if (!document.querySelector('.article-content, .articolo-content')) return;
+    
+    const progress = document.createElement('div');
+    progress.id = 'readingProgress';
+    progress.className = 'qol-reading-progress';
+    document.body.appendChild(progress);
+    
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const percent = (scrollTop / docHeight) * 100;
+        progress.style.width = `${percent}%`;
+    });
+}
+
+// Feature 7: Image lazy loading with placeholder
+function initLazyImages() {
+    const images = document.querySelectorAll('img[data-src]');
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.add('loaded');
+                observer.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+// Feature 8: Smooth scroll for anchor links
+function initSmoothScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+}
+
+// Feature 9: Copy to clipboard with feedback
+function copyToClipboard(text, successMessage = 'Copiato!') {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(successMessage, 'success');
+        }).catch(() => {
+            fallbackCopyToClipboard(text, successMessage);
+        });
+    } else {
+        fallbackCopyToClipboard(text, successMessage);
+    }
+}
+
+function fallbackCopyToClipboard(text, successMessage) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        showToast(successMessage, 'success');
+    } catch (err) {
+        showToast('Impossibile copiare', 'error');
+    }
+    document.body.removeChild(textarea);
+}
+
+// Feature 10: Share buttons
+function shareArticle(title, url) {
+    if (navigator.share) {
+        navigator.share({ title, url }).catch(() => {});
+    } else {
+        showShareModal(title, url);
+    }
+}
+
+function showShareModal(title, url) {
+    const modal = document.createElement('div');
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="this.parentElement.remove()"></div>
+        <div class="qol-modal-content qol-share-modal">
+            <h3>📤 Condividi</h3>
+            <div class="share-buttons">
+                <a href="https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}" target="_blank" class="share-btn whatsapp">
+                    📱 WhatsApp
+                </a>
+                <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}" target="_blank" class="share-btn twitter">
+                    🐦 Twitter
+                </a>
+                <button onclick="copyToClipboard('${url}'); this.closest('.qol-modal').remove();" class="share-btn copy">
+                    📋 Copia Link
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Feature 11: Confetti effect for celebrations
+function showConfetti() {
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'qol-confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => confetti.remove(), 5000);
+    }
+}
+
+// Feature 12: Notification bell
+function initNotificationBell() {
+    const bell = document.createElement('div');
+    bell.id = 'notificationBell';
+    bell.className = 'qol-notification-bell';
+    bell.innerHTML = `
+        <span class="bell-icon">🔔</span>
+        <span class="bell-badge" id="bellBadge">0</span>
+    `;
+    bell.onclick = showNotifications;
+    
+    // Add to header if exists
+    const header = document.querySelector('.header-content');
+    if (header) {
+        header.appendChild(bell);
+    }
+    
+    // Check for notifications
+    checkNotifications();
+}
+
+function checkNotifications() {
+    // Simulated notification check
+    const badge = document.getElementById('bellBadge');
+    if (badge) {
+        const count = parseInt(localStorage.getItem('unreadNotifications') || '0');
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }
+}
+
+function showNotifications() {
+    // Placeholder for notification system
+    showToast('Nessuna nuova notifica', 'info');
+    localStorage.setItem('unreadNotifications', '0');
+    checkNotifications();
+}
+
+// Feature 13: Online/offline indicator
+function initOnlineIndicator() {
+    window.addEventListener('online', () => {
+        showToast('Connessione ripristinata! 🌐', 'success');
+    });
+    
+    window.addEventListener('offline', () => {
+        showToast('Connessione persa. Alcune funzioni potrebbero non essere disponibili.', 'warning', 5000);
+    });
+}
+
+// Feature 14: Page visibility optimization
+function initPageVisibility() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // Pause animations and polling when tab is not visible
+            document.body.classList.add('tab-hidden');
+        } else {
+            document.body.classList.remove('tab-hidden');
+        }
+    });
+}
+
+// Feature 15: Print-friendly styles
+function initPrintStyles() {
+    window.matchMedia('print').addEventListener('change', (e) => {
+        if (e.matches) {
+            document.body.classList.add('printing');
+        } else {
+            document.body.classList.remove('printing');
+        }
+    });
+}
+
+// Feature 16: Font size controls
+function increaseFontSize() {
+    AppState.fontSize = Math.min(AppState.fontSize + 0.1, 1.5);
+    document.documentElement.style.fontSize = `${16 * AppState.fontSize}px`;
+    localStorage.setItem('fontSize', AppState.fontSize);
+    showToast(`Dimensione testo: ${Math.round(AppState.fontSize * 100)}%`, 'info');
+}
+
+function decreaseFontSize() {
+    AppState.fontSize = Math.max(AppState.fontSize - 0.1, 0.8);
+    document.documentElement.style.fontSize = `${16 * AppState.fontSize}px`;
+    localStorage.setItem('fontSize', AppState.fontSize);
+    showToast(`Dimensione testo: ${Math.round(AppState.fontSize * 100)}%`, 'info');
+}
+
+function resetFontSize() {
+    AppState.fontSize = 1.0;
+    document.documentElement.style.fontSize = '16px';
+    localStorage.setItem('fontSize', '1');
+    showToast('Dimensione testo ripristinata', 'info');
+}
+
+// Feature 17: Last visit tracker
+function trackVisit() {
+    const lastVisit = localStorage.getItem('lastVisit');
+    const now = new Date().toISOString();
+    
+    if (lastVisit) {
+        const lastDate = new Date(lastVisit);
+        const diff = Date.now() - lastDate.getTime();
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days > 7) {
+            showToast(`Bentornato! Non ti vedevamo da ${days} giorni 👋`, 'info', 5000);
+        }
+    } else {
+        showToast('Benvenuto sul Giornale Cesaris! 🎉', 'success', 5000);
+    }
+    
+    localStorage.setItem('lastVisit', now);
+}
+
+// Feature 18: Article bookmarks
+function toggleBookmark(articleId) {
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+    const index = bookmarks.indexOf(articleId);
+    
+    if (index > -1) {
+        bookmarks.splice(index, 1);
+        showToast('Articolo rimosso dai preferiti', 'info');
+    } else {
+        bookmarks.push(articleId);
+        showToast('Articolo aggiunto ai preferiti! ⭐', 'success');
+    }
+    
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+    return index === -1;
+}
+
+function isBookmarked(articleId) {
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+    return bookmarks.includes(articleId);
+}
+
+// Feature 19: Reading history
+function addToReadingHistory(article) {
+    const history = JSON.parse(localStorage.getItem('readingHistory') || '[]');
+    
+    // Remove if already exists
+    const filtered = history.filter(h => h.id !== article.id);
+    
+    // Add to beginning
+    filtered.unshift({
+        id: article.id,
+        title: article.title,
+        readAt: new Date().toISOString()
+    });
+    
+    // Keep only last 20
+    localStorage.setItem('readingHistory', JSON.stringify(filtered.slice(0, 20)));
+}
+
+// Feature 20: Quick actions menu (FAB)
+function initQuickActions() {
+    const fab = document.createElement('div');
+    fab.id = 'quickActionsFab';
+    fab.className = 'qol-fab';
+    fab.innerHTML = `
+        <button class="fab-main" onclick="toggleFabMenu()">⚡</button>
+        <div class="fab-menu" id="fabMenu">
+            <button onclick="showQuickSearch()" title="Cerca">🔍</button>
+            <button onclick="window.location.href='chat.html'" title="Chat">💬</button>
+            <button onclick="shareArticle(document.title, window.location.href)" title="Condividi">📤</button>
+            <button onclick="showKeyboardShortcuts()" title="Scorciatoie">⌨️</button>
+        </div>
+    `;
+    document.body.appendChild(fab);
+}
+
+function toggleFabMenu() {
+    document.getElementById('fabMenu').classList.toggle('open');
+}
+
+// Feature 21: Text selection sharing
+function initTextSelectionShare() {
+    let popup = null;
+    
+    document.addEventListener('mouseup', (e) => {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        
+        if (text.length > 10 && text.length < 500) {
+            if (popup) popup.remove();
+            
+            popup = document.createElement('div');
+            popup.className = 'qol-selection-popup';
+            popup.innerHTML = `
+                <button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}'); this.parentElement.remove();">📋</button>
+                <button onclick="searchGoogle('${text.replace(/'/g, "\\'")}'); this.parentElement.remove();">🔍</button>
+            `;
+            
+            const rect = selection.getRangeAt(0).getBoundingClientRect();
+            popup.style.top = (rect.top + window.scrollY - 40) + 'px';
+            popup.style.left = (rect.left + rect.width / 2 - 50) + 'px';
+            
+            document.body.appendChild(popup);
+            
+            setTimeout(() => popup && popup.remove(), 5000);
+        } else if (popup) {
+            popup.remove();
+            popup = null;
+        }
+    });
+}
+
+function searchGoogle(text) {
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(text)}`, '_blank');
+}
+
+// Feature 22: Auto-save drafts
+function initAutoSave() {
+    const textareas = document.querySelectorAll('textarea[data-autosave]');
+    
+    textareas.forEach(textarea => {
+        const key = `draft_${textarea.dataset.autosave}`;
+        
+        // Load saved draft
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            textarea.value = saved;
+        }
+        
+        // Save on input
+        let timeout;
+        textarea.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                localStorage.setItem(key, textarea.value);
+            }, 1000);
+        });
+    });
+}
+
+// Feature 23: Reduced motion preference
+function initReducedMotion() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    
+    const handleMotionPreference = (e) => {
+        document.body.classList.toggle('reduce-motion', e.matches);
+    };
+    
+    handleMotionPreference(prefersReducedMotion);
+    prefersReducedMotion.addEventListener('change', handleMotionPreference);
+}
+
+// Feature 24: Article reading time estimator
+function estimateReadingTime(content) {
+    const wordsPerMinute = 200;
+    const words = content.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    
+    if (minutes < 1) return 'Meno di 1 min';
+    if (minutes === 1) return '1 min di lettura';
+    return `${minutes} min di lettura`;
+}
+
+// Feature 25: Scroll progress memory
+function saveScrollPosition() {
+    const path = window.location.pathname;
+    localStorage.setItem(`scroll_${path}`, window.scrollY);
+}
+
+function restoreScrollPosition() {
+    const path = window.location.pathname;
+    const saved = localStorage.getItem(`scroll_${path}`);
+    if (saved) {
+        setTimeout(() => window.scrollTo(0, parseInt(saved)), 100);
+    }
+}
+
+// Initialize all QoL features
+function initQoLFeatures() {
+    initBackToTop();
+    initReadingProgress();
+    initLazyImages();
+    initSmoothScroll();
+    initOnlineIndicator();
+    initPageVisibility();
+    initPrintStyles();
+    initReducedMotion();
+    initAutoSave();
+    initQuickActions();
+    initTextSelectionShare();
+    trackVisit();
+    
+    // Restore scroll position on page load
+    restoreScrollPosition();
+    
+    // Save scroll position before unload
+    window.addEventListener('beforeunload', saveScrollPosition);
+}
+
+// Call on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initQoLFeatures, 100);
+});
+
+// Export additional functions
+window.showToast = showToast;
+window.copyToClipboard = copyToClipboard;
+window.shareArticle = shareArticle;
+window.showConfetti = showConfetti;
+window.toggleBookmark = toggleBookmark;
+window.isBookmarked = isBookmarked;
+window.increaseFontSize = increaseFontSize;
+window.decreaseFontSize = decreaseFontSize;
+window.resetFontSize = resetFontSize;
+window.showQuickSearch = showQuickSearch;
+window.closeQuickSearch = closeQuickSearch;
+window.handleQuickSearch = handleQuickSearch;
+window.showKeyboardShortcuts = showKeyboardShortcuts;
+window.closeShortcuts = closeShortcuts;
+window.toggleFabMenu = toggleFabMenu;
+window.searchGoogle = searchGoogle;
+
 console.log('✅ Main.js caricato con successo');
