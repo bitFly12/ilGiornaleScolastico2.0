@@ -16,7 +16,7 @@ const ChatState = {
     selectedMessageId: null,
     replyingTo: null,
     editingMessageId: null,
-    lastMessageId: null,
+    lastMessageTimestamp: null, // Changed from lastMessageId to use timestamp for proper polling
     isTyping: false,
     typingTimeout: null,
     unreadCount: 0,
@@ -87,12 +87,64 @@ async function initMobileChat() {
         // Setup scroll handler
         setupScrollHandler();
         
+        // Setup mobile keyboard handling
+        setupMobileKeyboardHandling();
+        
+        // Setup visibility change handler (pause polling when tab not visible)
+        setupVisibilityHandler();
+        
         console.log('✅ Chat initialized successfully!');
         
     } catch (error) {
         console.error('❌ Chat initialization error:', error);
         showToast('Errore nel caricamento della chat', '❌');
     }
+}
+
+// Handle mobile keyboard
+function setupMobileKeyboardHandling() {
+    const chatApp = document.getElementById('chatApp');
+    const input = document.getElementById('messageInput');
+    
+    if (!chatApp || !input) return;
+    
+    // Detect if on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        input.addEventListener('focus', () => {
+            chatApp.classList.add('keyboard-open');
+            // Scroll to bottom when keyboard opens
+            setTimeout(() => scrollToBottom(false), 300);
+        });
+        
+        input.addEventListener('blur', () => {
+            chatApp.classList.remove('keyboard-open');
+        });
+        
+        // Handle visual viewport changes (for iOS)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                // Adjust for keyboard
+                const viewport = window.visualViewport;
+                const offsetBottom = window.innerHeight - viewport.height - viewport.offsetTop;
+                document.body.style.setProperty('--keyboard-height', `${offsetBottom}px`);
+            });
+        }
+    }
+}
+
+// Pause polling when tab not visible
+function setupVisibilityHandler() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopRealtimeUpdates();
+        } else {
+            startRealtimeUpdates();
+            // Refresh messages when returning
+            loadMessages();
+        }
+    });
 }
 
 async function waitForSupabase() {
@@ -153,7 +205,8 @@ async function loadMessages() {
         renderMessages();
         
         if (messages && messages.length > 0) {
-            ChatState.lastMessageId = messages[messages.length - 1].id;
+            // Use timestamp for proper polling (works with UUIDs)
+            ChatState.lastMessageTimestamp = messages[messages.length - 1].created_at;
         }
         
         scrollToBottom(false);
@@ -305,9 +358,12 @@ async function sendMessage() {
         input.style.height = 'auto';
         cancelReply();
         
-        // Add message to state and render
-        ChatState.messages.push(data);
-        ChatState.lastMessageId = data.id;
+        // Add message to state and render (check for duplicates)
+        const exists = ChatState.messages.some(m => m.id === data.id);
+        if (!exists) {
+            ChatState.messages.push(data);
+            ChatState.lastMessageTimestamp = data.created_at;
+        }
         renderMessages();
         scrollToBottom(true);
         
@@ -827,7 +883,7 @@ function stopRealtimeUpdates() {
 }
 
 async function checkForNewMessages() {
-    if (!ChatState.lastMessageId) return;
+    if (!ChatState.lastMessageTimestamp) return;
     
     try {
         const { data: newMessages } = await window.supabaseClient
@@ -837,28 +893,36 @@ async function checkForNewMessages() {
                 user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .eq('is_deleted', false)
-            .gt('id', ChatState.lastMessageId)
+            .gt('created_at', ChatState.lastMessageTimestamp)
             .order('created_at', { ascending: true });
         
         if (newMessages && newMessages.length > 0) {
-            newMessages.forEach(msg => {
-                ChatState.messages.push(msg);
-                ChatState.lastMessageId = msg.id;
+            // Filter out any duplicates by checking existing message IDs
+            const existingIds = new Set(ChatState.messages.map(m => m.id));
+            const uniqueNewMessages = newMessages.filter(msg => !existingIds.has(msg.id));
+            
+            if (uniqueNewMessages.length > 0) {
+                uniqueNewMessages.forEach(msg => {
+                    ChatState.messages.push(msg);
+                    
+                    // Notify if mentioned
+                    if (checkIfMentioned(msg.content) && msg.user_id !== ChatState.currentUser?.id) {
+                        showToast(`${msg.user?.nome_visualizzato || 'Qualcuno'} ti ha menzionato!`, '🔔');
+                        notifyMention(msg);
+                    }
+                });
                 
-                // Notify if mentioned
-                if (checkIfMentioned(msg.content) && msg.user_id !== ChatState.currentUser?.id) {
-                    showToast(`${msg.user?.nome_visualizzato || 'Qualcuno'} ti ha menzionato!`, '🔔');
-                    notifyMention(msg);
+                // Update timestamp to latest message
+                ChatState.lastMessageTimestamp = uniqueNewMessages[uniqueNewMessages.length - 1].created_at;
+                
+                renderMessages();
+                
+                if (ChatState.isAtBottom) {
+                    scrollToBottom(true);
+                } else {
+                    ChatState.unreadCount += uniqueNewMessages.length;
+                    updateUnreadBadge();
                 }
-            });
-            
-            renderMessages();
-            
-            if (ChatState.isAtBottom) {
-                scrollToBottom(true);
-            } else {
-                ChatState.unreadCount += newMessages.length;
-                updateUnreadBadge();
             }
         }
     } catch (error) {
