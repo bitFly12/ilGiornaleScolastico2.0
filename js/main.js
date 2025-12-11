@@ -754,11 +754,23 @@ function showToast(message, type = 'info', duration = 3000) {
         info: 'ℹ️'
     };
     
-    toast.innerHTML = `
-        <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
-        <span class="toast-message">${message}</span>
-        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
-    `;
+    // Create elements safely to prevent XSS
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'toast-icon';
+    iconSpan.textContent = icons[type] || 'ℹ️';
+    
+    const messageSpan = document.createElement('span');
+    messageSpan.className = 'toast-message';
+    messageSpan.textContent = message; // Using textContent to prevent XSS
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', () => toast.remove());
+    
+    toast.appendChild(iconSpan);
+    toast.appendChild(messageSpan);
+    toast.appendChild(closeBtn);
     
     toastContainer.appendChild(toast);
     
@@ -878,25 +890,58 @@ function shareArticle(title, url) {
 }
 
 function showShareModal(title, url) {
+    // Sanitize inputs for security
+    const safeTitle = String(title).replace(/[<>"'&]/g, '');
+    const safeUrl = String(url).replace(/[<>"'&]/g, '');
+    
     const modal = document.createElement('div');
     modal.className = 'qol-modal';
-    modal.innerHTML = `
-        <div class="qol-modal-backdrop" onclick="this.parentElement.remove()"></div>
-        <div class="qol-modal-content qol-share-modal">
-            <h3>📤 Condividi</h3>
-            <div class="share-buttons">
-                <a href="https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}" target="_blank" class="share-btn whatsapp">
-                    📱 WhatsApp
-                </a>
-                <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}" target="_blank" class="share-btn twitter">
-                    🐦 Twitter
-                </a>
-                <button onclick="copyToClipboard('${url}'); this.closest('.qol-modal').remove();" class="share-btn copy">
-                    📋 Copia Link
-                </button>
-            </div>
-        </div>
-    `;
+    
+    // Build modal content safely
+    const backdrop = document.createElement('div');
+    backdrop.className = 'qol-modal-backdrop';
+    backdrop.addEventListener('click', () => modal.remove());
+    
+    const content = document.createElement('div');
+    content.className = 'qol-modal-content qol-share-modal';
+    
+    const heading = document.createElement('h3');
+    heading.textContent = '📤 Condividi';
+    
+    const buttonsDiv = document.createElement('div');
+    buttonsDiv.className = 'share-buttons';
+    
+    // WhatsApp link
+    const waLink = document.createElement('a');
+    waLink.href = `https://wa.me/?text=${encodeURIComponent(safeTitle + ' ' + safeUrl)}`;
+    waLink.target = '_blank';
+    waLink.className = 'share-btn whatsapp';
+    waLink.textContent = '📱 WhatsApp';
+    
+    // Twitter link
+    const twLink = document.createElement('a');
+    twLink.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(safeTitle)}&url=${encodeURIComponent(safeUrl)}`;
+    twLink.target = '_blank';
+    twLink.className = 'share-btn twitter';
+    twLink.textContent = '🐦 Twitter';
+    
+    // Copy button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'share-btn copy';
+    copyBtn.textContent = '📋 Copia Link';
+    copyBtn.addEventListener('click', () => {
+        copyToClipboard(safeUrl);
+        modal.remove();
+    });
+    
+    buttonsDiv.appendChild(waLink);
+    buttonsDiv.appendChild(twLink);
+    buttonsDiv.appendChild(copyBtn);
+    content.appendChild(heading);
+    content.appendChild(buttonsDiv);
+    modal.appendChild(backdrop);
+    modal.appendChild(content);
+    
     document.body.appendChild(modal);
 }
 
@@ -1076,15 +1121,49 @@ function initQuickActions() {
     const fab = document.createElement('div');
     fab.id = 'quickActionsFab';
     fab.className = 'qol-fab';
-    fab.innerHTML = `
-        <button class="fab-main" onclick="toggleFabMenu()">⚡</button>
-        <div class="fab-menu" id="fabMenu">
-            <button onclick="showQuickSearch()" title="Cerca">🔍</button>
-            <button onclick="window.location.href='chat.html'" title="Chat">💬</button>
-            <button onclick="shareArticle(document.title, window.location.href)" title="Condividi">📤</button>
-            <button onclick="showKeyboardShortcuts()" title="Scorciatoie">⌨️</button>
-        </div>
-    `;
+    
+    // Create main button
+    const mainBtn = document.createElement('button');
+    mainBtn.className = 'fab-main';
+    mainBtn.textContent = '⚡';
+    mainBtn.addEventListener('click', toggleFabMenu);
+    
+    // Create menu
+    const menu = document.createElement('div');
+    menu.className = 'fab-menu';
+    menu.id = 'fabMenu';
+    
+    // Search button
+    const searchBtn = document.createElement('button');
+    searchBtn.title = 'Cerca';
+    searchBtn.textContent = '🔍';
+    searchBtn.addEventListener('click', showQuickSearch);
+    
+    // Chat button
+    const chatBtn = document.createElement('button');
+    chatBtn.title = 'Chat';
+    chatBtn.textContent = '💬';
+    chatBtn.addEventListener('click', () => window.location.href = 'chat.html');
+    
+    // Share button
+    const shareBtn = document.createElement('button');
+    shareBtn.title = 'Condividi';
+    shareBtn.textContent = '📤';
+    shareBtn.addEventListener('click', () => shareArticle(document.title, window.location.href));
+    
+    // Shortcuts button
+    const shortcutsBtn = document.createElement('button');
+    shortcutsBtn.title = 'Scorciatoie';
+    shortcutsBtn.textContent = '⌨️';
+    shortcutsBtn.addEventListener('click', showKeyboardShortcuts);
+    
+    menu.appendChild(searchBtn);
+    menu.appendChild(chatBtn);
+    menu.appendChild(shareBtn);
+    menu.appendChild(shortcutsBtn);
+    
+    fab.appendChild(mainBtn);
+    fab.appendChild(menu);
     document.body.appendChild(fab);
 }
 
@@ -1095,6 +1174,7 @@ function toggleFabMenu() {
 // Feature 21: Text selection sharing
 function initTextSelectionShare() {
     let popup = null;
+    let selectedText = '';
     
     document.addEventListener('mouseup', (e) => {
         const selection = window.getSelection();
@@ -1103,12 +1183,29 @@ function initTextSelectionShare() {
         if (text.length > 10 && text.length < 500) {
             if (popup) popup.remove();
             
+            // Store text safely for later use
+            selectedText = text;
+            
             popup = document.createElement('div');
             popup.className = 'qol-selection-popup';
-            popup.innerHTML = `
-                <button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}'); this.parentElement.remove();">📋</button>
-                <button onclick="searchGoogle('${text.replace(/'/g, "\\'")}'); this.parentElement.remove();">🔍</button>
-            `;
+            
+            // Create buttons safely with event listeners instead of inline handlers
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋';
+            copyBtn.addEventListener('click', () => {
+                copyToClipboard(selectedText);
+                popup.remove();
+            });
+            
+            const searchBtn = document.createElement('button');
+            searchBtn.textContent = '🔍';
+            searchBtn.addEventListener('click', () => {
+                searchGoogle(selectedText);
+                popup.remove();
+            });
+            
+            popup.appendChild(copyBtn);
+            popup.appendChild(searchBtn);
             
             const rect = selection.getRangeAt(0).getBoundingClientRect();
             popup.style.top = (rect.top + window.scrollY - 40) + 'px';

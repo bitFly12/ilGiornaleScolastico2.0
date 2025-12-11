@@ -1439,14 +1439,27 @@ function showScheduleOptions() {
 
 // Feature 46: Quick reactions bar
 function showQuickReactions(messageId) {
+    // Validate messageId to prevent XSS
+    if (!messageId || typeof messageId !== 'string') return;
+    const safeMessageId = messageId.replace(/[^a-zA-Z0-9-_]/g, '');
+    
     const reactions = ['👍', '❤️', '😂', '😮', '🎉', '🔥'];
     const bar = document.createElement('div');
     bar.className = 'quick-reactions-bar';
-    bar.innerHTML = reactions.map(r => 
-        `<button class="quick-reaction" onclick="addReaction('${messageId}', '${r}'); this.parentElement.remove();">${r}</button>`
-    ).join('');
     
-    const bubble = document.querySelector(`[data-message-id="${messageId}"]`);
+    // Create buttons safely with event listeners
+    reactions.forEach(reaction => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-reaction';
+        btn.textContent = reaction;
+        btn.addEventListener('click', () => {
+            addReaction(safeMessageId, reaction);
+            bar.remove();
+        });
+        bar.appendChild(btn);
+    });
+    
+    const bubble = document.querySelector(`[data-message-id="${CSS.escape(safeMessageId)}"]`);
     if (bubble) {
         bubble.appendChild(bar);
         setTimeout(() => bar.remove(), 5000);
