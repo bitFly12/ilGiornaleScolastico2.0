@@ -811,6 +811,7 @@ CREATE INDEX idx_comments_parent ON article_comments(parent_comment_id);
 CREATE INDEX idx_chat_messages_user ON chat_messages(user_id);
 CREATE INDEX idx_chat_messages_created ON chat_messages(created_at DESC);
 CREATE INDEX idx_chat_messages_pinned ON chat_messages(is_pinned) WHERE is_pinned = true;
+CREATE INDEX idx_chat_messages_room ON chat_messages(room);
 
 -- Reactions indexes
 CREATE INDEX idx_article_reactions_article ON article_reactions(article_id);

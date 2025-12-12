@@ -46,8 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ================================================
 async function checkMaintenanceMode() {
     // Skip check on maintenance page and admin page
-    if (window.location.pathname.includes('manutenzione.html') || 
-        window.location.pathname.includes('admin.html')) {
+    const currentPath = window.location.pathname.toLowerCase();
+    if (currentPath.includes('manutenzione.html') || 
+        currentPath.includes('admin.html') ||
+        currentPath.includes('login.html')) {
         return;
     }
     
@@ -55,13 +57,41 @@ async function checkMaintenanceMode() {
     const settings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
     
     if (settings.maintenanceMode) {
-        // Check if user is admin
+        // Check if user is admin - check both localStorage and async Supabase check
         const userRole = localStorage.getItem('userRole');
         
-        if (userRole !== 'caporedattore' && userRole !== 'docente') {
-            // Redirect non-admin users to maintenance page
-            window.location.href = 'manutenzione.html';
+        // If clearly admin, allow access
+        if (userRole === 'caporedattore' || userRole === 'admin') {
+            console.log('Admin detected, skipping maintenance redirect');
+            return;
         }
+        
+        // Double-check with Supabase if available
+        try {
+            if (typeof supabase !== 'undefined') {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('profili_utenti')
+                        .select('ruolo')
+                        .eq('id', user.id)
+                        .single();
+                    
+                    if (profile && (profile.ruolo === 'caporedattore' || profile.ruolo === 'admin')) {
+                        localStorage.setItem('userRole', profile.ruolo);
+                        console.log('Admin confirmed via Supabase, skipping maintenance redirect');
+                        return;
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Supabase check failed, using localStorage');
+        }
+        
+        // Redirect non-admin users to maintenance page
+        console.log('Maintenance mode active, redirecting to maintenance page');
+        window.location.replace('manutenzione.html');
+        return;
     }
 }
 

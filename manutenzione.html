@@ -495,6 +495,20 @@
         }
         
         checkAdminAccess();
+        
+        // Check if maintenance mode is actually active, otherwise redirect to home
+        function checkMaintenanceStatus() {
+            const settings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
+            if (!settings.maintenanceMode) {
+                // Clear the maintenance end time and redirect to home
+                localStorage.removeItem('maintenanceEndTime');
+                window.location.replace('index.html');
+            }
+        }
+        
+        // Check maintenance status every 10 seconds
+        setTimeout(checkMaintenanceStatus, 1000);
+        setInterval(checkMaintenanceStatus, 10000);
     </script>
 </body>
 </html>

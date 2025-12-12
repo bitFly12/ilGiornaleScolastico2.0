@@ -155,8 +155,11 @@ async function checkForNewMessages() {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         
+        // Use window.supabaseClient for consistency
+        const client = window.supabaseClient || supabase;
+        
         // Build query to fetch new messages - filter by current room
-        let query = supabase
+        let query = client
             .from('chat_messages')
             .select(`
                 *,
@@ -277,10 +280,15 @@ async function loadChatMessages() {
 
     // Show loading state
     showChatLoading();
+    
+    console.log('Loading messages for room:', currentRoom);
 
     try {
+        // Use window.supabaseClient for consistency with other parts of the app
+        const client = window.supabaseClient || supabase;
+        
         // Filter by current room
-        const { data: messages, error } = await supabase
+        const { data: messages, error } = await client
             .from('chat_messages')
             .select(`
                 *,
@@ -291,7 +299,12 @@ async function loadChatMessages() {
             .order('created_at', { ascending: true })
             .limit(100);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error loading messages:', error);
+            throw error;
+        }
+        
+        console.log('Loaded messages:', messages?.length || 0, 'for room:', currentRoom);
 
         // Hide loading state
         hideChatLoading();
@@ -302,6 +315,9 @@ async function loadChatMessages() {
         if (pinnedMsg) {
             container.appendChild(pinnedMsg);
         }
+
+        // Reset lastMessageId when loading new room
+        lastMessageId = null;
 
         // Add messages
         if (messages && messages.length > 0) {
