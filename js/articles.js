@@ -62,25 +62,44 @@ async function loadArticles(page = 1) {
 function createArticleCardFromSupabase(article) {
     const card = document.createElement('div');
     card.className = 'article-card article-card-mini';
+    card.style.cursor = 'pointer';
     
     // Use placeholder if image doesn't exist
     const imageSrc = article.immagine_url || createPlaceholderImage(article.categoria);
     const authorName = article.autore?.nome_visualizzato || 'Anonimo';
+    const articleUrl = `articolo.html?id=${article.id}`;
     
     card.innerHTML = `
-        <img src="${imageSrc}" alt="${article.titolo}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
-        <div class="card-body">
-            <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${article.categoria}</span>
-            <h3 class="card-title">${truncateText(article.titolo, 60)}</h3>
-            <div class="card-meta">
-                <span>👤 ${authorName}</span>
-                <span>📖 ${article.reading_time_minutes} min</span>
+        <a href="${articleUrl}" style="display: block; text-decoration: none; color: inherit;">
+            <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            <div class="card-body">
+                <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${escapeHtml(article.categoria)}</span>
+                <h3 class="card-title">${truncateText(escapeHtml(article.titolo), 60)}</h3>
+                <div class="card-meta">
+                    <span>👤 ${escapeHtml(authorName)}</span>
+                    <span>📖 ${article.reading_time_minutes || 5} min</span>
+                </div>
+                <span class="btn btn-primary btn-sm" style="margin-top: 0.5rem; width: 100%; display: block; text-align: center;">Leggi</span>
             </div>
-            <a href="articolo.html?id=${article.id}" class="btn btn-primary btn-sm" style="margin-top: 0.5rem; width: 100%;">Leggi</a>
-        </div>
+        </a>
     `;
     
+    // Make entire card clickable with touch support
+    card.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'A') {
+            window.location.href = articleUrl;
+        }
+    });
+    
     return card;
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ================================================
@@ -89,24 +108,35 @@ function createArticleCardFromSupabase(article) {
 function createArticleCard(article) {
     const card = document.createElement('div');
     card.className = 'article-card article-card-mini';
+    card.style.cursor = 'pointer';
     
     // Use placeholder if image doesn't exist
     const imageSrc = article.immagine_url || article.immagine || createPlaceholderImage(article.categoria);
     const authorName = article.autore?.nome_visualizzato || article.autore?.nome || 'Redazione';
     const readingTime = article.reading_time_minutes || article.reading_time || 5;
+    const articleUrl = `articolo.html?id=${article.id}`;
     
     card.innerHTML = `
-        <img src="${imageSrc}" alt="${article.titolo}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
-        <div class="card-body">
-            <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${article.categoria}</span>
-            <h3 class="card-title">${truncateText(article.titolo, 60)}</h3>
-            <div class="card-meta">
-                <span>👤 ${authorName}</span>
-                <span>📖 ${readingTime} min</span>
+        <a href="${articleUrl}" style="display: block; text-decoration: none; color: inherit;">
+            <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            <div class="card-body">
+                <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${escapeHtml(article.categoria)}</span>
+                <h3 class="card-title">${truncateText(escapeHtml(article.titolo), 60)}</h3>
+                <div class="card-meta">
+                    <span>👤 ${escapeHtml(authorName)}</span>
+                    <span>📖 ${readingTime} min</span>
+                </div>
+                <span class="btn btn-primary btn-sm" style="margin-top: 0.5rem; width: 100%; display: block; text-align: center;">Leggi</span>
             </div>
-            <a href="articolo.html?id=${article.id}" class="btn btn-primary btn-sm" style="margin-top: 0.5rem; width: 100%;">Leggi</a>
-        </div>
+        </a>
     `;
+    
+    // Make entire card clickable with touch support
+    card.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'A') {
+            window.location.href = articleUrl;
+        }
+    });
     
     return card;
 }
@@ -167,25 +197,37 @@ function renderTrendingArticles(articles, container) {
         const authorName = article.autore?.nome_visualizzato || article.autore?.nome || 'Redazione';
         const views = article.visualizzazioni || 0;
         const imageSrc = article.immagine_url || article.immagine || createPlaceholderImage(article.categoria);
+        const articleUrl = `articolo.html?id=${article.id}`;
         
         const card = document.createElement('div');
         card.className = 'card';
+        card.style.cursor = 'pointer';
         card.innerHTML = `
-            <img src="${imageSrc}" alt="${article.titolo}" class="card-img" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
-            <div class="card-body">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.875rem; color: var(--primary); font-weight: 600;">${article.categoria}</span>
-                    <span style="font-size: 1.5rem;">${medal}</span>
+            <a href="${articleUrl}" style="display: block; text-decoration: none; color: inherit;">
+                <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" class="card-img" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+                <div class="card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.875rem; color: var(--primary); font-weight: 600;">${escapeHtml(article.categoria)}</span>
+                        <span style="font-size: 1.5rem;">${medal}</span>
+                    </div>
+                    <h3 class="card-title">${escapeHtml(article.titolo)}</h3>
+                    <p class="card-text">${truncateText(escapeHtml(article.sommario || ''), 100)}</p>
+                    <div class="card-meta">
+                        <span>👤 ${escapeHtml(authorName)}</span>
+                        <span>👁️ ${views}</span>
+                    </div>
+                    <span class="btn btn-primary" style="margin-top: 1rem; width: 100%; display: block; text-align: center;">Leggi Articolo</span>
                 </div>
-                <h3 class="card-title">${article.titolo}</h3>
-                <p class="card-text">${truncateText(article.sommario, 100)}</p>
-                <div class="card-meta">
-                    <span>👤 ${authorName}</span>
-                    <span>👁️ ${views}</span>
-                </div>
-                <a href="articolo.html?id=${article.id}" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Leggi Articolo</a>
-            </div>
+            </a>
         `;
+        
+        // Make entire card clickable with touch support
+        card.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'A') {
+                window.location.href = articleUrl;
+            }
+        });
+        
         container.appendChild(card);
     });
 }

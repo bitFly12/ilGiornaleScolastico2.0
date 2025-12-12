@@ -21,6 +21,9 @@ const AppState = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎓 Giornale Scolastico Cesaris inizializzato');
     
+    // Check maintenance mode first
+    checkMaintenanceMode();
+    
     // Initialize app features
     initMobileMenu();
     initDailyQuote();
@@ -37,6 +40,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show terms modal for first-time visitors
     checkTermsAcceptance();
 });
+
+// ================================================
+// MAINTENANCE MODE CHECK
+// ================================================
+async function checkMaintenanceMode() {
+    // Skip check on maintenance page and admin page
+    if (window.location.pathname.includes('manutenzione.html') || 
+        window.location.pathname.includes('admin.html')) {
+        return;
+    }
+    
+    // Check local storage for maintenance mode
+    const settings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
+    
+    if (settings.maintenanceMode) {
+        // Check if user is admin
+        const userRole = localStorage.getItem('userRole');
+        
+        if (userRole !== 'caporedattore' && userRole !== 'docente') {
+            // Redirect non-admin users to maintenance page
+            window.location.href = 'manutenzione.html';
+        }
+    }
+}
 
 // ================================================
 // MOBILE MENU
@@ -72,13 +99,15 @@ function initMobileMenu() {
             menuToggle.innerHTML = '<span>☰</span>';
         });
         
-        // Close menu when clicking a link
+        // Close menu when clicking a link - allow navigation to happen
         navLinks.forEach(link => {
-            link.addEventListener('click', () => {
+            link.addEventListener('click', (e) => {
+                // Close menu but don't prevent default - allow navigation
                 navMenu.classList.remove('mobile-menu-open');
                 overlay.classList.remove('active');
                 document.body.style.overflow = '';
                 menuToggle.innerHTML = '<span>☰</span>';
+                // Navigation will happen naturally via href
             });
         });
         

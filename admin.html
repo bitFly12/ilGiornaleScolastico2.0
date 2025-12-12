@@ -491,7 +491,7 @@
                 container.innerHTML = articles.map(article => `
                     <div class="article-item">
                         <div class="article-info">
-                            <h3 style="margin: 0 0 0.5rem 0;">${article.titolo}</h3>
+                            <h3 style="margin: 0 0 0.5rem 0;">${escapeHtml(article.titolo)}</h3>
                             <p style="color: var(--neutral); font-size: 0.875rem; margin: 0;">
                                 di ${article.autore?.nome_visualizzato || 'Anonimo'} • 
                                 ${article.categoria} • 
@@ -502,8 +502,9 @@
                             </span>
                         </div>
                         <div class="article-actions">
-                            <button class="btn btn-sm btn-primary" onclick="editArticle('${article.id}')">Modifica</button>
-                            <button class="btn btn-sm btn-error" onclick="deleteArticle('${article.id}')">Elimina</button>
+                            <a href="articolo.html?id=${article.id}" class="btn btn-sm btn-outline" target="_blank">👁️ Vedi</a>
+                            <button class="btn btn-sm btn-warning" onclick="reportArticle('${article.id}')">🚩 Segnala</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteArticle('${article.id}')">🗑️ Elimina</button>
                         </div>
                     </div>
                 `).join('');
@@ -637,11 +638,18 @@
             window.location.href = `dashboard.html?edit=${id}`;
         }
 
-        // Delete article
+        // Delete article - improved with verification
         async function deleteArticle(id) {
-            if (!confirm('Sei sicuro di voler eliminare questo articolo?')) return;
+            if (!confirm('⚠️ Sei sicuro di voler eliminare questo articolo?')) return;
+            if (!confirm('🔴 Questa azione è irreversibile. Confermi?')) return;
 
             try {
+                // First delete related data (comments, reactions)
+                await supabase.from('article_comments').delete().eq('article_id', id);
+                await supabase.from('article_reactions').delete().eq('article_id', id);
+                await supabase.from('content_reports').delete().eq('content_id', id).eq('content_type', 'article');
+                
+                // Then delete the article
                 const { error } = await supabase
                     .from('articoli')
                     .delete()
@@ -649,11 +657,45 @@
 
                 if (error) throw error;
 
+                // Verify deletion
+                const { data: checkArticle } = await supabase
+                    .from('articoli')
+                    .select('id')
+                    .eq('id', id)
+                    .single();
+                
+                if (checkArticle) {
+                    throw new Error('Articolo non eliminato - potrebbe essere necessario controllare le policy del database');
+                }
+
                 alert('✅ Articolo eliminato con successo');
-                loadAllArticles();
+                await loadAllArticles();
+                await loadStatistics();
             } catch (error) {
                 console.error('Error deleting article:', error);
-                alert('❌ Errore nell\'eliminazione dell\'articolo');
+                alert('❌ Errore nell\'eliminazione dell\'articolo: ' + (error.message || 'Errore sconosciuto'));
+            }
+        }
+        
+        // Report an article from admin
+        async function reportArticle(articleId) {
+            const reason = prompt('Motivo della segnalazione:');
+            if (!reason) return;
+            
+            try {
+                await supabase.from('content_reports').insert({
+                    content_type: 'article',
+                    content_id: articleId,
+                    reported_by: currentUser?.profile?.id,
+                    reason: reason,
+                    status: 'pending'
+                });
+                
+                alert('✅ Articolo segnalato');
+                loadReports();
+            } catch (error) {
+                console.error('Error reporting article:', error);
+                alert('❌ Errore: ' + error.message);
             }
         }
 
