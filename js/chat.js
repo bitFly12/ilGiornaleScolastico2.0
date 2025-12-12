@@ -7,6 +7,67 @@ let currentUser = null;
 let selectedMentionIndex = 0;
 let realtimeInterval = null;
 let lastMessageId = null;
+let currentRoom = 'generale'; // Default room
+
+// Room names for display
+const roomNames = {
+    'generale': 'Chat Globale',
+    'sport': 'Sport',
+    'musica': 'Musica',
+    'gaming': 'Gaming',
+    'meme': 'Meme',
+    'anime': 'Anime',
+    'studio': 'Studio',
+    'tech': 'Tech'
+};
+
+// Room icons
+const roomIcons = {
+    'generale': '💬',
+    'sport': '⚽',
+    'musica': '🎵',
+    'gaming': '🎮',
+    'meme': '😂',
+    'anime': '🎌',
+    'studio': '📚',
+    'tech': '💻'
+};
+
+// Select a chat room
+function selectRoom(roomId) {
+    currentRoom = roomId;
+    lastMessageId = null; // Reset last message ID for new room
+    
+    // Update UI
+    document.querySelectorAll('.room-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const selectedItem = document.querySelector(`.room-item[onclick*="${roomId}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('active');
+        // Clear unread badge
+        const badge = selectedItem.querySelector('.room-badge');
+        if (badge) badge.remove();
+    }
+    
+    // Update header
+    const headerTitle = document.querySelector('.chat-header-info h1');
+    if (headerTitle) {
+        headerTitle.textContent = roomNames[roomId] || 'Chat';
+    }
+    
+    const headerIcon = document.querySelector('.chat-avatar-group');
+    if (headerIcon) {
+        headerIcon.textContent = roomIcons[roomId] || '💬';
+    }
+    
+    // Close sidebar on mobile
+    toggleSidebar();
+    
+    // Reload messages for this room
+    loadChatMessages();
+}
 
 // ================================================
 // Initialize Chat
@@ -88,7 +149,7 @@ async function checkForNewMessages() {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         
-        // Build query to fetch new messages
+        // Build query to fetch new messages - filter by current room
         let query = supabase
             .from('chat_messages')
             .select(`
@@ -96,6 +157,7 @@ async function checkForNewMessages() {
                 user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .eq('is_deleted', false)
+            .eq('room', currentRoom)
             .order('created_at', { ascending: false })
             .limit(20);
         
@@ -211,6 +273,7 @@ async function loadChatMessages() {
     showChatLoading();
 
     try {
+        // Filter by current room
         const { data: messages, error } = await supabase
             .from('chat_messages')
             .select(`
@@ -218,6 +281,7 @@ async function loadChatMessages() {
                 user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .eq('is_deleted', false)
+            .eq('room', currentRoom)
             .order('created_at', { ascending: true })
             .limit(100);
 
@@ -245,10 +309,10 @@ async function loadChatMessages() {
                 }
             });
         } else {
-            // Show welcome message
+            // Show welcome message for the room
             const welcomeDiv = document.createElement('div');
             welcomeDiv.style.cssText = 'text-align: center; padding: 2rem; color: var(--neutral);';
-            welcomeDiv.innerHTML = '<p>💬 Nessun messaggio ancora. Inizia la conversazione!</p>';
+            welcomeDiv.innerHTML = `<p>${roomIcons[currentRoom] || '💬'} Nessun messaggio in ${roomNames[currentRoom] || 'questa chat'} ancora. Inizia la conversazione!</p>`;
             container.appendChild(welcomeDiv);
         }
 
@@ -299,7 +363,10 @@ function createMessageElement(msg) {
         <div class="message-content">
             <div class="message-header">
                 <span class="message-author">${escapeHTML(displayName)} <span style="color: var(--neutral); font-weight: normal;">@${username}</span></span>
-                <span class="message-time">${timeAgo}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="message-time">${timeAgo}</span>
+                    <button class="report-btn" onclick="reportMessage('${msg.id}')" title="Segnala" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.75rem;">🚩</button>
+                </div>
             </div>
             <div class="message-text">${messageText}</div>
             ${reactionsHTML}
@@ -307,6 +374,35 @@ function createMessageElement(msg) {
     `;
 
     return div;
+}
+
+// Report message function
+async function reportMessage(messageId) {
+    const reason = prompt('Motivo della segnalazione:');
+    if (!reason) return;
+    
+    try {
+        const userId = localStorage.getItem('userId') || currentUser?.id;
+        if (!userId) {
+            alert('Devi essere loggato per segnalare');
+            return;
+        }
+        
+        await supabase
+            .from('content_reports')
+            .insert({
+                content_type: 'message',
+                content_id: messageId,
+                reported_by: userId,
+                reason: reason,
+                status: 'pending'
+            });
+        
+        alert('✅ Messaggio segnalato. Grazie per la segnalazione!');
+    } catch (error) {
+        console.error('Error reporting message:', error);
+        alert('❌ Errore nella segnalazione');
+    }
 }
 
 // ================================================
@@ -510,7 +606,7 @@ async function sendMessage() {
         
         const authorName = profile?.nome_visualizzato || profile?.username || 'Anonimo';
         
-        // Insert message into Supabase
+        // Insert message into Supabase with current room
         const { data, error } = await supabase
             .from('chat_messages')
             .insert([
@@ -518,6 +614,7 @@ async function sendMessage() {
                     user_id: currentUser.id,
                     author_name: authorName,
                     content: message,
+                    room: currentRoom,
                     message_type: 'text'
                 }
             ])

@@ -333,6 +333,7 @@ CREATE TABLE chat_messages (
     user_id UUID NOT NULL,
     author_name TEXT NOT NULL,
     content TEXT NOT NULL,
+    room TEXT DEFAULT 'generale' CHECK (room IN ('generale', 'sport', 'musica', 'gaming', 'meme', 'anime', 'studio', 'tech')),
     message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'poll', 'voice', 'image')),
     poll_data JSONB,
     voice_url TEXT,
