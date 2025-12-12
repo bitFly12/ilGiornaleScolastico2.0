@@ -1409,6 +1409,362 @@ function restoreScrollPosition() {
     }
 }
 
+// Feature 26: Reading streak tracker
+function trackReadingStreak() {
+    const today = new Date().toDateString();
+    const lastRead = localStorage.getItem('lastReadDate');
+    let streak = parseInt(localStorage.getItem('readingStreak') || '0');
+    
+    if (lastRead !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        if (lastRead === yesterday) {
+            streak++;
+            if (streak === 7) {
+                showToast('🔥 7 giorni consecutivi di lettura! Sei incredibile!', 'success', 5000);
+                showConfetti();
+            } else if (streak === 30) {
+                showToast('🏆 30 giorni di lettura! Sei un campione!', 'success', 5000);
+                showConfetti();
+            }
+        } else {
+            streak = 1;
+        }
+        localStorage.setItem('readingStreak', streak);
+        localStorage.setItem('lastReadDate', today);
+    }
+    return streak;
+}
+
+// Feature 27: Quick jump to section (on article pages)
+function initQuickJump() {
+    const headings = document.querySelectorAll('h2, h3');
+    if (headings.length < 3) return;
+    
+    const jumpBtn = document.createElement('button');
+    jumpBtn.className = 'qol-quick-jump-btn';
+    jumpBtn.innerHTML = '📑';
+    jumpBtn.title = 'Vai a sezione';
+    jumpBtn.addEventListener('click', showJumpMenu);
+    document.body.appendChild(jumpBtn);
+}
+
+function showJumpMenu() {
+    if (document.getElementById('jumpMenu')) {
+        document.getElementById('jumpMenu').remove();
+        return;
+    }
+    
+    const headings = document.querySelectorAll('h2, h3');
+    const menu = document.createElement('div');
+    menu.id = 'jumpMenu';
+    menu.className = 'qol-jump-menu';
+    
+    headings.forEach((h, i) => {
+        h.id = h.id || `section-${i}`;
+        const item = document.createElement('a');
+        item.href = `#${h.id}`;
+        item.className = h.tagName === 'H2' ? 'jump-h2' : 'jump-h3';
+        item.textContent = h.textContent;
+        item.addEventListener('click', () => menu.remove());
+        menu.appendChild(item);
+    });
+    
+    document.body.appendChild(menu);
+    
+    // Close on outside click
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 100);
+}
+
+// Feature 28: Double tap to like on mobile
+function initDoubleTapLike() {
+    if (!('ontouchstart' in window)) return;
+    
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+        const target = e.target.closest('.article-card, .message-bubble');
+        if (!target) return;
+        
+        const now = Date.now();
+        if (now - lastTap < 300) {
+            // Double tap detected
+            showHeartAnimation(e);
+        }
+        lastTap = now;
+    });
+}
+
+function showHeartAnimation(e) {
+    const heart = document.createElement('div');
+    heart.className = 'qol-heart-animation';
+    heart.textContent = '❤️';
+    heart.style.left = e.changedTouches[0].clientX + 'px';
+    heart.style.top = e.changedTouches[0].clientY + 'px';
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 1000);
+}
+
+// Feature 29: Pull to refresh (mobile)
+function initPullToRefresh() {
+    if (!('ontouchstart' in window)) return;
+    
+    let startY = 0;
+    let pulling = false;
+    
+    document.addEventListener('touchstart', (e) => {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+            pulling = true;
+        }
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        const diff = e.touches[0].clientY - startY;
+        if (diff > 100 && window.scrollY === 0) {
+            showToast('Rilascia per aggiornare...', 'info', 1000);
+        }
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        if (!pulling) return;
+        const diff = e.changedTouches[0].clientY - startY;
+        if (diff > 100 && window.scrollY === 0) {
+            showToast('Aggiornamento...', 'info');
+            setTimeout(() => window.location.reload(), 500);
+        }
+        pulling = false;
+    });
+}
+
+// Feature 30: Shake to go home (mobile)
+function initShakeToHome() {
+    if (!window.DeviceMotionEvent) return;
+    
+    let shakeThreshold = 15;
+    let lastShake = 0;
+    
+    window.addEventListener('devicemotion', (e) => {
+        const acc = e.accelerationIncludingGravity;
+        if (!acc) return;
+        
+        const total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+        if (total > shakeThreshold) {
+            const now = Date.now();
+            if (now - lastShake > 1000) {
+                lastShake = now;
+                if (confirm('Vuoi tornare alla Home?')) {
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+    });
+}
+
+// Feature 31: Haptic feedback (mobile)
+function vibrate(pattern = [50]) {
+    if ('vibrate' in navigator) {
+        navigator.vibrate(pattern);
+    }
+}
+
+// Feature 32: Reading mode
+function toggleReadingMode() {
+    document.body.classList.toggle('reading-mode');
+    const isReading = document.body.classList.contains('reading-mode');
+    showToast(isReading ? 'Modalità lettura attivata 📖' : 'Modalità lettura disattivata', 'info');
+    localStorage.setItem('readingMode', isReading);
+}
+
+// Feature 33: Text highlight and note
+// Constants for highlight validation
+const HIGHLIGHT_MIN_LENGTH = 10;
+const HIGHLIGHT_MAX_LENGTH = 500;
+
+function initHighlightText() {
+    document.addEventListener('mouseup', (e) => {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        if (text.length > HIGHLIGHT_MIN_LENGTH && text.length < HIGHLIGHT_MAX_LENGTH) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            showHighlightPopup(text, rect);
+        }
+    });
+}
+
+// Store current highlight text for secure access
+let currentHighlightText = '';
+
+function showHighlightPopup(text, rect) {
+    const existing = document.querySelector('.qol-highlight-popup');
+    if (existing) existing.remove();
+    
+    // Store the full text securely
+    currentHighlightText = text;
+    
+    const popup = document.createElement('div');
+    popup.className = 'qol-highlight-popup';
+    popup.style.top = (rect.top - 50) + 'px';
+    popup.style.left = rect.left + 'px';
+    
+    // Create buttons safely without inline handlers
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '📌 Salva';
+    saveBtn.addEventListener('click', () => saveHighlight(currentHighlightText));
+    
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = '📋 Copia';
+    copyBtn.addEventListener('click', () => {
+        copyToClipboard(currentHighlightText);
+        popup.remove();
+    });
+    
+    popup.appendChild(saveBtn);
+    popup.appendChild(copyBtn);
+    document.body.appendChild(popup);
+    
+    setTimeout(() => {
+        document.addEventListener('click', function remove(e) {
+            if (!popup.contains(e.target)) {
+                popup.remove();
+                document.removeEventListener('click', remove);
+            }
+        });
+    }, 100);
+}
+
+function saveHighlight(text) {
+    const highlights = JSON.parse(localStorage.getItem('highlights') || '[]');
+    highlights.push({ text, date: new Date().toISOString(), page: window.location.pathname });
+    localStorage.setItem('highlights', JSON.stringify(highlights));
+    showToast('Testo salvato nei tuoi appunti! 📝', 'success');
+    document.querySelector('.qol-highlight-popup')?.remove();
+}
+
+// Feature 34: Daily tip
+function showDailyTip() {
+    const tips = [
+        '💡 Usa Ctrl+K per cercare rapidamente!',
+        '💡 Puoi salvare articoli nei preferiti con ⭐',
+        '💡 Premi G poi H per tornare alla Home',
+        '💡 Trascina per selezionare testo e condividerlo',
+        '💡 La chat supporta le menzioni con /username',
+        '💡 Puoi aumentare la dimensione del testo in Impostazioni',
+        '💡 Il tema scuro riduce l\'affaticamento degli occhi',
+        '💡 Seguici sui social per non perdere nulla!'
+    ];
+    
+    const lastTip = localStorage.getItem('lastTipDate');
+    const today = new Date().toDateString();
+    
+    if (lastTip !== today) {
+        const tip = tips[Math.floor(Math.random() * tips.length)];
+        setTimeout(() => showToast(tip, 'info', 6000), 5000);
+        localStorage.setItem('lastTipDate', today);
+    }
+}
+
+// Feature 35: Session timer
+function initSessionTimer() {
+    const startTime = Date.now();
+    
+    // Show session duration on leaving
+    window.addEventListener('beforeunload', () => {
+        const duration = Math.round((Date.now() - startTime) / 60000);
+        if (duration > 5) {
+            localStorage.setItem('lastSessionDuration', duration);
+        }
+    });
+    
+    // Show welcome message based on last session
+    const lastDuration = localStorage.getItem('lastSessionDuration');
+    if (lastDuration && parseInt(lastDuration) > 30) {
+        showToast('Bentornato! La tua ultima visita è durata ' + lastDuration + ' minuti 📚', 'info', 5000);
+    }
+}
+
+// Feature 36: Page loader animation
+function showPageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (loader) {
+        loader.style.display = 'flex';
+        loader.style.opacity = '1';
+    }
+}
+
+function hidePageLoader() {
+    const loader = document.getElementById('page-loader');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 300);
+    }
+}
+
+// Feature 37: Focus mode
+function toggleFocusMode() {
+    document.body.classList.toggle('focus-mode');
+    const isFocus = document.body.classList.contains('focus-mode');
+    showToast(isFocus ? 'Modalità focus attivata 🎯' : 'Modalità focus disattivata', 'info');
+}
+
+// Feature 38: Quick note
+function openQuickNote() {
+    const existing = document.getElementById('quickNoteModal');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+    
+    const savedNote = localStorage.getItem('quickNote') || '';
+    const modal = document.createElement('div');
+    modal.id = 'quickNoteModal';
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="document.getElementById('quickNoteModal').remove()"></div>
+        <div class="qol-modal-content" style="max-width: 400px;">
+            <h3>📝 Note Veloci</h3>
+            <textarea id="quickNoteText" style="width: 100%; height: 150px; margin: 1rem 0; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd;">${savedNote}</textarea>
+            <button onclick="saveQuickNote()" class="btn btn-primary">Salva</button>
+            <button onclick="document.getElementById('quickNoteModal').remove()" class="btn">Chiudi</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('quickNoteText').focus();
+}
+
+function saveQuickNote() {
+    const text = document.getElementById('quickNoteText').value;
+    localStorage.setItem('quickNote', text);
+    showToast('Nota salvata! 📝', 'success');
+    document.getElementById('quickNoteModal').remove();
+}
+
+// Feature 40: Smart scroll (pause on focus)
+function initSmartScroll() {
+    let scrollPaused = false;
+    
+    document.addEventListener('focus', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            scrollPaused = true;
+        }
+    }, true);
+    
+    document.addEventListener('blur', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            scrollPaused = false;
+        }
+    }, true);
+}
+
 // Initialize all QoL features
 function initQoLFeatures() {
     initBackToTop();
@@ -1423,6 +1779,13 @@ function initQoLFeatures() {
     initQuickActions();
     initTextSelectionShare();
     trackVisit();
+    trackReadingStreak();
+    initQuickJump();
+    initDoubleTapLike();
+    initPullToRefresh();
+    initSmartScroll();
+    showDailyTip();
+    initSessionTimer();
     
     // Restore scroll position on page load
     restoreScrollPosition();
@@ -1453,5 +1816,13 @@ window.showKeyboardShortcuts = showKeyboardShortcuts;
 window.closeShortcuts = closeShortcuts;
 window.toggleFabMenu = toggleFabMenu;
 window.searchGoogle = searchGoogle;
+window.toggleReadingMode = toggleReadingMode;
+window.toggleFocusMode = toggleFocusMode;
+window.openQuickNote = openQuickNote;
+window.saveQuickNote = saveQuickNote;
+window.saveHighlight = saveHighlight;
+window.vibrate = vibrate;
+window.showPageLoader = showPageLoader;
+window.hidePageLoader = hidePageLoader;
 
-console.log('✅ Main.js caricato con successo');
+console.log('✅ Main.js caricato con successo con 40+ funzionalità QoL');
