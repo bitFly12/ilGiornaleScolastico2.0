@@ -906,12 +906,9 @@
                     return;
                 }
                 
-                const currentUserId = localStorage.getItem('userId');
-                
                 container.innerHTML = comments.map(comment => {
                     const authorName = comment.user?.nome_visualizzato || comment.user?.username || 'Utente';
                     const initial = authorName.charAt(0).toUpperCase();
-                    const isOwner = currentUserId === comment.user_id;
                     
                     return `
                         <div class="comment" data-comment-id="${comment.id}">

@@ -216,48 +216,60 @@
             <h2>📱 Chat Rooms</h2>
         </div>
         <div class="room-list">
-            <div class="room-item active" onclick="selectRoom('generale')">
+            <div class="room-item active" data-room="generale" onclick="selectRoom('generale')">
                 <div class="room-icon">💬</div>
                 <div class="room-info">
                     <div class="room-name">Chat Globale</div>
                     <div class="room-preview">Chatta con tutti</div>
                 </div>
             </div>
-            <div class="room-item" onclick="selectRoom('sport')">
+            <div class="room-item" data-room="sport" onclick="selectRoom('sport')">
                 <div class="room-icon">⚽</div>
                 <div class="room-info">
                     <div class="room-name">Sport</div>
                     <div class="room-preview">Discussioni sportive</div>
                 </div>
-                <span class="room-badge">3</span>
             </div>
-            <div class="room-item" onclick="selectRoom('musica')">
+            <div class="room-item" data-room="musica" onclick="selectRoom('musica')">
                 <div class="room-icon">🎵</div>
                 <div class="room-info">
                     <div class="room-name">Musica</div>
                     <div class="room-preview">Condividi la tua musica</div>
                 </div>
             </div>
-            <div class="room-item" onclick="selectRoom('gaming')">
+            <div class="room-item" data-room="gaming" onclick="selectRoom('gaming')">
                 <div class="room-icon">🎮</div>
                 <div class="room-info">
                     <div class="room-name">Gaming</div>
                     <div class="room-preview">Per i gamer</div>
                 </div>
-                <span class="room-badge">7</span>
             </div>
-            <div class="room-item" onclick="selectRoom('meme')">
+            <div class="room-item" data-room="meme" onclick="selectRoom('meme')">
                 <div class="room-icon">😂</div>
                 <div class="room-info">
                     <div class="room-name">Meme</div>
                     <div class="room-preview">Solo meme divertenti</div>
                 </div>
             </div>
-            <div class="room-item" onclick="selectRoom('studio')">
+            <div class="room-item" data-room="studio" onclick="selectRoom('studio')">
                 <div class="room-icon">📚</div>
                 <div class="room-info">
                     <div class="room-name">Studio</div>
                     <div class="room-preview">Aiuto compiti</div>
+                </div>
+            </div>
+            <div class="room-item" data-room="tech" onclick="selectRoom('tech')">
+                <div class="room-icon">💻</div>
+                <div class="room-info">
+                    <div class="room-name">Tech</div>
+                    <div class="room-preview">Tecnologia e coding</div>
+                </div>
+            </div>
+            <div class="room-item" data-room="anime" onclick="selectRoom('anime')">
+                <div class="room-icon">🎌</div>
+                <div class="room-info">
+                    <div class="room-name">Anime</div>
+                    <div class="room-preview">Anime e manga</div>
                 </div>
             </div>
         </div>

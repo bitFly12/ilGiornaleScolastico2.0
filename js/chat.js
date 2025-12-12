@@ -35,21 +35,27 @@ const roomIcons = {
 
 // Select a chat room
 function selectRoom(roomId) {
+    // Validate roomId is a known room
+    if (!roomNames[roomId]) {
+        console.error('Invalid room ID:', roomId);
+        return;
+    }
+    
     currentRoom = roomId;
     lastMessageId = null; // Reset last message ID for new room
     
-    // Update UI
+    // Update UI - use data attribute for safety
     document.querySelectorAll('.room-item').forEach(item => {
         item.classList.remove('active');
+        // Check using data attribute or by parsing onclick safely
+        const itemRoom = item.getAttribute('data-room');
+        if (itemRoom === roomId) {
+            item.classList.add('active');
+            // Clear unread badge
+            const badge = item.querySelector('.room-badge');
+            if (badge) badge.remove();
+        }
     });
-    
-    const selectedItem = document.querySelector(`.room-item[onclick*="${roomId}"]`);
-    if (selectedItem) {
-        selectedItem.classList.add('active');
-        // Clear unread badge
-        const badge = selectedItem.querySelector('.room-badge');
-        if (badge) badge.remove();
-    }
     
     // Update header
     const headerTitle = document.querySelector('.chat-header-info h1');

@@ -63,6 +63,8 @@ function createArticleCardFromSupabase(article) {
     const card = document.createElement('div');
     card.className = 'article-card article-card-mini';
     card.style.cursor = 'pointer';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'article');
     
     // Use placeholder if image doesn't exist
     const imageSrc = article.immagine_url || createPlaceholderImage(article.categoria);
@@ -84,9 +86,17 @@ function createArticleCardFromSupabase(article) {
         </a>
     `;
     
-    // Make entire card clickable with touch support
-    card.addEventListener('click', (e) => {
+    // Make entire card clickable with touch and keyboard support
+    const navigateToArticle = (e) => {
         if (e.target.tagName !== 'A') {
+            window.location.href = articleUrl;
+        }
+    };
+    
+    card.addEventListener('click', navigateToArticle);
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
             window.location.href = articleUrl;
         }
     });
@@ -109,6 +119,8 @@ function createArticleCard(article) {
     const card = document.createElement('div');
     card.className = 'article-card article-card-mini';
     card.style.cursor = 'pointer';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'article');
     
     // Use placeholder if image doesn't exist
     const imageSrc = article.immagine_url || article.immagine || createPlaceholderImage(article.categoria);
@@ -131,9 +143,17 @@ function createArticleCard(article) {
         </a>
     `;
     
-    // Make entire card clickable with touch support
-    card.addEventListener('click', (e) => {
+    // Make entire card clickable with touch and keyboard support
+    const navigateToArticle = (e) => {
         if (e.target.tagName !== 'A') {
+            window.location.href = articleUrl;
+        }
+    };
+    
+    card.addEventListener('click', navigateToArticle);
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
             window.location.href = articleUrl;
         }
     });
