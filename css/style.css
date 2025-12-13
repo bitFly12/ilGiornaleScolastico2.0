@@ -3374,3 +3374,8 @@ img.loaded {
 .bounce {
     animation: bounce 1s ease infinite;
 }
+
+/* Nascondi l'overlay scuro del menu mobile */
+.mobile-menu-overlay {
+    display: none ! important;
+}
