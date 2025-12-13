@@ -2168,7 +2168,6 @@ function showArticleSummary() {
 // Feature 55: Related articles suggestions
 function loadRelatedArticles(category) {
     // Placeholder - would query Supabase in production
-    console.log('Loading related articles for category:', category);
 }
 
 // Feature 56: Article comparison mode
@@ -2845,7 +2844,7 @@ function showCookieConsent() {
     
     const banner = document.createElement('div');
     banner.className = 'qol-cookie-banner';
-    banner.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; background: var(--text-dark); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 9999; flex-wrap: wrap; gap: 1rem;';
+    banner.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; background: var(--text-dark); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 998; flex-wrap: wrap; gap: 1rem;';
     banner.innerHTML = `
         <p style="margin: 0; flex: 1;">🍪 Questo sito utilizza cookie per migliorare l'esperienza. <a href="privacy.html" style="color: #00f0ff;">Scopri di più</a></p>
         <div>
@@ -2868,7 +2867,7 @@ function declineCookies() {
 
 // Feature 96: Performance monitor (dev mode)
 function showPerformance() {
-    if (window.performance) {
+    if (window.performance && window.location.hostname === 'localhost') {
         const timing = performance.timing;
         const loadTime = timing.loadEventEnd - timing.navigationStart;
         console.log(`⚡ Pagina caricata in ${loadTime}ms`);
@@ -2926,7 +2925,7 @@ function showReadingCompanion() {
 
 // Feature 100: Celebration for 100 features!
 function celebrate100Features() {
-    console.log('🎉 100+ Quality of Life features implemented!');
+    // Silent celebration - avoid console noise in production
 }
 
 // Initialize additional QoL features
@@ -3007,4 +3006,4 @@ window.showReadingCompanion = showReadingCompanion;
 window.acceptCookies = acceptCookies;
 window.declineCookies = declineCookies;
 
-console.log('✅ Main.js caricato con successo con 100+ funzionalità QoL');
+// Main.js loaded with 100+ QoL features
