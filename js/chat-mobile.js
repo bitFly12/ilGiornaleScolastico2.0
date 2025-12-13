@@ -410,6 +410,12 @@ async function sendMessage() {
     
     if (!message || isSending || !ChatState.currentUser) return;
     
+    // Check if user is suspended
+    if (ChatState.currentProfile?.is_hidden === true || localStorage.getItem('userSuspended') === 'true') {
+        showToast('⚠️ Il tuo account è sospeso. Non puoi inviare messaggi.', '⚠️');
+        return;
+    }
+    
     isSending = true;
     sendBtn.disabled = true;
     

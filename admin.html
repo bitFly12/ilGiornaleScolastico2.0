@@ -1165,6 +1165,7 @@
                                     ${new Date(report.created_at).toLocaleDateString('it-IT')}
                                 </p>
                                 ${report.description ? `<p style="margin-top: 0.5rem; font-size: 0.9rem;">${escapeHtml(report.description)}</p>` : ''}
+                                ${report.message_content ? `<p style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 6px; font-size: 0.85rem;">💬 "${escapeHtml(report.message_content)}"</p>` : ''}
                             </div>
                             <div class="article-actions" style="flex-direction: column; gap: 0.5rem;">
                                 ${report.status === 'pending' ? `
@@ -1172,6 +1173,9 @@
                                     <button class="btn btn-sm btn-danger" onclick="resolveReport('${report.id}', 'dismissed')">❌ Respingi</button>
                                     <button class="btn btn-sm btn-warning" onclick="viewReportContent('${report.content_type}', '${report.content_id}')">👁️ Vedi</button>
                                     <button class="btn btn-sm btn-primary" onclick="suspendUserFromReport('${report.content_id}', '${report.content_type}')">🔨 Sospendi</button>
+                                    ${report.content_type === 'comment' || report.content_type === 'message' ? `
+                                        <button class="btn btn-sm btn-danger" onclick="deleteReportedContent('${report.content_type}', '${report.content_id}', '${report.id}')">🗑️ Elimina</button>
+                                    ` : ''}
                                 ` : `
                                     <span style="color: var(--neutral); font-size: 0.75rem;">
                                         ${report.resolution_note || 'Nessuna nota'}
@@ -1316,6 +1320,51 @@
                 loadReports();
             } catch (error) {
                 console.error('Error suspending user:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        }
+        
+        // Delete reported content (comment or message)
+        async function deleteReportedContent(contentType, contentId, reportId) {
+            const confirmMsg = contentType === 'comment' 
+                ? '⚠️ Vuoi eliminare questo commento?' 
+                : '⚠️ Vuoi eliminare questo messaggio?';
+                
+            if (!confirm(confirmMsg)) return;
+            
+            try {
+                let error = null;
+                
+                if (contentType === 'comment') {
+                    const result = await supabase
+                        .from('article_comments')
+                        .delete()
+                        .eq('id', contentId);
+                    error = result.error;
+                } else if (contentType === 'message') {
+                    // For messages, we soft-delete by marking as deleted
+                    const result = await supabase
+                        .from('chat_messages')
+                        .update({ is_deleted: true, content: '[Messaggio rimosso per violazione delle regole]' })
+                        .eq('id', contentId);
+                    error = result.error;
+                }
+                
+                if (error) throw error;
+                
+                // Mark report as resolved
+                await supabase
+                    .from('content_reports')
+                    .update({ 
+                        status: 'resolved', 
+                        resolution_note: 'Contenuto eliminato dall\'admin'
+                    })
+                    .eq('id', reportId);
+                
+                alert('✅ Contenuto eliminato e segnalazione risolta');
+                loadReports();
+            } catch (error) {
+                console.error('Error deleting content:', error);
                 alert('❌ Errore: ' + error.message);
             }
         }

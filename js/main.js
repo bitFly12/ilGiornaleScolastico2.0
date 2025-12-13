@@ -198,12 +198,9 @@ function initMobileMenu() {
     
     console.log('Mobile menu: Initialized successfully');
 }
-    
-    console.log('✅ Mobile menu initialized');
-}
 
 // ================================================
-// MOBILE MENU
+// DAILY QUOTE
 // ================================================
 function initDailyQuote() {
     const quotes = [
@@ -423,16 +420,31 @@ async function checkAuth() {
                 // User is authenticated via Supabase
                 AppState.isAuthenticated = true;
                 
-                // Try to get profile from localStorage first (faster)
-                const cachedProfile = localStorage.getItem('userProfile');
-                if (cachedProfile) {
-                    try {
-                        AppState.user = JSON.parse(cachedProfile);
-                        AppState.user.id = user.id;
-                        AppState.user.email = user.email;
-                    } catch (e) {
-                        console.error('Error parsing cached profile:', e);
+                // Fetch fresh profile from Supabase to check suspension status
+                const { data: profile } = await window.supabaseClient
+                    .from('profili_utenti')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profile) {
+                    AppState.user = profile;
+                    AppState.user.id = user.id;
+                    AppState.user.email = user.email;
+                    
+                    // Check if user is suspended (is_hidden = true)
+                    if (profile.is_hidden === true) {
+                        AppState.isSuspended = true;
+                        localStorage.setItem('userSuspended', 'true');
+                        console.log('⚠️ User is suspended - read-only mode');
+                        showSuspensionNotice();
+                    } else {
+                        AppState.isSuspended = false;
+                        localStorage.removeItem('userSuspended');
                     }
+                    
+                    // Cache profile
+                    localStorage.setItem('userProfile', JSON.stringify(profile));
                 }
                 
                 updateUIForAuthenticatedUser();
@@ -448,6 +460,7 @@ async function checkAuth() {
             try {
                 AppState.user = JSON.parse(userSession);
                 AppState.isAuthenticated = true;
+                AppState.isSuspended = localStorage.getItem('userSuspended') === 'true';
                 updateUIForAuthenticatedUser();
             } catch (e) {
                 console.error('Error parsing user session:', e);
@@ -458,6 +471,32 @@ async function checkAuth() {
         console.error('Error checking auth:', error);
         AppState.isAuthenticated = false;
     }
+}
+
+// Show suspension notice to user
+function showSuspensionNotice() {
+    // Only show once per session
+    if (sessionStorage.getItem('suspensionNoticeShown')) return;
+    sessionStorage.setItem('suspensionNoticeShown', 'true');
+    
+    const notice = document.createElement('div');
+    notice.id = 'suspensionNotice';
+    notice.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; background: #ef4444; color: white; padding: 1rem; text-align: center; z-index: 10000; font-size: 0.9rem;">
+            ⚠️ <strong>Account Sospeso:</strong> Il tuo account è stato sospeso. Puoi solo leggere contenuti. Per maggiori informazioni contatta gli amministratori.
+            <button onclick="this.parentElement.remove()" style="margin-left: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">✕</button>
+        </div>
+    `;
+    document.body.prepend(notice);
+}
+
+// Check if user is suspended before any action
+function checkSuspensionBeforeAction(actionName = 'questa azione') {
+    if (AppState.isSuspended) {
+        alert(`⚠️ Il tuo account è sospeso. Non puoi eseguire ${actionName}.`);
+        return true; // blocked
+    }
+    return false; // allowed
 }
 
 function updateUIForAuthenticatedUser() {

@@ -6,6 +6,22 @@
 // Articles are now loaded from the 'articoli' table in Supabase
 
 // ================================================
+// Helper Functions
+// ================================================
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ================================================
 // Load Articles on Page
 // ================================================
 async function loadArticles(page = 1) {
