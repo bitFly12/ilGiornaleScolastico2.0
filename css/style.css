@@ -261,6 +261,7 @@ img {
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-md);
     transition: var(--transition);
+    white-space: nowrap; /* Prevent text wrapping on buttons like Admin */
 }
 
 .nav-link:hover,
@@ -471,6 +472,29 @@ img {
 .article-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
+}
+
+/* Article image container with fixed aspect ratio */
+.article-card-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: var(--bg-light);
+}
+
+.article-card-image-container img,
+.article-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.3s ease;
+}
+
+.article-card:hover .article-card-image-container img,
+.article-card:hover img {
+    transform: scale(1.05);
 }
 
 .article-card-mini {
@@ -1122,10 +1146,12 @@ a:hover {
         flex-direction: column;
         padding: 4rem 1rem 2rem;
         transition: right 0.3s ease;
-        z-index: 1000;
+        z-index: 1002; /* Higher than overlay (999) and toggle (1001) */
         display: flex !important;
         list-style: none;
         gap: 0.5rem;
+        overflow-y: auto;
+        pointer-events: auto; /* Ensure links are clickable */
     }
     
     nav ul.mobile-menu-open,
@@ -1146,6 +1172,11 @@ a:hover {
         width: 100%;
         border-radius: 8px;
         transition: all 0.2s ease;
+        pointer-events: auto; /* Ensure links are clickable */
+        position: relative;
+        z-index: 1003; /* Above the menu container */
+        color: var(--text-dark);
+        text-decoration: none;
     }
     
     nav ul li a:hover,

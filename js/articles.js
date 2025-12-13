@@ -73,7 +73,9 @@ function createArticleCardFromSupabase(article) {
     
     card.innerHTML = `
         <a href="${articleUrl}" style="display: block; text-decoration: none; color: inherit;">
-            <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            <div class="article-card-image-container">
+                <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            </div>
             <div class="card-body">
                 <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${escapeHtml(article.categoria)}</span>
                 <h3 class="card-title">${truncateText(escapeHtml(article.titolo), 60)}</h3>
@@ -130,7 +132,9 @@ function createArticleCard(article) {
     
     card.innerHTML = `
         <a href="${articleUrl}" style="display: block; text-decoration: none; color: inherit;">
-            <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            <div class="article-card-image-container">
+                <img src="${imageSrc}" alt="${escapeHtml(article.titolo)}" onerror="this.src='${createPlaceholderImage(article.categoria)}'">
+            </div>
             <div class="card-body">
                 <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${escapeHtml(article.categoria)}</span>
                 <h3 class="card-title">${truncateText(escapeHtml(article.titolo), 60)}</h3>
