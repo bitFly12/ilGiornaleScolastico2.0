@@ -3376,6 +3376,3 @@ img.loaded {
 }
 
 /* Nascondi l'overlay scuro del menu mobile */
-.mobile-menu-overlay {
-    display: none ! important;
-}
