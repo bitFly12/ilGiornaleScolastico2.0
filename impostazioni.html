@@ -190,20 +190,6 @@
             
             <div class="setting-item">
                 <div class="setting-info">
-                    <div class="setting-label">Tema</div>
-                    <div class="setting-description">Scegli tra tema chiaro, scuro o automatico</div>
-                </div>
-                <div class="setting-control">
-                    <select id="themeSelect" class="form-select">
-                        <option value="light">☀️ Chiaro</option>
-                        <option value="dark">🌙 Scuro</option>
-                        <option value="auto">🔄 Automatico</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="setting-item">
-                <div class="setting-info">
                     <div class="setting-label">Dimensione Font</div>
                     <div class="setting-description">Regola la dimensione del testo</div>
                 </div>
@@ -242,16 +228,6 @@
                     <div class="toggle-switch" id="browserNotificationsToggle">
                         <div class="toggle-slider"></div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="setting-item">
-                <div class="setting-info">
-                    <div class="setting-label">Iscrizione Newsletter</div>
-                    <div class="setting-description" id="newsletterStatus">Gestisci la tua iscrizione alla newsletter</div>
-                </div>
-                <div class="setting-control">
-                    <button class="btn btn-secondary btn-sm" id="newsletterManageBtn" onclick="manageNewsletter()">Verifica</button>
                 </div>
             </div>
             
@@ -458,20 +434,16 @@
 
         // Apply settings to UI
         function applySettings() {
-            // Theme
-            document.getElementById('themeSelect').value = settings.theme;
-            if (settings.theme === 'dark' || (settings.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.body.classList.add('dark-mode');
-            }
-            
             // Font size
-            document.getElementById('fontSizeSelect').value = settings.fontSize;
+            const fontSizeSelect = document.getElementById('fontSizeSelect');
+            if (fontSizeSelect) {
+                fontSizeSelect.value = settings.fontSize;
+            }
             document.documentElement.style.fontSize = settings.fontSize === 'small' ? '14px' : settings.fontSize === 'large' ? '18px' : '16px';
             
             // Toggles
             setToggle('animationsToggle', settings.animations);
             setToggle('browserNotificationsToggle', settings.browserNotifications);
-            setToggle('emailNotificationsToggle', settings.emailNotifications);
             setToggle('chatNotificationsToggle', settings.chatNotifications);
             setToggle('publicProfileToggle', settings.publicProfile);
             setToggle('showEmailToggle', settings.showEmail);
@@ -479,8 +451,14 @@
             setToggle('autoplayToggle', settings.autoplay);
             
             // Selects
-            document.getElementById('articlesPerPageSelect').value = settings.articlesPerPage;
-            document.getElementById('languageSelect').value = settings.language;
+            const articlesPerPageSelect = document.getElementById('articlesPerPageSelect');
+            if (articlesPerPageSelect) {
+                articlesPerPageSelect.value = settings.articlesPerPage;
+            }
+            const languageSelect = document.getElementById('languageSelect');
+            if (languageSelect) {
+                languageSelect.value = settings.language;
+            }
             
             // Animations
             if (!settings.animations) {
@@ -497,6 +475,7 @@
         // Helper function to set toggle state
         function setToggle(id, active) {
             const toggle = document.getElementById(id);
+            if (!toggle) return; // Guard against null elements
             if (active) {
                 toggle.classList.add('active');
             } else {
@@ -517,32 +496,37 @@
 
         // Initialize selects
         function initSelects() {
-            document.getElementById('themeSelect').addEventListener('change', (e) => {
-                settings.theme = e.target.value;
-                applyTheme();
-                saveSettings();
-            });
+            const fontSizeSelect = document.getElementById('fontSizeSelect');
+            if (fontSizeSelect) {
+                fontSizeSelect.addEventListener('change', (e) => {
+                    settings.fontSize = e.target.value;
+                    applySettings();
+                    saveSettings();
+                });
+            }
             
-            document.getElementById('fontSizeSelect').addEventListener('change', (e) => {
-                settings.fontSize = e.target.value;
-                applySettings();
-                saveSettings();
-            });
+            const articlesPerPageSelect = document.getElementById('articlesPerPageSelect');
+            if (articlesPerPageSelect) {
+                articlesPerPageSelect.addEventListener('change', (e) => {
+                    settings.articlesPerPage = parseInt(e.target.value);
+                    saveSettings();
+                });
+            }
             
-            document.getElementById('articlesPerPageSelect').addEventListener('change', (e) => {
-                settings.articlesPerPage = parseInt(e.target.value);
-                saveSettings();
-            });
-            
-            document.getElementById('languageSelect').addEventListener('change', (e) => {
-                settings.language = e.target.value;
-                saveSettings();
-            });
+            const languageSelect = document.getElementById('languageSelect');
+            if (languageSelect) {
+                languageSelect.addEventListener('change', (e) => {
+                    settings.language = e.target.value;
+                    saveSettings();
+                });
+            }
         }
 
         // Update setting from toggle
         function updateSetting(toggleId) {
-            const isActive = document.getElementById(toggleId).classList.contains('active');
+            const toggleEl = document.getElementById(toggleId);
+            if (!toggleEl) return;
+            const isActive = toggleEl.classList.contains('active');
             
             switch(toggleId) {
                 case 'animationsToggle':
@@ -554,17 +538,16 @@
                         requestNotificationPermission();
                     }
                     break;
-                case 'emailNotificationsToggle':
-                    settings.emailNotifications = isActive;
-                    break;
                 case 'chatNotificationsToggle':
                     settings.chatNotifications = isActive;
                     break;
                 case 'publicProfileToggle':
                     settings.publicProfile = isActive;
+                    updatePublicProfile(isActive);
                     break;
                 case 'showEmailToggle':
                     settings.showEmail = isActive;
+                    updateShowEmail(isActive);
                     break;
                 case 'readingStatsToggle':
                     settings.readingStats = isActive;
@@ -576,20 +559,40 @@
             
             saveSettings();
         }
-
-        // Apply theme
-        function applyTheme() {
-            const theme = settings.theme;
-            if (theme === 'dark') {
-                document.body.classList.add('dark-mode');
-            } else if (theme === 'light') {
-                document.body.classList.remove('dark-mode');
-            } else { // auto
-                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.body.classList.add('dark-mode');
-                } else {
-                    document.body.classList.remove('dark-mode');
-                }
+        
+        // Implement public profile toggle functionality
+        async function updatePublicProfile(isPublic) {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user) return;
+                
+                const { error } = await window.supabaseClient
+                    .from('profili_utenti')
+                    .update({ profilo_pubblico: isPublic })
+                    .eq('id', user.id);
+                
+                if (error) throw error;
+                showAlert(isPublic ? '✅ Profilo reso pubblico!' : '🔒 Profilo reso privato!', 'success');
+            } catch (error) {
+                console.error('Error updating public profile:', error);
+            }
+        }
+        
+        // Implement show email toggle functionality
+        async function updateShowEmail(showEmail) {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user) return;
+                
+                const { error } = await window.supabaseClient
+                    .from('profili_utenti')
+                    .update({ mostra_email: showEmail })
+                    .eq('id', user.id);
+                
+                if (error) throw error;
+                showAlert(showEmail ? '📧 Email visibile nel profilo!' : '🔒 Email nascosta!', 'success');
+            } catch (error) {
+                console.error('Error updating show email:', error);
             }
         }
 
@@ -607,17 +610,102 @@
             }
         }
 
-        // Account functions
-        function changePassword() {
-            alert('Funzionalità in arrivo: Cambio password tramite email');
+        // Account functions - now implemented
+        async function changePassword() {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user) {
+                    alert('❌ Devi essere loggato');
+                    return;
+                }
+                
+                const { error } = await window.supabaseClient.auth.resetPasswordForEmail(user.email, {
+                    redirectTo: window.location.origin + '/profilo.html'
+                });
+                
+                if (error) throw error;
+                showAlert('📧 Email per il reset password inviata!', 'success');
+            } catch (error) {
+                console.error('Error sending password reset:', error);
+                showAlert('❌ Errore: ' + error.message, 'error');
+            }
         }
 
-        function viewSessions() {
-            alert('Funzionalità in arrivo: Visualizza sessioni attive');
+        async function viewSessions() {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user) {
+                    alert('❌ Devi essere loggato');
+                    return;
+                }
+                
+                // Show current session info
+                const sessionInfo = `
+📱 Sessione Attuale
+━━━━━━━━━━━━━━━━━━━
+🆔 ID Utente: ${user.id.substring(0, 8)}...
+📧 Email: ${user.email}
+🕐 Ultimo accesso: ${new Date(user.last_sign_in_at).toLocaleString('it-IT')}
+🔐 Autenticato: Sì
+                `;
+                alert(sessionInfo);
+            } catch (error) {
+                console.error('Error viewing sessions:', error);
+                alert('❌ Errore nel caricamento delle sessioni');
+            }
         }
 
-        function exportData() {
-            alert('Funzionalità in arrivo: Esporta i tuoi dati');
+        async function exportData() {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (!user) {
+                    alert('❌ Devi essere loggato');
+                    return;
+                }
+                
+                // Get user profile
+                const { data: profile } = await window.supabaseClient
+                    .from('profili_utenti')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                // Get user's articles (if any)
+                const { data: articles } = await window.supabaseClient
+                    .from('articoli')
+                    .select('titolo, sommario, created_at, stato')
+                    .eq('autore_id', user.id);
+                
+                // Get user's chat messages
+                const { data: messages } = await window.supabaseClient
+                    .from('chat_messages')
+                    .select('content, created_at')
+                    .eq('user_id', user.id);
+                
+                const exportData = {
+                    esportato_il: new Date().toISOString(),
+                    profilo: profile,
+                    articoli: articles || [],
+                    messaggi_chat: messages || [],
+                    impostazioni: settings
+                };
+                
+                // Download as JSON file
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dati_${user.email.split('@')[0]}_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showAlert('✅ Dati esportati con successo!', 'success');
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showAlert('❌ Errore nell\'esportazione: ' + error.message, 'error');
+            }
         }
 
         function resetSettings() {
@@ -627,10 +715,33 @@
             }
         }
 
-        function deleteAccount() {
+        async function deleteAccount() {
             const confirmed = prompt('Sei ASSOLUTAMENTE SICURO? Scrivi "ELIMINA" per confermare');
             if (confirmed === 'ELIMINA') {
-                alert('Funzionalità in arrivo: Eliminazione account');
+                try {
+                    const { data: { user } } = await window.supabaseClient.auth.getUser();
+                    if (!user) return;
+                    
+                    // Delete user profile data
+                    await window.supabaseClient
+                        .from('profili_utenti')
+                        .delete()
+                        .eq('id', user.id);
+                    
+                    // Sign out
+                    await window.supabaseClient.auth.signOut();
+                    
+                    // Clear all local data
+                    localStorage.clear();
+                    
+                    showAlert('Account eliminato. Verrai reindirizzato...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } catch (error) {
+                    console.error('Error deleting account:', error);
+                    alert('❌ Errore nella cancellazione dell\'account. Contatta un amministratore.');
+                }
             }
         }
 
@@ -642,55 +753,6 @@
             setTimeout(() => {
                 alertBox.classList.remove('show');
             }, 5000);
-        }
-
-        // Manage newsletter subscription
-        async function manageNewsletter() {
-            const statusEl = document.getElementById('newsletterStatus');
-            const btnEl = document.getElementById('newsletterManageBtn');
-            
-            if (!window.supabaseClient) {
-                alert('❌ Supabase non disponibile');
-                return;
-            }
-            
-            try {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (!user || !user.email) {
-                    alert('❌ Devi essere loggato');
-                    return;
-                }
-                
-                // Check subscription status
-                const { data, error } = await window.supabaseClient
-                    .from('iscrizioni_newsletter')
-                    .select('*')
-                    .eq('email', user.email)
-                    .single();
-                
-                if (data && !error) {
-                    // User is subscribed
-                    if (confirm('Sei attualmente iscritto alla newsletter. Vuoi disiscriverti?')) {
-                        const { error: deleteError } = await window.supabaseClient
-                            .from('iscrizioni_newsletter')
-                            .delete()
-                            .eq('email', user.email);
-                        
-                        if (deleteError) throw deleteError;
-                        
-                        statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
-                        btnEl.textContent = 'Verifica';
-                        showAlert('✅ Disiscrizione completata!', 'success');
-                    }
-                } else {
-                    // User is not subscribed
-                    statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
-                    alert('ℹ️ Non sei iscritto alla newsletter. Puoi iscriverti dalla homepage.');
-                }
-            } catch (error) {
-                console.error('Error managing newsletter:', error);
-                alert('❌ Errore: ' + error.message);
-            }
         }
 
         // Check user role and show/hide sections
@@ -709,39 +771,20 @@
                         if (role === 'caporedattore' || role === 'docente') {
                             document.getElementById('dangerSection').style.display = 'block';
                         }
+                        
+                        // Load saved profile settings
+                        if (profile.data.profilo_pubblico !== undefined) {
+                            settings.publicProfile = profile.data.profilo_pubblico;
+                            setToggle('publicProfileToggle', settings.publicProfile);
+                        }
+                        if (profile.data.mostra_email !== undefined) {
+                            settings.showEmail = profile.data.mostra_email;
+                            setToggle('showEmailToggle', settings.showEmail);
+                        }
                     }
                 }
             } catch (error) {
                 console.error('Error checking user role:', error);
-            }
-        }
-
-        // Check newsletter subscription status on load
-        async function checkNewsletterSubscriptionStatus() {
-            if (!window.supabaseClient) return;
-            
-            try {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (!user || !user.email) return;
-                
-                const { data } = await window.supabaseClient
-                    .from('iscrizioni_newsletter')
-                    .select('*')
-                    .eq('email', user.email)
-                    .single();
-                
-                const statusEl = document.getElementById('newsletterStatus');
-                const btnEl = document.getElementById('newsletterManageBtn');
-                
-                if (data) {
-                    statusEl.textContent = '✅ Iscritto - Clicca per disiscriverti';
-                    btnEl.textContent = 'Gestisci';
-                } else {
-                    statusEl.textContent = 'Non iscritto - Iscriviti dalla homepage';
-                    btnEl.textContent = 'Verifica';
-                }
-            } catch (error) {
-                console.error('Error checking newsletter status:', error);
             }
         }
 
@@ -751,7 +794,6 @@
             initToggles();
             initSelects();
             checkUserRole();
-            checkNewsletterSubscriptionStatus();
             // initAuth() is not needed here - it's handled by main.js
             if (typeof initMobileMenu === 'function') {
                 initMobileMenu();
