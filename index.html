@@ -326,10 +326,16 @@
                 const positions = ['gold', 'silver', 'bronze'];
                 
                 widget.innerHTML = topWriters.map((writer, index) => {
-                    const initial = writer.name.charAt(0).toUpperCase();
+                    const writerName = writer.name || 'Anonimo';
+                    const initial = writerName.charAt(0).toUpperCase();
                     const position = positions[index] || 'bronze';
                     const medal = medals[index] || '🏅';
                     const rank = index + 1;
+                    
+                    // Escape HTML for safety
+                    const escapedName = writerName.replace(/[&<>"']/g, (c) => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    }[c]));
                     
                     return `
                         <div class="writer-podium ${position}">
@@ -337,7 +343,7 @@
                                 ${initial}
                                 <span class="writer-medal">${medal}</span>
                             </div>
-                            <div class="writer-name" title="${writer.name}">${writer.name}</div>
+                            <div class="writer-name" title="${escapedName}">${escapedName}</div>
                             <div class="writer-stats">
                                 <span>👁️ ${writer.totalViews.toLocaleString()}</span>
                                 <span>📝 ${writer.articleCount} articoli</span>

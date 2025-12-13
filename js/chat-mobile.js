@@ -93,12 +93,57 @@ async function initMobileChat() {
         // Setup visibility change handler (pause polling when tab not visible)
         setupVisibilityHandler();
         
+        // Setup event delegation for message interactions
+        setupMessageEventDelegation();
+        
         console.log('✅ Chat initialized successfully!');
         
     } catch (error) {
         console.error('❌ Chat initialization error:', error);
         showToast('Errore nel caricamento della chat', '❌');
     }
+}
+
+// Setup event delegation for message interactions (safer than inline onclick)
+function setupMessageEventDelegation() {
+    const container = document.getElementById('messagesContainer');
+    if (!container) return;
+    
+    // Handle click events using delegation
+    container.addEventListener('click', (e) => {
+        // Handle delete button clicks
+        const deleteBtn = e.target.closest('.bubble-delete-btn');
+        if (deleteBtn) {
+            e.stopPropagation();
+            const messageId = deleteBtn.dataset.deleteId;
+            if (messageId) {
+                ChatState.selectedMessageId = messageId;
+                deleteCurrentMessage();
+            }
+            return;
+        }
+        
+        // Handle message bubble clicks
+        const bubble = e.target.closest('.message-bubble');
+        if (bubble) {
+            const messageId = bubble.dataset.messageId;
+            if (messageId) {
+                handleMessageClick(e, messageId);
+            }
+        }
+    });
+    
+    // Handle context menu (long press) events using delegation
+    container.addEventListener('contextmenu', (e) => {
+        const bubble = e.target.closest('.message-bubble');
+        if (bubble) {
+            e.preventDefault();
+            const messageId = bubble.dataset.messageId;
+            if (messageId) {
+                handleMessageLongPress(e, messageId);
+            }
+        }
+    });
 }
 
 // Handle mobile keyboard
@@ -292,17 +337,19 @@ function createMessageBubble(msg) {
     // Edited indicator
     const editedHtml = msg.edited_at ? '<span style="font-size: 0.6rem; opacity: 0.6;"> (modificato)</span>' : '';
     
+    // Safely escape message ID for use in HTML attributes
+    const safeMessageId = escapeHtml(String(msg.id));
+    const safeUserId = escapeHtml(String(msg.user_id));
+    
     // Delete button - only visible for own messages
     const deleteButtonHtml = isOwn ? `
-        <button class="bubble-delete-btn" onclick="event.stopPropagation(); ChatState.selectedMessageId='${msg.id}'; deleteCurrentMessage();" title="Elimina" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🗑️</button>
+        <button class="bubble-delete-btn" data-delete-id="${safeMessageId}" title="Elimina" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🗑️</button>
     ` : '';
     
     return `
         <div class="message-bubble ${isOwn ? 'own' : ''} ${mentionedClass}" 
-             data-message-id="${msg.id}"
-             data-user-id="${msg.user_id}"
-             onclick="handleMessageClick(event, '${msg.id}')"
-             oncontextmenu="handleMessageLongPress(event, '${msg.id}')">
+             data-message-id="${safeMessageId}"
+             data-user-id="${safeUserId}">
             ${!isOwn ? `<div class="message-avatar-small" style="background: ${avatarColor}">${initial}</div>` : ''}
             <div class="bubble-content">
                 ${!isOwn ? `<div class="bubble-author">${escapeHtml(displayName)}</div>` : ''}
