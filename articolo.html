@@ -139,58 +139,6 @@
             transform: translateY(-2px);
         }
         
-        .article-reactions {
-            background: var(--bg-card);
-            padding: 2rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            margin: 2rem 0;
-            text-align: center;
-        }
-        
-        .reactions-title {
-            margin-bottom: 1.5rem;
-            color: var(--text-dark);
-            font-size: 1.25rem;
-        }
-        
-        .reaction-buttons {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .reaction-btn {
-            padding: 1rem 1.5rem;
-            border: 2px solid #e5e7eb;
-            border-radius: var(--radius-full);
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .reaction-btn:hover {
-            border-color: var(--primary);
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(0, 51, 160, 0.2);
-        }
-        
-        .reaction-btn.active {
-            background: linear-gradient(135deg, var(--primary), #00f0ff);
-            border-color: var(--primary);
-            color: white;
-        }
-        
-        .reaction-btn .count {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        
         .share-section {
             background: var(--bg-card);
             padding: 1.5rem;
@@ -440,11 +388,6 @@
                 flex-direction: column;
                 text-align: center;
             }
-            
-            .reaction-btn {
-                padding: 0.75rem 1rem;
-                font-size: 1.25rem;
-            }
         }
     </style>
 </head>
@@ -493,18 +436,6 @@
                 </div>
             </div>
         </article>
-        
-        <!-- Reactions -->
-        <div class="article-reactions" id="reactionsSection" style="display: none;">
-            <h3 class="reactions-title">🎭 Come ti è sembrato questo articolo?</h3>
-            <div class="reaction-buttons" id="reactionButtons">
-                <button class="reaction-btn" data-reaction="like">👍 <span class="count">0</span></button>
-                <button class="reaction-btn" data-reaction="love">❤️ <span class="count">0</span></button>
-                <button class="reaction-btn" data-reaction="wow">😮 <span class="count">0</span></button>
-                <button class="reaction-btn" data-reaction="clap">👏 <span class="count">0</span></button>
-                <button class="reaction-btn" data-reaction="think">🤔 <span class="count">0</span></button>
-            </div>
-        </div>
         
         <!-- Share Section -->
         <div class="share-section" id="shareSection" style="display: none;">
@@ -633,13 +564,9 @@
                 renderArticle(article);
                 
                 // Show other sections
-                document.getElementById('reactionsSection').style.display = 'block';
                 document.getElementById('shareSection').style.display = 'block';
                 document.getElementById('commentsSection').style.display = 'block';
                 document.getElementById('relatedSection').style.display = 'block';
-                
-                // Load reactions
-                loadReactions(id);
                 
                 // Check authentication and load comments
                 checkAuthAndLoadComments(id);
@@ -701,7 +628,7 @@
                 </div>
                 
                 <div class="article-image-container">
-                    <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                    <img src="${article.immagine_url || createPlaceholderImage(article.categoria)}" 
                          alt="${escapeHTML(article.titolo)}" 
                          class="article-image"
                          onerror="this.src='${createPlaceholderImage(article.categoria)}'">
@@ -770,110 +697,6 @@
                 }
             } catch (error) {
                 console.error('Error checking auth:', error);
-            }
-        }
-        
-        async function loadReactions(articleId) {
-            try {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                
-                // Load reactions from database
-                const { data: dbReactions } = await window.supabaseClient
-                    .from('article_reactions')
-                    .select('reaction_type, user_id')
-                    .eq('article_id', articleId);
-                
-                // Count reactions by type
-                const reactions = { like: 0, love: 0, wow: 0, clap: 0, think: 0 };
-                let userReaction = null;
-                
-                if (dbReactions) {
-                    dbReactions.forEach(r => {
-                        if (reactions.hasOwnProperty(r.reaction_type)) {
-                            reactions[r.reaction_type]++;
-                        }
-                        if (user && r.user_id === user.id) {
-                            userReaction = r.reaction_type;
-                        }
-                    });
-                }
-                
-                const buttons = document.querySelectorAll('.reaction-btn');
-                buttons.forEach(btn => {
-                    const reaction = btn.getAttribute('data-reaction');
-                    const countSpan = btn.querySelector('.count');
-                    countSpan.textContent = reactions[reaction] || 0;
-                    
-                    if (userReaction === reaction) {
-                        btn.classList.add('active');
-                    }
-                    
-                    btn.addEventListener('click', async () => {
-                        if (!user) {
-                            alert('Devi effettuare il login per lasciare una reazione');
-                            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
-                            return;
-                        }
-                        
-                        try {
-                            // Check if user already has this reaction
-                            const { data: existingReaction } = await window.supabaseClient
-                                .from('article_reactions')
-                                .select('id, reaction_type')
-                                .eq('article_id', articleId)
-                                .eq('user_id', user.id)
-                                .single();
-                            
-                            if (existingReaction) {
-                                // Remove existing reaction
-                                await window.supabaseClient
-                                    .from('article_reactions')
-                                    .delete()
-                                    .eq('id', existingReaction.id);
-                                
-                                reactions[existingReaction.reaction_type]--;
-                                document.querySelector(`[data-reaction="${existingReaction.reaction_type}"]`)?.classList.remove('active');
-                                
-                                // If clicking a different reaction, add new one
-                                if (existingReaction.reaction_type !== reaction) {
-                                    await window.supabaseClient
-                                        .from('article_reactions')
-                                        .insert({
-                                            article_id: articleId,
-                                            user_id: user.id,
-                                            reaction_type: reaction
-                                        });
-                                    
-                                    reactions[reaction]++;
-                                    btn.classList.add('active');
-                                }
-                            } else {
-                                // Add new reaction
-                                await window.supabaseClient
-                                    .from('article_reactions')
-                                    .insert({
-                                        article_id: articleId,
-                                        user_id: user.id,
-                                        reaction_type: reaction
-                                    });
-                                
-                                reactions[reaction]++;
-                                btn.classList.add('active');
-                            }
-                            
-                            // Update all counts
-                            buttons.forEach(b => {
-                                const r = b.getAttribute('data-reaction');
-                                b.querySelector('.count').textContent = reactions[r] || 0;
-                            });
-                        } catch (error) {
-                            console.error('Error saving reaction:', error);
-                            alert('Errore nel salvare la reazione. Riprova.');
-                        }
-                    });
-                });
-            } catch (error) {
-                console.error('Error loading reactions:', error);
             }
         }
         
@@ -964,7 +787,7 @@
             try {
                 const { data: articles } = await window.supabaseClient
                     .from('articoli')
-                    .select('id, titolo, sommario, immagine, categoria')
+                    .select('id, titolo, sommario, immagine_url, categoria')
                     .eq('categoria', category)
                     .neq('id', currentId)
                     .eq('stato', 'pubblicato')
@@ -979,7 +802,7 @@
                 
                 container.innerHTML = articles.map(article => `
                     <a href="articolo.html?id=${article.id}" class="related-card" style="text-decoration: none;">
-                        <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                        <img src="${article.immagine_url || createPlaceholderImage(article.categoria)}" 
                              alt="${escapeHTML(article.titolo)}"
                              onerror="this.src='${createPlaceholderImage(article.categoria)}'">
                         <div class="related-card-body">
@@ -997,6 +820,12 @@
         // Comment form - save to database
         document.getElementById('addCommentForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Check if user is suspended
+            if (window.AppState?.isSuspended || localStorage.getItem('userSuspended') === 'true') {
+                alert('⚠️ Il tuo account è sospeso. Non puoi pubblicare commenti.');
+                return;
+            }
             
             const text = document.getElementById('commentText').value.trim();
             if (!text) return;

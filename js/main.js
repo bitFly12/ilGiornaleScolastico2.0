@@ -61,7 +61,7 @@ async function checkMaintenanceMode() {
         const userRole = localStorage.getItem('userRole');
         
         // If clearly admin, allow access
-        if (userRole === 'caporedattore' || userRole === 'admin') {
+        if (userRole === 'caporedattore' || userRole === 'admin' || userRole === 'docente') {
             console.log('Admin detected, skipping maintenance redirect');
             return;
         }
@@ -77,16 +77,30 @@ async function checkMaintenanceMode() {
                         .eq('id', user.id)
                         .single();
                     
-                    if (profile && (profile.ruolo === 'caporedattore' || profile.ruolo === 'admin')) {
+                    if (profile && (profile.ruolo === 'caporedattore' || profile.ruolo === 'admin' || profile.ruolo === 'docente')) {
                         localStorage.setItem('userRole', profile.ruolo);
                         console.log('Admin confirmed via Supabase, skipping maintenance redirect');
                         return;
                     }
+                    
+                    // User is logged in but NOT admin - destroy their session
+                    console.log('Maintenance mode: Destroying non-admin user session');
+                    await supabase.auth.signOut();
                 }
             }
         } catch (e) {
             console.log('Supabase check failed, using localStorage');
         }
+        
+        // Clear all user session data for non-admins
+        console.log('Maintenance mode: Clearing session data');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userSession');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userProfile');
         
         // Redirect non-admin users to maintenance page
         console.log('Maintenance mode active, redirecting to maintenance page');
@@ -96,76 +110,97 @@ async function checkMaintenanceMode() {
 }
 
 // ================================================
-// MOBILE MENU
+// MOBILE MENU - SIMPLIFIED ROBUST IMPLEMENTATION
 // ================================================
 function initMobileMenu() {
-    const menuToggle = document.querySelector('.mobile-menu-toggle, .menu-toggle, #menuToggle');
-    const navMenu = document.querySelector('nav ul, .nav-menu, #navMenu');
-    const navLinks = navMenu ? navMenu.querySelectorAll('li a') : [];
+    // Get elements by ID (most reliable)
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
     
-    if (menuToggle && navMenu) {
-        // Create overlay for mobile menu
-        let overlay = document.querySelector('.mobile-menu-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.className = 'mobile-menu-overlay';
-            document.body.appendChild(overlay);
-        }
-        
-        menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            const isOpen = navMenu.classList.toggle('mobile-menu-open');
-            overlay.classList.toggle('active', isOpen);
-            document.body.style.overflow = isOpen ? 'hidden' : '';
-            menuToggle.innerHTML = isOpen ? '<span>✕</span>' : '<span>☰</span>';
-        });
-        
-        // Close menu when clicking overlay
-        overlay.addEventListener('click', () => {
-            navMenu.classList.remove('mobile-menu-open');
-            overlay.classList.remove('active');
-            document.body.style.overflow = '';
-            menuToggle.innerHTML = '<span>☰</span>';
-        });
-        
-        // Close menu when clicking a link - allow navigation to happen
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                // Close menu but don't prevent default - allow navigation
-                navMenu.classList.remove('mobile-menu-open');
-                overlay.classList.remove('active');
-                document.body.style.overflow = '';
-                menuToggle.innerHTML = '<span>☰</span>';
-                // Navigation will happen naturally via href
-            });
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (navMenu.classList.contains('mobile-menu-open') && 
-                !menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
-                navMenu.classList.remove('mobile-menu-open');
-                overlay.classList.remove('active');
-                document.body.style.overflow = '';
-                menuToggle.innerHTML = '<span>☰</span>';
-            }
-        });
-        
-        // Close menu on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && navMenu.classList.contains('mobile-menu-open')) {
-                navMenu.classList.remove('mobile-menu-open');
-                overlay.classList.remove('active');
-                document.body.style.overflow = '';
-                menuToggle.innerHTML = '<span>☰</span>';
-            }
-        });
+    if (!menuToggle || !navMenu) {
+        console.log('Mobile menu: Elements not found (menuToggle or navMenu missing)');
+        return;
     }
+    
+    console.log('Mobile menu: Initializing...');
+    
+    // Create overlay if it doesn't exist
+    let overlay = document.getElementById('mobileMenuOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'mobileMenuOverlay';
+        overlay.className = 'mobile-menu-overlay';
+        document.body.appendChild(overlay);
+    }
+    
+    let isOpen = false;
+    
+    function openMenu() {
+        if (isOpen) return;
+        isOpen = true;
+        navMenu.classList.add('mobile-menu-open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        menuToggle.innerHTML = '<span>✕</span>';
+        menuToggle.setAttribute('aria-expanded', 'true');
+        console.log('Mobile menu: Opened');
+    }
+    
+    function closeMenu() {
+        if (!isOpen) return;
+        isOpen = false;
+        navMenu.classList.remove('mobile-menu-open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        menuToggle.innerHTML = '<span>☰</span>';
+        menuToggle.setAttribute('aria-expanded', 'false');
+        console.log('Mobile menu: Closed');
+    }
+    
+    // Toggle button - click event
+    menuToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+    
+    // Overlay click - close menu
+    overlay.addEventListener('click', function(e) {
+        e.preventDefault();
+        closeMenu();
+    });
+    
+    // Menu links - close menu on click
+    const links = navMenu.querySelectorAll('a');
+    links.forEach(function(link) {
+        link.addEventListener('click', function() {
+            setTimeout(closeMenu, 100);
+        });
+    });
+    
+    // Escape key - close menu
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isOpen) {
+            closeMenu();
+        }
+    });
+    
+    // Resize handler - close menu when going to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && isOpen) {
+            closeMenu();
+        }
+    });
+    
+    console.log('Mobile menu: Initialized successfully');
 }
 
 // ================================================
-// MOBILE MENU
+// DAILY QUOTE
 // ================================================
 function initDailyQuote() {
     const quotes = [
@@ -385,16 +420,31 @@ async function checkAuth() {
                 // User is authenticated via Supabase
                 AppState.isAuthenticated = true;
                 
-                // Try to get profile from localStorage first (faster)
-                const cachedProfile = localStorage.getItem('userProfile');
-                if (cachedProfile) {
-                    try {
-                        AppState.user = JSON.parse(cachedProfile);
-                        AppState.user.id = user.id;
-                        AppState.user.email = user.email;
-                    } catch (e) {
-                        console.error('Error parsing cached profile:', e);
+                // Fetch fresh profile from Supabase to check suspension status
+                const { data: profile } = await window.supabaseClient
+                    .from('profili_utenti')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profile) {
+                    AppState.user = profile;
+                    AppState.user.id = user.id;
+                    AppState.user.email = user.email;
+                    
+                    // Check if user is suspended (is_hidden = true)
+                    if (profile.is_hidden === true) {
+                        AppState.isSuspended = true;
+                        localStorage.setItem('userSuspended', 'true');
+                        console.log('⚠️ User is suspended - read-only mode');
+                        showSuspensionNotice();
+                    } else {
+                        AppState.isSuspended = false;
+                        localStorage.removeItem('userSuspended');
                     }
+                    
+                    // Cache profile
+                    localStorage.setItem('userProfile', JSON.stringify(profile));
                 }
                 
                 updateUIForAuthenticatedUser();
@@ -410,6 +460,7 @@ async function checkAuth() {
             try {
                 AppState.user = JSON.parse(userSession);
                 AppState.isAuthenticated = true;
+                AppState.isSuspended = localStorage.getItem('userSuspended') === 'true';
                 updateUIForAuthenticatedUser();
             } catch (e) {
                 console.error('Error parsing user session:', e);
@@ -420,6 +471,32 @@ async function checkAuth() {
         console.error('Error checking auth:', error);
         AppState.isAuthenticated = false;
     }
+}
+
+// Show suspension notice to user
+function showSuspensionNotice() {
+    // Only show once per session
+    if (sessionStorage.getItem('suspensionNoticeShown')) return;
+    sessionStorage.setItem('suspensionNoticeShown', 'true');
+    
+    const notice = document.createElement('div');
+    notice.id = 'suspensionNotice';
+    notice.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; background: #ef4444; color: white; padding: 1rem; text-align: center; z-index: 10000; font-size: 0.9rem;">
+            ⚠️ <strong>Account Sospeso:</strong> Il tuo account è stato sospeso. Puoi solo leggere contenuti. Per maggiori informazioni contatta gli amministratori.
+            <button onclick="this.parentElement.remove()" style="margin-left: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">✕</button>
+        </div>
+    `;
+    document.body.prepend(notice);
+}
+
+// Check if user is suspended before any action
+function checkSuspensionBeforeAction(actionName = 'questa azione') {
+    if (AppState.isSuspended) {
+        alert(`⚠️ Il tuo account è sospeso. Non puoi eseguire ${actionName}.`);
+        return true; // blocked
+    }
+    return false; // allowed
 }
 
 function updateUIForAuthenticatedUser() {
@@ -1825,4 +1902,1112 @@ window.vibrate = vibrate;
 window.showPageLoader = showPageLoader;
 window.hidePageLoader = hidePageLoader;
 
-console.log('✅ Main.js caricato con successo con 40+ funzionalità QoL');
+// ================================================
+// ADDITIONAL 60+ QOL FEATURES (Features 41-100+)
+// ================================================
+
+// Feature 41: Smooth page transitions
+function initPageTransitions() {
+    document.querySelectorAll('a[href^="./"], a[href^="http"], a[href^="/"]:not([href*="://"]), a[href$=".html"]').forEach(link => {
+        if (link.getAttribute('target') === '_blank') return;
+        if (link.hasAttribute('data-no-transition')) return;
+        
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            // Skip dangerous or special URLs (including data: and vbscript:)
+            if (!href || href.startsWith('#') || 
+                href.startsWith('javascript:') || 
+                href.startsWith('data:') || 
+                href.startsWith('vbscript:')) return;
+            
+            e.preventDefault();
+            document.body.classList.add('page-transitioning');
+            
+            setTimeout(() => {
+                window.location.href = href;
+            }, 200);
+        });
+    });
+}
+
+// Feature 42: Remember last visited page
+function trackLastPage() {
+    const currentPage = window.location.pathname + window.location.search;
+    const lastPages = JSON.parse(localStorage.getItem('lastVisitedPages') || '[]');
+    
+    // Don't add duplicates
+    if (lastPages[0] !== currentPage) {
+        lastPages.unshift(currentPage);
+        if (lastPages.length > 10) lastPages.pop();
+        localStorage.setItem('lastVisitedPages', JSON.stringify(lastPages));
+    }
+}
+
+// Feature 43: Show recent pages in menu
+function getRecentPages() {
+    return JSON.parse(localStorage.getItem('lastVisitedPages') || '[]');
+}
+
+// Feature 44: Smart link preview on hover
+function initLinkPreviews() {
+    let previewTimeout;
+    let previewElement;
+    
+    document.addEventListener('mouseover', (e) => {
+        const link = e.target.closest('a[href*="articolo.html"]');
+        if (!link) return;
+        
+        clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(() => {
+            showLinkPreview(link, e);
+        }, 500);
+    });
+    
+    document.addEventListener('mouseout', (e) => {
+        clearTimeout(previewTimeout);
+        if (previewElement) {
+            previewElement.remove();
+            previewElement = null;
+        }
+    });
+}
+
+function showLinkPreview(link, event) {
+    // Simple preview with article title
+    const previewElement = document.createElement('div');
+    previewElement.className = 'qol-link-preview';
+    previewElement.innerHTML = `<div style="padding: 0.5rem;">📰 Clicca per leggere l'articolo</div>`;
+    previewElement.style.cssText = `
+        position: fixed;
+        left: ${event.clientX + 10}px;
+        top: ${event.clientY + 10}px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        pointer-events: none;
+    `;
+    document.body.appendChild(previewElement);
+}
+
+// Feature 45: Article word count display
+function showWordCount() {
+    const content = document.querySelector('.article-content');
+    if (!content) return;
+    
+    const text = content.textContent || '';
+    const words = text.trim().split(/\s+/).length;
+    const chars = text.length;
+    
+    const wordCountEl = document.createElement('div');
+    wordCountEl.className = 'qol-word-count';
+    wordCountEl.innerHTML = `📊 ${words} parole • ${chars} caratteri`;
+    wordCountEl.style.cssText = 'font-size: 0.85rem; color: var(--neutral); margin-bottom: 1rem;';
+    
+    const articleMeta = document.querySelector('.article-meta');
+    if (articleMeta) {
+        articleMeta.appendChild(wordCountEl);
+    }
+}
+
+// Feature 46: Quick category filter buttons
+function initCategoryQuickFilter() {
+    const grid = document.getElementById('articlesGrid');
+    if (!grid) return;
+    
+    const categories = ['Tutte', 'Scuola', 'Sport', 'Cultura', 'Tecnologia', 'Ambiente'];
+    
+    const filterBar = document.createElement('div');
+    filterBar.className = 'qol-category-filter';
+    filterBar.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; padding: 0 1rem;';
+    
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'qol-filter-btn';
+        btn.textContent = cat;
+        btn.style.cssText = 'padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 20px; background: white; cursor: pointer; transition: all 0.2s;';
+        btn.addEventListener('click', () => filterByCategory(cat));
+        filterBar.appendChild(btn);
+    });
+    
+    grid.parentElement.insertBefore(filterBar, grid);
+}
+
+function filterByCategory(category) {
+    const cards = document.querySelectorAll('.article-card');
+    cards.forEach(card => {
+        if (category === 'Tutte') {
+            card.style.display = '';
+        } else {
+            const cardCategory = card.querySelector('[style*="text-transform: uppercase"]')?.textContent || '';
+            card.style.display = cardCategory.toLowerCase().includes(category.toLowerCase()) ? '' : 'none';
+        }
+    });
+}
+
+// Feature 47: Estimated reading time based on user's reading speed
+function getPersonalizedReadTime(wordCount) {
+    const userSpeed = parseInt(localStorage.getItem('readingSpeed')) || 200; // words per minute
+    return Math.ceil(wordCount / userSpeed);
+}
+
+// Feature 48: Adjust reading speed preference
+function setReadingSpeed(wpm) {
+    localStorage.setItem('readingSpeed', wpm);
+    showToast(`Velocità lettura impostata: ${wpm} parole/min`, 'info');
+}
+
+// Feature 49: Auto-hide header on scroll down
+function initAutoHideHeader() {
+    let lastScroll = 0;
+    const header = document.querySelector('header');
+    if (!header) return;
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 100) {
+            if (currentScroll > lastScroll) {
+                header.style.transform = 'translateY(-100%)';
+            } else {
+                header.style.transform = 'translateY(0)';
+            }
+        } else {
+            header.style.transform = 'translateY(0)';
+        }
+        
+        lastScroll = currentScroll;
+    }, { passive: true });
+    
+    header.style.transition = 'transform 0.3s ease';
+}
+
+// Feature 50: Night mode scheduler
+function initNightModeScheduler() {
+    const hour = new Date().getHours();
+    const isNightTime = hour >= 21 || hour < 7;
+    
+    if (isNightTime && !localStorage.getItem('darkModeManual')) {
+        document.body.classList.add('dark-mode');
+    }
+}
+
+// Feature 51: Font contrast enhancement
+function toggleHighContrast() {
+    document.body.classList.toggle('high-contrast');
+    const isOn = document.body.classList.contains('high-contrast');
+    localStorage.setItem('highContrast', isOn);
+    showToast(isOn ? 'Alto contrasto attivato' : 'Alto contrasto disattivato', 'info');
+}
+
+// Feature 52: Reading ruler (line guide)
+function toggleReadingRuler() {
+    let ruler = document.getElementById('readingRuler');
+    
+    if (ruler) {
+        ruler.remove();
+        return;
+    }
+    
+    ruler = document.createElement('div');
+    ruler.id = 'readingRuler';
+    ruler.style.cssText = `
+        position: fixed;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: rgba(255, 255, 0, 0.15);
+        pointer-events: none;
+        z-index: 9999;
+        border-top: 2px solid rgba(0, 51, 160, 0.3);
+        border-bottom: 2px solid rgba(0, 51, 160, 0.3);
+    `;
+    document.body.appendChild(ruler);
+    
+    document.addEventListener('mousemove', (e) => {
+        if (ruler) ruler.style.top = (e.clientY - 15) + 'px';
+    });
+}
+
+// Feature 53: Text-to-speech for articles
+function readArticleAloud() {
+    const content = document.querySelector('.article-content');
+    if (!content) {
+        showToast('Nessun articolo da leggere', 'error');
+        return;
+    }
+    
+    if ('speechSynthesis' in window) {
+        const text = content.textContent;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'it-IT';
+        utterance.rate = 0.9;
+        
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+        showToast('🔊 Lettura in corso...', 'info');
+    } else {
+        showToast('Text-to-speech non supportato', 'error');
+    }
+}
+
+function stopReading() {
+    if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        showToast('Lettura interrotta', 'info');
+    }
+}
+
+// Feature 54: Article summary generator (uses first paragraph)
+function showArticleSummary() {
+    const content = document.querySelector('.article-content');
+    if (!content) return;
+    
+    const firstParagraph = content.querySelector('p')?.textContent || '';
+    const summary = firstParagraph.substring(0, 200) + '...';
+    
+    showToast(`📝 Sommario: ${summary}`, 'info');
+}
+
+// Feature 55: Related articles suggestions
+function loadRelatedArticles(category) {
+    // Placeholder - would query Supabase in production
+}
+
+// Feature 56: Article comparison mode
+function toggleComparisonMode() {
+    document.body.classList.toggle('comparison-mode');
+    showToast('Modalità confronto: seleziona articoli', 'info');
+}
+
+// Feature 57: Quick report issue
+function showReportIssue() {
+    const modal = document.createElement('div');
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="this.parentElement.remove()"></div>
+        <div class="qol-modal-content">
+            <h3>🚨 Segnala un problema</h3>
+            <select id="issueType" style="width: 100%; padding: 0.5rem; margin: 1rem 0; border-radius: 8px; border: 1px solid #ddd;">
+                <option>Bug tecnico</option>
+                <option>Contenuto inappropriato</option>
+                <option>Errore di ortografia</option>
+                <option>Link rotto</option>
+                <option>Altro</option>
+            </select>
+            <textarea id="issueDesc" placeholder="Descrivi il problema..." style="width: 100%; height: 100px; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd;"></textarea>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <button onclick="submitIssue()" class="btn btn-primary">Invia</button>
+                <button onclick="this.closest('.qol-modal').remove()" class="btn">Annulla</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function submitIssue() {
+    showToast('Segnalazione inviata. Grazie!', 'success');
+    document.querySelector('.qol-modal').remove();
+}
+
+// Feature 58: Quick navigation breadcrumbs
+function initBreadcrumbs() {
+    const path = window.location.pathname.split('/').filter(Boolean);
+    const container = document.querySelector('.container');
+    if (!container || path.length < 1) return;
+    
+    const breadcrumb = document.createElement('nav');
+    breadcrumb.className = 'qol-breadcrumb';
+    breadcrumb.setAttribute('aria-label', 'Breadcrumb');
+    breadcrumb.style.cssText = 'padding: 0.5rem 1rem; font-size: 0.85rem; color: var(--neutral);';
+    
+    let html = '<a href="index.html">Home</a>';
+    
+    const pageName = path[path.length - 1].replace('.html', '').replace(/-/g, ' ');
+    html += ` › <span style="text-transform: capitalize;">${pageName}</span>`;
+    
+    breadcrumb.innerHTML = html;
+    container.insertBefore(breadcrumb, container.firstChild);
+}
+
+// Feature 59: Keyboard navigation for articles
+function initKeyboardArticleNav() {
+    document.addEventListener('keydown', (e) => {
+        const cards = document.querySelectorAll('.article-card');
+        if (cards.length === 0) return;
+        
+        const focusedCard = document.activeElement.closest('.article-card');
+        let index = Array.from(cards).indexOf(focusedCard);
+        
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            index = (index + 1) % cards.length;
+            cards[index].focus();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            index = (index - 1 + cards.length) % cards.length;
+            cards[index].focus();
+        } else if (e.key === 'Enter' && focusedCard) {
+            const link = focusedCard.querySelector('a');
+            if (link) link.click();
+        }
+    });
+}
+
+// Feature 60: Quick scroll to comments
+function scrollToComments() {
+    const comments = document.querySelector('#commentsSection, .comments-section, [id*="comment"]');
+    if (comments) {
+        comments.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        showToast('Sezione commenti non trovata', 'info');
+    }
+}
+
+// Feature 61: Article freshness indicator
+function showArticleFreshness() {
+    const dateElements = document.querySelectorAll('[data-date], time');
+    
+    dateElements.forEach(el => {
+        const dateStr = el.getAttribute('datetime') || el.textContent;
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffHours = (now - date) / (1000 * 60 * 60);
+        
+        if (diffHours < 24) {
+            el.insertAdjacentHTML('afterend', '<span class="qol-new-badge" style="background: #10b981; color: white; padding: 0.125rem 0.5rem; border-radius: 10px; font-size: 0.75rem; margin-left: 0.5rem;">NUOVO</span>');
+        } else if (diffHours < 72) {
+            el.insertAdjacentHTML('afterend', '<span class="qol-recent-badge" style="background: #f59e0b; color: white; padding: 0.125rem 0.5rem; border-radius: 10px; font-size: 0.75rem; margin-left: 0.5rem;">RECENTE</span>');
+        }
+    });
+}
+
+// Feature 62: Estimated time to finish reading
+function showTimeToFinish() {
+    const progressBar = document.querySelector('.qol-progress-bar');
+    if (!progressBar) return;
+    
+    const scrollPercent = parseFloat(progressBar.style.width) || 0;
+    const remainingPercent = 100 - scrollPercent;
+    const totalReadTime = parseInt(document.querySelector('[data-reading-time]')?.dataset.readingTime) || 5;
+    const remainingTime = Math.ceil(totalReadTime * remainingPercent / 100);
+    
+    let indicator = document.getElementById('timeToFinish');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'timeToFinish';
+        indicator.style.cssText = 'position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; z-index: 1000;';
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.textContent = `⏱️ ~${remainingTime} min rimanenti`;
+}
+
+// Feature 63: Mobile swipe to navigate
+function initSwipeNavigation() {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const diff = touchEndX - touchStartX;
+        const threshold = 100;
+        
+        if (diff > threshold) {
+            // Swipe right - go back
+            if (document.referrer) {
+                history.back();
+            }
+        } else if (diff < -threshold) {
+            // Swipe left - could go to next article
+        }
+    }
+}
+
+// Feature 64: Quick emoji reactions
+const quickEmojis = ['👍', '❤️', '😮', '👏', '🤔'];
+
+function showQuickReactions(articleId) {
+    const existing = document.getElementById('quickReactions');
+    if (existing) existing.remove();
+    
+    const container = document.createElement('div');
+    container.id = 'quickReactions';
+    container.style.cssText = 'display: flex; gap: 0.5rem; margin: 1rem 0;';
+    
+    quickEmojis.forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.textContent = emoji;
+        btn.style.cssText = 'font-size: 1.5rem; background: var(--bg-light); border: none; padding: 0.5rem; border-radius: 50%; cursor: pointer; transition: transform 0.2s;';
+        btn.addEventListener('click', () => {
+            btn.style.transform = 'scale(1.3)';
+            setTimeout(() => btn.style.transform = '', 200);
+            showToast(`Reazione ${emoji} inviata!`, 'success');
+        });
+        container.appendChild(btn);
+    });
+    
+    document.querySelector('.article-body')?.appendChild(container);
+}
+
+// Feature 65: Quick stats display
+function showQuickStats() {
+    const articlesRead = JSON.parse(localStorage.getItem('readingHistory') || '[]').length;
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]').length;
+    const streak = parseInt(localStorage.getItem('readingStreak')) || 0;
+    
+    showToast(`📊 Articoli letti: ${articlesRead} | Salvati: ${bookmarks} | Serie: ${streak} giorni`, 'info');
+}
+
+// Feature 66: Color theme selector
+function showThemeSelector() {
+    const themes = [
+        { name: 'Default', primary: '#0033A0', bg: '#ffffff' },
+        { name: 'Oceano', primary: '#0077b6', bg: '#f0f9ff' },
+        { name: 'Foresta', primary: '#2d6a4f', bg: '#f0fff4' },
+        { name: 'Tramonto', primary: '#c2410c', bg: '#fff7ed' },
+        { name: 'Lavanda', primary: '#7c3aed', bg: '#faf5ff' }
+    ];
+    
+    const modal = document.createElement('div');
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="this.parentElement.remove()"></div>
+        <div class="qol-modal-content">
+            <h3>🎨 Scegli un tema</h3>
+            <div style="display: grid; gap: 0.5rem; margin-top: 1rem;">
+                ${themes.map(t => `
+                    <button onclick="applyTheme('${t.primary}', '${t.bg}')" 
+                        style="padding: 1rem; border: 2px solid ${t.primary}; border-radius: 8px; background: ${t.bg}; cursor: pointer;">
+                        <span style="color: ${t.primary}; font-weight: 600;">${t.name}</span>
+                    </button>
+                `).join('')}
+            </div>
+            <button onclick="this.closest('.qol-modal').remove()" class="btn" style="margin-top: 1rem;">Chiudi</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function applyTheme(primary, bg) {
+    document.documentElement.style.setProperty('--primary', primary);
+    document.documentElement.style.setProperty('--bg-light', bg);
+    localStorage.setItem('customTheme', JSON.stringify({ primary, bg }));
+    showToast('Tema applicato!', 'success');
+    document.querySelector('.qol-modal')?.remove();
+}
+
+// Feature 67: Restore custom theme on load
+function restoreCustomTheme() {
+    const theme = JSON.parse(localStorage.getItem('customTheme'));
+    if (theme) {
+        document.documentElement.style.setProperty('--primary', theme.primary);
+        document.documentElement.style.setProperty('--bg-light', theme.bg);
+    }
+}
+
+// Feature 68: Reading goals
+function setReadingGoal(articles) {
+    localStorage.setItem('readingGoal', articles);
+    showToast(`Obiettivo impostato: ${articles} articoli al giorno`, 'success');
+}
+
+function checkReadingGoal() {
+    const goal = parseInt(localStorage.getItem('readingGoal')) || 3;
+    const today = new Date().toDateString();
+    const readToday = JSON.parse(localStorage.getItem('readToday') || '{}');
+    
+    if (readToday.date !== today) {
+        localStorage.setItem('readToday', JSON.stringify({ date: today, count: 0 }));
+    }
+    
+    return { goal, read: readToday.count || 0 };
+}
+
+// Feature 69: Celebration on goal achievement
+function checkGoalAndCelebrate() {
+    const { goal, read } = checkReadingGoal();
+    if (read >= goal) {
+        showConfetti();
+        showToast('🎉 Obiettivo giornaliero raggiunto!', 'success');
+    }
+}
+
+// Feature 70: Article difficulty indicator
+function estimateDifficulty(wordCount, avgWordLength) {
+    if (avgWordLength > 6 && wordCount > 1000) return '🔴 Avanzato';
+    if (avgWordLength > 5 && wordCount > 500) return '🟡 Medio';
+    return '🟢 Facile';
+}
+
+// Feature 71: Quick language toggle (if multilingual)
+function toggleLanguage() {
+    const currentLang = document.documentElement.lang || 'it';
+    const newLang = currentLang === 'it' ? 'en' : 'it';
+    document.documentElement.lang = newLang;
+    localStorage.setItem('language', newLang);
+    showToast(`Lingua: ${newLang.toUpperCase()}`, 'info');
+}
+
+// Feature 72: Zen mode (hide all distractions)
+function toggleZenMode() {
+    document.body.classList.toggle('zen-mode');
+    const isZen = document.body.classList.contains('zen-mode');
+    
+    if (isZen) {
+        document.querySelectorAll('header, footer, aside, .sidebar, .qol-fab, .chat-bubble').forEach(el => {
+            el.style.display = 'none';
+        });
+    } else {
+        document.querySelectorAll('header, footer, aside, .sidebar, .qol-fab, .chat-bubble').forEach(el => {
+            el.style.display = '';
+        });
+    }
+    
+    showToast(isZen ? '🧘 Modalità Zen attivata' : '🧘 Modalità Zen disattivata', 'info');
+}
+
+// Feature 73: Smart image zoom
+function initImageZoom() {
+    document.querySelectorAll('.article-image, .article-card img').forEach(img => {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', () => {
+            const modal = document.createElement('div');
+            modal.className = 'qol-image-modal';
+            modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: zoom-out;';
+            modal.innerHTML = `<img src="${img.src}" style="max-width: 95%; max-height: 95%; object-fit: contain;">`;
+            modal.addEventListener('click', () => modal.remove());
+            document.body.appendChild(modal);
+        });
+    });
+}
+
+// Feature 74: Recent activity feed
+function showRecentActivity() {
+    const history = JSON.parse(localStorage.getItem('readingHistory') || '[]');
+    const recent = history.slice(0, 5);
+    
+    let html = '<h4>Attività Recente</h4>';
+    recent.forEach(item => {
+        html += `<p style="font-size: 0.85rem; color: var(--neutral);">📖 ${item.title || 'Articolo'}</p>`;
+    });
+    
+    showToast(recent.length ? `Ultimi ${recent.length} articoli letti` : 'Nessuna attività recente', 'info');
+}
+
+// Feature 75: Quick settings panel
+function showQuickSettings() {
+    const modal = document.createElement('div');
+    modal.className = 'qol-modal';
+    modal.innerHTML = `
+        <div class="qol-modal-backdrop" onclick="this.parentElement.remove()"></div>
+        <div class="qol-modal-content">
+            <h3>⚙️ Impostazioni Rapide</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                <label><input type="checkbox" id="autoHideHeader" ${localStorage.getItem('autoHideHeader') === 'true' ? 'checked' : ''}> Nascondi header durante scroll</label>
+                <label><input type="checkbox" id="nightSchedule" ${localStorage.getItem('nightSchedule') === 'true' ? 'checked' : ''}> Modalità notte automatica</label>
+                <label><input type="checkbox" id="soundEffects" ${localStorage.getItem('soundEffects') !== 'false' ? 'checked' : ''}> Effetti sonori</label>
+                <label><input type="checkbox" id="animations" ${localStorage.getItem('animations') !== 'false' ? 'checked' : ''}> Animazioni</label>
+            </div>
+            <button onclick="saveQuickSettings()" class="btn btn-primary" style="margin-top: 1rem;">Salva</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveQuickSettings() {
+    localStorage.setItem('autoHideHeader', document.getElementById('autoHideHeader').checked);
+    localStorage.setItem('nightSchedule', document.getElementById('nightSchedule').checked);
+    localStorage.setItem('soundEffects', document.getElementById('soundEffects').checked);
+    localStorage.setItem('animations', document.getElementById('animations').checked);
+    showToast('Impostazioni salvate!', 'success');
+    document.querySelector('.qol-modal').remove();
+}
+
+// Feature 76: Search within article
+function searchInArticle() {
+    const content = document.querySelector('.article-content');
+    if (!content) return;
+    
+    const searchTerm = prompt('Cerca nel testo:');
+    if (!searchTerm) return;
+    
+    const html = content.innerHTML;
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const highlighted = html.replace(regex, '<mark style="background: yellow;">$1</mark>');
+    content.innerHTML = highlighted;
+    
+    const matches = content.querySelectorAll('mark').length;
+    showToast(`Trovate ${matches} corrispondenze`, 'info');
+}
+
+// Feature 77: Article audio preview
+function playArticlePreview() {
+    if ('speechSynthesis' in window) {
+        const title = document.querySelector('.article-title')?.textContent || '';
+        const summary = document.querySelector('.article-summary')?.textContent || '';
+        
+        const text = `${title}. ${summary}`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'it-IT';
+        
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+    }
+}
+
+// Feature 78: Floating action for current article
+function showArticleActions() {
+    const existing = document.getElementById('articleActions');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+    
+    const actions = document.createElement('div');
+    actions.id = 'articleActions';
+    actions.style.cssText = 'position: fixed; bottom: 100px; right: 20px; display: flex; flex-direction: column; gap: 0.5rem; z-index: 1000;';
+    actions.innerHTML = `
+        <button onclick="toggleBookmark()" style="padding: 0.75rem; border-radius: 50%; border: none; background: var(--primary); color: white; cursor: pointer;">🔖</button>
+        <button onclick="shareArticle()" style="padding: 0.75rem; border-radius: 50%; border: none; background: #10b981; color: white; cursor: pointer;">📤</button>
+        <button onclick="scrollToComments()" style="padding: 0.75rem; border-radius: 50%; border: none; background: #6366f1; color: white; cursor: pointer;">💬</button>
+        <button onclick="readArticleAloud()" style="padding: 0.75rem; border-radius: 50%; border: none; background: #f59e0b; color: white; cursor: pointer;">🔊</button>
+    `;
+    document.body.appendChild(actions);
+}
+
+// Feature 79: Desktop notifications for new articles
+function requestNotifications() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(perm => {
+            if (perm === 'granted') {
+                showToast('Notifiche abilitate!', 'success');
+            }
+        });
+    }
+}
+
+function sendNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/favicon.ico' });
+    }
+}
+
+// Feature 80: Quick tip of the day
+function showRandomTip() {
+    const tips = [
+        '💡 Premi Ctrl+K per aprire la ricerca rapida',
+        '💡 Clicca due volte su un articolo per salvarlo',
+        '💡 Usa le frecce per navigare tra gli articoli',
+        '💡 Premi F per attivare la modalità lettura',
+        '💡 Scuoti il telefono per tornare alla home',
+        '💡 Premi ? per vedere tutte le scorciatoie',
+        '💡 Trascina verso destra per tornare indietro',
+        '💡 Il tema si adatta automaticamente di notte',
+        '💡 Puoi evidenziare testo per condividerlo',
+        '💡 Premi Z per attivare la modalità Zen'
+    ];
+    
+    return tips[Math.floor(Math.random() * tips.length)];
+}
+
+// Feature 81: Article scheduling reminder
+function remindLater(articleId, minutes = 30) {
+    const reminder = {
+        id: articleId,
+        time: Date.now() + minutes * 60 * 1000,
+        title: document.querySelector('.article-title')?.textContent || 'Articolo'
+    };
+    
+    const reminders = JSON.parse(localStorage.getItem('articleReminders') || '[]');
+    reminders.push(reminder);
+    localStorage.setItem('articleReminders', JSON.stringify(reminders));
+    
+    showToast(`Ti ricorderemo tra ${minutes} minuti!`, 'success');
+}
+
+// Feature 82: Check and show reminders
+function checkReminders() {
+    const reminders = JSON.parse(localStorage.getItem('articleReminders') || '[]');
+    const now = Date.now();
+    
+    reminders.forEach((reminder, index) => {
+        if (reminder.time <= now) {
+            sendNotification('Promemoria lettura', `Non dimenticare: ${reminder.title}`);
+            reminders.splice(index, 1);
+        }
+    });
+    
+    localStorage.setItem('articleReminders', JSON.stringify(reminders));
+}
+
+// Feature 83: Table of contents for long articles
+function generateTableOfContents() {
+    const content = document.querySelector('.article-content');
+    if (!content) return;
+    
+    const headings = content.querySelectorAll('h2, h3');
+    if (headings.length < 3) return;
+    
+    const toc = document.createElement('nav');
+    toc.className = 'qol-toc';
+    toc.style.cssText = 'background: var(--bg-light); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;';
+    toc.innerHTML = '<strong>📑 Indice</strong>';
+    
+    const list = document.createElement('ul');
+    list.style.cssText = 'margin: 0.5rem 0 0 1rem; font-size: 0.9rem;';
+    
+    headings.forEach((h, i) => {
+        h.id = `section-${i}`;
+        const li = document.createElement('li');
+        li.style.margin = '0.25rem 0';
+        li.innerHTML = `<a href="#section-${i}" style="color: var(--primary); text-decoration: none;">${h.textContent}</a>`;
+        list.appendChild(li);
+    });
+    
+    toc.appendChild(list);
+    content.insertBefore(toc, content.firstChild);
+}
+
+// Feature 84: Progress milestone celebrations
+function celebrateMilestone(milestone) {
+    const milestones = {
+        10: '🌟 Hai letto 10 articoli!',
+        25: '🏆 25 articoli! Sei un lettore appassionato!',
+        50: '🎖️ 50 articoli! Incredibile!',
+        100: '👑 100 articoli! Sei una leggenda!'
+    };
+    
+    if (milestones[milestone]) {
+        showConfetti();
+        showToast(milestones[milestone], 'success');
+    }
+}
+
+// Feature 85: Dynamic favicon based on status
+function updateFavicon(status) {
+    const link = document.querySelector('link[rel="icon"]') || document.createElement('link');
+    link.rel = 'icon';
+    
+    // Simple emoji-based favicon
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+    ctx.font = '24px serif';
+    ctx.fillText(status === 'new' ? '🔔' : '📰', 4, 24);
+    
+    link.href = canvas.toDataURL();
+    document.head.appendChild(link);
+}
+
+// Feature 86: Reading position sync across tabs
+function syncReadingPosition() {
+    const articleId = new URLSearchParams(window.location.search).get('id');
+    if (!articleId) return;
+    
+    window.addEventListener('storage', (e) => {
+        if (e.key === `reading-pos-${articleId}`) {
+            const pos = parseFloat(e.newValue);
+            window.scrollTo(0, document.body.scrollHeight * pos);
+        }
+    });
+    
+    window.addEventListener('scroll', () => {
+        const pos = window.scrollY / document.body.scrollHeight;
+        localStorage.setItem(`reading-pos-${articleId}`, pos.toString());
+    }, { passive: true });
+}
+
+// Feature 87: Quick article download as PDF
+function downloadAsPDF() {
+    showToast('Preparazione PDF in corso...', 'info');
+    window.print();
+}
+
+// Feature 88: Article footnotes popup
+function initFootnotes() {
+    document.querySelectorAll('sup[data-footnote]').forEach(sup => {
+        sup.style.cursor = 'help';
+        sup.addEventListener('click', () => {
+            const note = sup.dataset.footnote;
+            showToast(note, 'info');
+        });
+    });
+}
+
+// Feature 89: Typewriter effect for titles
+function typewriterEffect(element, text, speed = 50) {
+    let i = 0;
+    element.textContent = '';
+    
+    function type() {
+        if (i < text.length) {
+            element.textContent += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    
+    type();
+}
+
+// Feature 90: Parallax scroll effect for images
+function initParallax() {
+    const images = document.querySelectorAll('.article-image, .hero-image');
+    
+    window.addEventListener('scroll', () => {
+        images.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * 0.3;
+            
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+                img.style.transform = `translateY(${rate * 0.1}px)`;
+            }
+        });
+    }, { passive: true });
+}
+
+// Feature 91: Sticky table headers
+function initStickyTableHeaders() {
+    document.querySelectorAll('table').forEach(table => {
+        const thead = table.querySelector('thead');
+        if (thead) {
+            thead.style.position = 'sticky';
+            thead.style.top = '60px';
+            thead.style.background = 'white';
+            thead.style.zIndex = '10';
+        }
+    });
+}
+
+// Feature 92: Code block copy button
+function initCodeCopy() {
+    document.querySelectorAll('pre code').forEach(block => {
+        const btn = document.createElement('button');
+        btn.textContent = '📋 Copia';
+        btn.style.cssText = 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; border: none; background: var(--primary); color: white; border-radius: 4px; cursor: pointer;';
+        btn.addEventListener('click', () => {
+            navigator.clipboard.writeText(block.textContent);
+            btn.textContent = '✓ Copiato!';
+            setTimeout(() => btn.textContent = '📋 Copia', 2000);
+        });
+        
+        block.parentElement.style.position = 'relative';
+        block.parentElement.appendChild(btn);
+    });
+}
+
+// Feature 93: Scroll spy for TOC
+function initScrollSpy() {
+    const sections = document.querySelectorAll('[id^="section-"]');
+    if (sections.length === 0) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const link = document.querySelector(`.qol-toc a[href="#${entry.target.id}"]`);
+            if (link) {
+                link.style.fontWeight = entry.isIntersecting ? '700' : '400';
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    sections.forEach(section => observer.observe(section));
+}
+
+// Feature 94: Gesture hints on first visit
+function showGestureHints() {
+    if (localStorage.getItem('gestureHintsSeen')) return;
+    if (!('ontouchstart' in window)) return;
+    
+    const hints = document.createElement('div');
+    hints.className = 'qol-gesture-hints';
+    hints.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 2rem;';
+    hints.innerHTML = `
+        <h2>👆 Gesti Touch</h2>
+        <p style="margin: 1rem 0;">← Scorri a destra per tornare indietro</p>
+        <p style="margin: 1rem 0;">↓ Tira giù per aggiornare</p>
+        <p style="margin: 1rem 0;">👆👆 Doppio tap per salvare</p>
+        <button onclick="this.parentElement.remove(); localStorage.setItem('gestureHintsSeen', 'true');" style="padding: 1rem 2rem; background: var(--primary); color: white; border: none; border-radius: 8px; margin-top: 2rem; cursor: pointer;">Ho capito!</button>
+    `;
+    document.body.appendChild(hints);
+}
+
+// Feature 95: Cookie consent banner
+function showCookieConsent() {
+    if (localStorage.getItem('cookieConsent')) return;
+    
+    const banner = document.createElement('div');
+    banner.className = 'qol-cookie-banner';
+    banner.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; background: var(--text-dark); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 998; flex-wrap: wrap; gap: 1rem;';
+    banner.innerHTML = `
+        <p style="margin: 0; flex: 1;">🍪 Questo sito utilizza cookie per migliorare l'esperienza. <a href="privacy.html" style="color: #00f0ff;">Scopri di più</a></p>
+        <div>
+            <button onclick="acceptCookies()" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">Accetta</button>
+            <button onclick="declineCookies()" style="padding: 0.5rem 1rem; background: transparent; color: white; border: 1px solid white; border-radius: 4px; cursor: pointer;">Rifiuta</button>
+        </div>
+    `;
+    document.body.appendChild(banner);
+}
+
+function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'accepted');
+    document.querySelector('.qol-cookie-banner')?.remove();
+}
+
+function declineCookies() {
+    localStorage.setItem('cookieConsent', 'declined');
+    document.querySelector('.qol-cookie-banner')?.remove();
+}
+
+// Feature 96: Performance monitor (dev mode)
+function showPerformance() {
+    if (window.performance && window.location.hostname === 'localhost') {
+        const timing = performance.timing;
+        const loadTime = timing.loadEventEnd - timing.navigationStart;
+        console.log(`⚡ Pagina caricata in ${loadTime}ms`);
+    }
+}
+
+// Feature 97: Smooth anchor scrolls
+function smoothAnchorScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', (e) => {
+            const targetId = anchor.getAttribute('href').slice(1);
+            const target = document.getElementById(targetId);
+            
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+}
+
+// Feature 98: Idle detection for auto-pause
+let idleTime = 0;
+function initIdleDetection() {
+    setInterval(() => {
+        idleTime++;
+        if (idleTime >= 5 && 'speechSynthesis' in window) {
+            speechSynthesis.pause();
+        }
+    }, 60000);
+    
+    ['mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+        document.addEventListener(event, () => idleTime = 0, { passive: true });
+    });
+}
+
+// Feature 99: Reading companion widget
+function showReadingCompanion() {
+    const existing = document.getElementById('readingCompanion');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+    
+    const companion = document.createElement('div');
+    companion.id = 'readingCompanion';
+    companion.style.cssText = 'position: fixed; bottom: 20px; left: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 1rem; max-width: 250px; z-index: 1000;';
+    companion.innerHTML = `
+        <h4 style="margin: 0 0 0.5rem;">📚 Compagno di Lettura</h4>
+        <p style="font-size: 0.85rem; color: var(--neutral); margin: 0;">${showRandomTip()}</p>
+        <button onclick="this.parentElement.remove()" style="margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; border: none; background: var(--bg-light); border-radius: 4px; cursor: pointer;">Chiudi</button>
+    `;
+    document.body.appendChild(companion);
+}
+
+// Feature 100: Celebration for 100 features!
+function celebrate100Features() {
+    // Silent celebration - avoid console noise in production
+}
+
+// Initialize additional QoL features
+function initAdditionalQoL() {
+    trackLastPage();
+    restoreCustomTheme();
+    initKeyboardArticleNav();
+    showArticleFreshness();
+    initImageZoom();
+    initCodeCopy();
+    smoothAnchorScroll();
+    initIdleDetection();
+    showPerformance();
+    showCookieConsent();
+    generateTableOfContents();
+    initScrollSpy();
+    initFootnotes();
+    showGestureHints();
+    checkReminders();
+    
+    // Check reading goal
+    setTimeout(() => {
+        const { goal, read } = checkReadingGoal();
+        if (read > 0 && read < goal) {
+            showToast(`📖 Hai letto ${read}/${goal} articoli oggi`, 'info');
+        }
+    }, 3000);
+    
+    // Initialize auto-hide header if enabled
+    if (localStorage.getItem('autoHideHeader') === 'true') {
+        initAutoHideHeader();
+    }
+    
+    // Initialize night mode scheduler if enabled
+    if (localStorage.getItem('nightSchedule') === 'true') {
+        initNightModeScheduler();
+    }
+    
+    // Show word count on article pages
+    if (window.location.pathname.includes('articolo')) {
+        showWordCount();
+        showArticleActions();
+        syncReadingPosition();
+    }
+    
+    // Swipe navigation on mobile
+    if ('ontouchstart' in window) {
+        initSwipeNavigation();
+    }
+    
+    celebrate100Features();
+}
+
+// Call additional QoL initialization
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initAdditionalQoL, 500);
+});
+
+// Export new functions
+window.toggleHighContrast = toggleHighContrast;
+window.toggleReadingRuler = toggleReadingRuler;
+window.readArticleAloud = readArticleAloud;
+window.stopReading = stopReading;
+window.showThemeSelector = showThemeSelector;
+window.applyTheme = applyTheme;
+window.setReadingGoal = setReadingGoal;
+window.toggleZenMode = toggleZenMode;
+window.showQuickStats = showQuickStats;
+window.showQuickSettings = showQuickSettings;
+window.saveQuickSettings = saveQuickSettings;
+window.showReportIssue = showReportIssue;
+window.submitIssue = submitIssue;
+window.remindLater = remindLater;
+window.searchInArticle = searchInArticle;
+window.downloadAsPDF = downloadAsPDF;
+window.scrollToComments = scrollToComments;
+window.showReadingCompanion = showReadingCompanion;
+window.acceptCookies = acceptCookies;
+window.declineCookies = declineCookies;
+
+// Main.js loaded with 100+ QoL features

@@ -302,10 +302,97 @@
                 <h3 style="margin-top: 2rem; margin-bottom: 1rem;">📝 Ultimi Articoli</h3>
                 ${renderRecentArticles(myArticles.slice(0, 5))}
                 
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">🏆 Obiettivi</h3>
-                ${renderAchievements(myArticles.length, totalViews)}
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">🎯 Obiettivi</h3>
+                ${renderObjectivesWithProgress(myArticles.length, totalViews)}
+                
+                <div style="margin-top: 2rem; text-align: center;">
+                    <a href="badges.html" class="btn btn-secondary">🏆 Vedi Tutti i Badge</a>
+                </div>
             `;
         }
+        
+        function renderObjectivesWithProgress(articleCount, totalViews) {
+            const objectives = [
+                { 
+                    name: 'Primo Articolo', 
+                    description: 'Pubblica il tuo primo articolo',
+                    icon: '🎯',
+                    current: Math.min(articleCount, 1),
+                    target: 1,
+                    unlocked: articleCount >= 1
+                },
+                { 
+                    name: 'Scrittore Attivo', 
+                    description: 'Pubblica 5 articoli',
+                    icon: '⭐',
+                    current: Math.min(articleCount, 5),
+                    target: 5,
+                    unlocked: articleCount >= 5
+                },
+                { 
+                    name: 'Reporter Esperto', 
+                    description: 'Pubblica 10 articoli',
+                    icon: '🏆',
+                    current: Math.min(articleCount, 10),
+                    target: 10,
+                    unlocked: articleCount >= 10
+                },
+                { 
+                    name: 'Popolare', 
+                    description: 'Raggiungi 100 visualizzazioni totali',
+                    icon: '👥',
+                    current: Math.min(totalViews, 100),
+                    target: 100,
+                    unlocked: totalViews >= 100
+                },
+                { 
+                    name: 'Virale', 
+                    description: 'Raggiungi 500 visualizzazioni totali',
+                    icon: '🔥',
+                    current: Math.min(totalViews, 500),
+                    target: 500,
+                    unlocked: totalViews >= 500
+                }
+            ];
+            
+            return `
+                <div style="display: grid; gap: 1rem;">
+                    ${objectives.map(obj => {
+                        const progressPercent = Math.min((obj.current / obj.target) * 100, 100);
+                        return `
+                            <div class="objective-card" style="
+                                background: ${obj.unlocked ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : 'var(--bg-primary)'};
+                                padding: 1rem;
+                                border-radius: var(--radius-md);
+                                border: 1px solid ${obj.unlocked ? 'var(--success)' : '#e5e7eb'};
+                            ">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 1.5rem;">${obj.icon}</span>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; color: var(--text-dark);">
+                                            ${obj.name}
+                                            ${obj.unlocked ? '<span style="color: var(--success); margin-left: 0.5rem;">✓</span>' : ''}
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: var(--neutral);">${obj.description}</div>
+                                    </div>
+                                    <div style="font-weight: 600; color: var(--primary);">${obj.current}/${obj.target}</div>
+                                </div>
+                                <div style="background: #e5e7eb; border-radius: 9999px; height: 8px; overflow: hidden;">
+                                    <div style="
+                                        background: ${obj.unlocked ? 'var(--success)' : 'linear-gradient(90deg, var(--primary), var(--secondary))'};
+                                        height: 100%;
+                                        width: ${progressPercent}%;
+                                        border-radius: 9999px;
+                                        transition: width 0.3s ease;
+                                    "></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
         
         async function renderUserContent(userData) {
             return `
