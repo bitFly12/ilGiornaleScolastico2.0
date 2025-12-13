@@ -160,6 +160,14 @@
                 let isOwnProfile = true;
                 
                 if (viewUserId && viewUserId !== profileId) {
+                    // Validate UUID format to prevent injection
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    if (!uuidRegex.test(viewUserId)) {
+                        console.error('Invalid user ID format');
+                        showError();
+                        return;
+                    }
+                    
                     // Viewing another user's profile
                     profileId = viewUserId;
                     isOwnProfile = false;

@@ -1359,12 +1359,26 @@
                         .eq('id', contentId);
                     error = result.error;
                 } else if (contentType === 'article') {
-                    // For articles, delete all related data first
-                    await supabase.from('article_comments').delete().eq('article_id', contentId);
-                    await supabase.from('article_reactions').delete().eq('article_id', contentId);
-                    await supabase.from('content_reports').delete().eq('content_id', contentId).eq('content_type', 'article');
+                    // For articles, delete all related data first with error checking
+                    const commentsResult = await supabase.from('article_comments').delete().eq('article_id', contentId);
+                    if (commentsResult.error) {
+                        console.warn('Error deleting article comments:', commentsResult.error);
+                        // Continue anyway as comments might not exist
+                    }
                     
-                    // Then delete the article
+                    const reactionsResult = await supabase.from('article_reactions').delete().eq('article_id', contentId);
+                    if (reactionsResult.error) {
+                        console.warn('Error deleting article reactions:', reactionsResult.error);
+                        // Continue anyway as reactions might not exist
+                    }
+                    
+                    const reportsResult = await supabase.from('content_reports').delete().eq('content_id', contentId).eq('content_type', 'article');
+                    if (reportsResult.error) {
+                        console.warn('Error deleting article reports:', reportsResult.error);
+                        // Continue anyway as other reports might not exist
+                    }
+                    
+                    // Then delete the article - this is the critical operation
                     const result = await supabase
                         .from('articoli')
                         .delete()
