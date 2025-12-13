@@ -1751,7 +1751,8 @@ function showDailyTip() {
 // Feature 35: Session timer
 function initSessionTimer() {
     const startTime = Date.now();
-    
+
+    /*
     // Show session duration on leaving
     window.addEventListener('beforeunload', () => {
         const duration = Math.round((Date.now() - startTime) / 60000);
@@ -1765,7 +1766,7 @@ function initSessionTimer() {
     if (lastDuration && parseInt(lastDuration) > 30) {
         showToast('Bentornato! La tua ultima visita è durata ' + lastDuration + ' minuti 📚', 'info', 5000);
     }
-}
+}*/
 
 // Feature 36: Page loader animation
 function showPageLoader() {
