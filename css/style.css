@@ -1271,75 +1271,52 @@ a:hover {
     cursor: pointer;
     padding: 0.5rem;
     color: var(--text-dark);
+    -webkit-tap-highlight-color: transparent;
 }
 
 @media (max-width: 768px) {
-    /* Mobile Menu Toggle Visible */
+    /* ========================================
+       MOBILE MENU - COMPLETE FIX
+       ======================================== */
+    
+    /* Mobile Menu Toggle Button - Always visible on mobile */
     .menu-toggle,
     .mobile-menu-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         position: relative;
-        z-index: 1001;
+        z-index: 9999; /* Highest - always clickable */
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
     
-    /* Mobile navigation slide-in menu */
-    nav ul,
-    nav .nav-menu {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 280px;
-        height: 100vh;
-        background: white;
-        box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-        flex-direction: column;
-        padding: 4rem 1rem 2rem;
-        transition: right 0.3s ease;
-        z-index: 1002; /* Higher than overlay (999) and toggle (1001) */
-        display: flex !important;
-        list-style: none;
-        gap: 0.5rem;
-        overflow-y: auto;
+    .menu-toggle span,
+    .mobile-menu-toggle span {
+        font-size: 1.75rem;
+        line-height: 1;
+        pointer-events: none; /* Prevent span from intercepting clicks */
     }
     
-    nav ul.mobile-menu-open,
-    nav .nav-menu.mobile-menu-open {
-        right: 0;
-    }
-    
-    nav ul li,
-    nav .nav-menu li {
-        width: 100%;
-        margin: 0.25rem 0;
-    }
-    
-    nav ul li a,
-    nav .nav-menu li a {
-        display: block;
-        padding: 0.75rem 1rem;
-        width: 100%;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-        position: relative;
-        z-index: 1003; /* Above the menu container */
-        color: var(--text-dark);
-        text-decoration: none;
-    }
-    
-    nav ul li a:hover,
-    nav .nav-menu li a:hover {
-        background: var(--bg-light);
-    }
-    
-    /* Mobile menu overlay - aesthetic but not applying blur globally */
+    /* Mobile Menu Overlay - Dark backdrop */
     .mobile-menu-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for iOS */
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 9997; /* Below menu, above everything else */
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -1349,7 +1326,105 @@ a:hover {
     .mobile-menu-overlay.active {
         opacity: 1;
         visibility: visible;
-        pointer-events: auto;
+        pointer-events: auto; /* Enable clicks to close menu */
+    }
+    
+    /* Mobile Navigation Slide-in Menu */
+    nav ul,
+    nav .nav-menu {
+        position: fixed !important;
+        top: 0 !important;
+        right: -100% !important;
+        width: 80vw !important; /* 80% of screen width as requested */
+        max-width: 320px;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background: white !important;
+        box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25) !important;
+        flex-direction: column !important;
+        padding: 5rem 1.5rem 2rem !important;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 9998 !important; /* Above overlay, below toggle when closed */
+        display: flex !important;
+        list-style: none !important;
+        gap: 0.5rem !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+    
+    /* Menu Open State */
+    nav ul.mobile-menu-open,
+    nav .nav-menu.mobile-menu-open {
+        right: 0 !important;
+    }
+    
+    /* Menu Items */
+    nav ul li,
+    nav .nav-menu li {
+        width: 100%;
+        margin: 0.25rem 0;
+        list-style: none;
+    }
+    
+    /* Menu Links - Fully Clickable */
+    nav ul li a,
+    nav .nav-menu li a {
+        display: flex !important;
+        align-items: center;
+        padding: 1rem 1.25rem !important;
+        width: 100% !important;
+        min-height: 48px; /* Touch-friendly size */
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        color: var(--text-dark) !important;
+        text-decoration: none !important;
+        font-size: 1rem;
+        font-weight: 500;
+        background: transparent;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    nav ul li a:hover,
+    nav ul li a:active,
+    nav .nav-menu li a:hover,
+    nav .nav-menu li a:active {
+        background: var(--bg-light, #f8fafc) !important;
+        color: var(--primary, #0033A0) !important;
+    }
+    
+    nav ul li a.active,
+    nav .nav-menu li a.active {
+        background: var(--primary, #0033A0) !important;
+        color: white !important;
+    }
+    
+    /* Close Button Styling for Mobile */
+    .mobile-menu-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-light, #f8fafc);
+        border: none;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        z-index: 9999;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Prevent body scroll when menu is open */
+    body.menu-open {
+        overflow: hidden !important;
+        position: fixed;
+        width: 100%;
+        height: 100%;
     }
     
     /* Typography */
