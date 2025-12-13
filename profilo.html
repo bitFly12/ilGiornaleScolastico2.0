@@ -231,7 +231,7 @@
         async function renderProfileContent(userData, role, isOwnProfile = true) {
             const container = document.getElementById('profileContent');
             
-            let html = renderProfileHeader(userData);
+            let html = renderProfileHeader(userData, isOwnProfile);
             
             html += `<div class="profile-grid">`;
             
