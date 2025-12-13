@@ -498,14 +498,22 @@ img {
 }
 
 .article-card-mini {
-    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
 }
 
+.article-card-mini .article-card-image-container {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    overflow: hidden;
+}
+
+.article-card-mini .article-card-image-container img,
 .article-card-mini img {
-    height: 60%;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    object-position: center;
 }
 
 .article-card-mini .card-body {

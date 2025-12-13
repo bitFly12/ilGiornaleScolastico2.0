@@ -110,144 +110,94 @@ async function checkMaintenanceMode() {
 }
 
 // ================================================
-// MOBILE MENU - COMPLETE FIX
+// MOBILE MENU - SIMPLIFIED ROBUST IMPLEMENTATION
 // ================================================
 function initMobileMenu() {
-    const menuToggle = document.querySelector('.mobile-menu-toggle, .menu-toggle, #menuToggle');
-    const navMenu = document.querySelector('nav ul, .nav-menu, #navMenu');
+    // Get elements by ID (most reliable)
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
     
     if (!menuToggle || !navMenu) {
-        console.warn('Mobile menu: Toggle or menu not found');
+        console.log('Mobile menu: Elements not found (menuToggle or navMenu missing)');
         return;
     }
     
-    const navLinks = navMenu.querySelectorAll('li a');
+    console.log('Mobile menu: Initializing...');
     
-    // Create or get overlay
-    let overlay = document.querySelector('.mobile-menu-overlay');
+    // Create overlay if it doesn't exist
+    let overlay = document.getElementById('mobileMenuOverlay');
     if (!overlay) {
         overlay = document.createElement('div');
+        overlay.id = 'mobileMenuOverlay';
         overlay.className = 'mobile-menu-overlay';
-        overlay.setAttribute('aria-hidden', 'true');
         document.body.appendChild(overlay);
     }
     
-    // State management
-    let isMenuOpen = false;
+    let isOpen = false;
     
     function openMenu() {
-        if (isMenuOpen) return;
-        isMenuOpen = true;
-        
+        if (isOpen) return;
+        isOpen = true;
         navMenu.classList.add('mobile-menu-open');
         overlay.classList.add('active');
-        document.body.classList.add('menu-open');
         document.body.style.overflow = 'hidden';
         menuToggle.innerHTML = '<span>✕</span>';
         menuToggle.setAttribute('aria-expanded', 'true');
-        overlay.setAttribute('aria-hidden', 'false');
-        
-        // Focus trap - focus first menu item
-        setTimeout(() => {
-            const firstLink = navMenu.querySelector('a');
-            if (firstLink) firstLink.focus();
-        }, 100);
+        console.log('Mobile menu: Opened');
     }
     
     function closeMenu() {
-        if (!isMenuOpen) return;
-        isMenuOpen = false;
-        
+        if (!isOpen) return;
+        isOpen = false;
         navMenu.classList.remove('mobile-menu-open');
         overlay.classList.remove('active');
-        document.body.classList.remove('menu-open');
         document.body.style.overflow = '';
         menuToggle.innerHTML = '<span>☰</span>';
         menuToggle.setAttribute('aria-expanded', 'false');
-        overlay.setAttribute('aria-hidden', 'true');
-        
-        // Return focus to toggle button
-        menuToggle.focus();
+        console.log('Mobile menu: Closed');
     }
     
-    function toggleMenu(e) {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        if (isMenuOpen) {
+    // Toggle button - click event
+    menuToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen) {
             closeMenu();
         } else {
             openMenu();
         }
-    }
+    });
     
-    // Toggle button click handler
-    menuToggle.addEventListener('click', toggleMenu);
-    
-    // Touch handler for toggle button (iOS fix)
-    menuToggle.addEventListener('touchend', (e) => {
+    // Overlay click - close menu
+    overlay.addEventListener('click', function(e) {
         e.preventDefault();
-        e.stopPropagation();
-        toggleMenu();
-    }, { passive: false });
-    
-    // Overlay click to close
-    overlay.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
         closeMenu();
     });
     
-    // Overlay touch to close (iOS fix)
-    overlay.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        closeMenu();
-    }, { passive: false });
-    
-    // Menu link clicks - close menu and navigate
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            // Small delay to allow visual feedback before close
-            setTimeout(closeMenu, 50);
-            // Navigation happens naturally via href
+    // Menu links - close menu on click
+    const links = navMenu.querySelectorAll('a');
+    links.forEach(function(link) {
+        link.addEventListener('click', function() {
+            setTimeout(closeMenu, 100);
         });
     });
     
-    // Close on outside click (desktop)
-    document.addEventListener('click', (e) => {
-        if (isMenuOpen && 
-            !menuToggle.contains(e.target) && 
-            !navMenu.contains(e.target) &&
-            !overlay.contains(e.target)) {
+    // Escape key - close menu
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isOpen) {
             closeMenu();
         }
     });
     
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isMenuOpen) {
+    // Resize handler - close menu when going to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && isOpen) {
             closeMenu();
         }
     });
     
-    // Handle resize - close menu when switching to desktop
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            if (window.innerWidth > 768 && isMenuOpen) {
-                closeMenu();
-            }
-        }, 150);
-    });
-    
-    // Prevent scroll on menu when body scroll is locked
-    navMenu.addEventListener('touchmove', (e) => {
-        e.stopPropagation();
-    }, { passive: true });
+    console.log('Mobile menu: Initialized successfully');
+}
     
     console.log('✅ Mobile menu initialized');
 }

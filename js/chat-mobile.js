@@ -123,6 +123,18 @@ function setupMessageEventDelegation() {
             return;
         }
         
+        // Handle report button clicks
+        const reportBtn = e.target.closest('.bubble-report-btn');
+        if (reportBtn) {
+            e.stopPropagation();
+            const messageId = reportBtn.dataset.reportMessageId;
+            const userId = reportBtn.dataset.reportUserId;
+            if (messageId && userId) {
+                reportMessage(messageId, userId);
+            }
+            return;
+        }
+        
         // Handle message bubble clicks
         const bubble = e.target.closest('.message-bubble');
         if (bubble) {
@@ -360,6 +372,11 @@ function createMessageBubble(msg) {
         <button class="bubble-delete-btn" data-delete-id="${safeMessageId}" title="Elimina" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🗑️</button>
     ` : '';
     
+    // Report button - visible for other users' messages
+    const reportButtonHtml = !isOwn ? `
+        <button class="bubble-report-btn" data-report-message-id="${safeMessageId}" data-report-user-id="${safeUserId}" title="Segnala" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🚩</button>
+    ` : '';
+    
     return `
         <div class="message-bubble ${isOwn ? 'own' : ''} ${mentionedClass}" 
              data-message-id="${safeMessageId}"
@@ -373,6 +390,7 @@ function createMessageBubble(msg) {
                     <span class="bubble-time">${time}</span>
                     ${isOwn ? '<span class="bubble-status">✓✓</span>' : ''}
                     ${deleteButtonHtml}
+                    ${reportButtonHtml}
                 </div>
                 ${reactionsHtml}
             </div>
@@ -1487,9 +1505,11 @@ function translateMessage() {
     closeActionsMenu();
 }
 
-// Feature 39: Report message - now saves to database
-async function reportMessage() {
-    if (!ChatState.selectedMessageId) return;
+// Feature 39: Report message - now saves to database with user info
+async function reportMessage(messageId = null, reportedUserId = null) {
+    // Use passed parameters or fall back to selectedMessageId
+    const targetMessageId = messageId || ChatState.selectedMessageId;
+    if (!targetMessageId) return;
     
     const reasons = [
         'Contenuto inappropriato',
@@ -1523,13 +1543,20 @@ async function reportMessage() {
             return;
         }
         
+        // Get the message content for the report
+        const targetMessage = ChatState.messages.find(m => String(m.id) === String(targetMessageId));
+        const messageContent = targetMessage?.content || '';
+        const targetUserId = reportedUserId || targetMessage?.user_id;
+        
         // Save report to database
         const { error } = await window.supabaseClient
             .from('content_reports')
             .insert({
                 reported_by: user.id,
                 content_type: 'message',
-                content_id: ChatState.selectedMessageId,
+                content_id: targetMessageId,
+                reported_user_id: targetUserId,
+                message_content: messageContent,
                 reason: reason,
                 description: description || null,
                 status: 'pending'
@@ -1543,7 +1570,7 @@ async function reportMessage() {
                 showToast('Errore nella segnalazione', '❌');
             }
         } else {
-            showToast('Messaggio segnalato. Grazie! 🚩', '🚩');
+            showToast('Messaggio segnalato. L\'utente verrà avvisato. 🚩', '🚩');
         }
     } catch (error) {
         console.error('Report error:', error);

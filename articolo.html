@@ -701,7 +701,7 @@
                 </div>
                 
                 <div class="article-image-container">
-                    <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                    <img src="${article.immagine_url || createPlaceholderImage(article.categoria)}" 
                          alt="${escapeHTML(article.titolo)}" 
                          class="article-image"
                          onerror="this.src='${createPlaceholderImage(article.categoria)}'">
