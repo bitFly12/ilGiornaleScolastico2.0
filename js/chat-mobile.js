@@ -234,26 +234,40 @@ async function loadAllUsers() {
 // ================================================
 async function loadMessages() {
     try {
-        // Filter by current room
+        // Filter by current room - simple query without join
         const { data: messages, error } = await window.supabaseClient
             .from('chat_messages')
-            .select(`
-                *,
-                user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
-            `)
+            .select('*')
             .eq('is_deleted', false)
-            .eq('room', ChatState.currentRoom) // Filter by current room
+            .eq('room', ChatState.currentRoom)
             .order('created_at', { ascending: true })
             .limit(100);
         
-        if (error) throw error;
+        if (error) {
+            // If room column doesn't exist, try without it
+            if (error.code === '42703' && error.message.includes('room')) {
+                console.warn('room column not found, loading all messages');
+                const { data: fallbackMessages, error: fallbackError } = await window.supabaseClient
+                    .from('chat_messages')
+                    .select('*')
+                    .eq('is_deleted', false)
+                    .order('created_at', { ascending: true })
+                    .limit(100);
+                
+                if (fallbackError) throw fallbackError;
+                ChatState.messages = fallbackMessages || [];
+            } else {
+                throw error;
+            }
+        } else {
+            ChatState.messages = messages || [];
+        }
         
-        ChatState.messages = messages || [];
         renderMessages();
         
-        if (messages && messages.length > 0) {
+        if (ChatState.messages.length > 0) {
             // Use timestamp for proper polling (works with UUIDs)
-            ChatState.lastMessageTimestamp = messages[messages.length - 1].created_at;
+            ChatState.lastMessageTimestamp = ChatState.messages[ChatState.messages.length - 1].created_at;
         }
         
         scrollToBottom(false);

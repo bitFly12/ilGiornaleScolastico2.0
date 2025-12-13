@@ -964,7 +964,7 @@
             try {
                 const { data: articles } = await window.supabaseClient
                     .from('articoli')
-                    .select('id, titolo, sommario, immagine, categoria')
+                    .select('id, titolo, sommario, immagine_url, categoria')
                     .eq('categoria', category)
                     .neq('id', currentId)
                     .eq('stato', 'pubblicato')
@@ -979,7 +979,7 @@
                 
                 container.innerHTML = articles.map(article => `
                     <a href="articolo.html?id=${article.id}" class="related-card" style="text-decoration: none;">
-                        <img src="${article.immagine || createPlaceholderImage(article.categoria)}" 
+                        <img src="${article.immagine_url || createPlaceholderImage(article.categoria)}" 
                              alt="${escapeHTML(article.titolo)}"
                              onerror="this.src='${createPlaceholderImage(article.categoria)}'">
                         <div class="related-card-body">

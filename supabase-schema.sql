@@ -1149,6 +1149,15 @@ CREATE POLICY "Moderators can update all articles" ON articoli
         EXISTS (SELECT 1 FROM profili_utenti WHERE id = auth.uid() AND ruolo IN ('moderatore', 'caporedattore'))
     );
 
+-- Articoli DELETE policies
+CREATE POLICY "Authors can delete own articles" ON articoli
+    FOR DELETE USING (auth.uid() = autore_id);
+
+CREATE POLICY "Admins can delete all articles" ON articoli
+    FOR DELETE USING (
+        EXISTS (SELECT 1 FROM profili_utenti WHERE id = auth.uid() AND ruolo IN ('caporedattore', 'docente'))
+    );
+
 -- Comments policies
 CREATE POLICY "Approved comments are viewable by everyone" ON article_comments
     FOR SELECT USING (is_approved = true OR auth.uid() = user_id);
@@ -1159,6 +1168,14 @@ CREATE POLICY "Authenticated users can insert comments" ON article_comments
 CREATE POLICY "Users can update own comments" ON article_comments
     FOR UPDATE USING (auth.uid() = user_id);
 
+CREATE POLICY "Users can delete own comments" ON article_comments
+    FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can delete comments" ON article_comments
+    FOR DELETE USING (
+        EXISTS (SELECT 1 FROM profili_utenti WHERE id = auth.uid() AND ruolo IN ('caporedattore', 'docente'))
+    );
+
 -- Chat policies
 CREATE POLICY "Authenticated users can view chat messages" ON chat_messages
     FOR SELECT USING (auth.role() = 'authenticated');
@@ -1168,6 +1185,46 @@ CREATE POLICY "Authenticated users can insert chat messages" ON chat_messages
 
 CREATE POLICY "Users can update own messages" ON chat_messages
     FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own messages" ON chat_messages
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Article reactions policies
+ALTER TABLE article_reactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view reactions" ON article_reactions
+    FOR SELECT USING (true);
+
+CREATE POLICY "Users can create reactions" ON article_reactions
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own reactions" ON article_reactions
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own reactions" ON article_reactions
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Content reports policies
+CREATE POLICY "Users can create reports" ON content_reports
+    FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can view own reports" ON content_reports
+    FOR SELECT USING (reported_by = auth.uid());
+
+CREATE POLICY "Admins can view all reports" ON content_reports
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM profili_utenti WHERE id = auth.uid() AND ruolo IN ('caporedattore', 'docente'))
+    );
+
+CREATE POLICY "Admins can update reports" ON content_reports
+    FOR UPDATE USING (
+        EXISTS (SELECT 1 FROM profili_utenti WHERE id = auth.uid() AND ruolo IN ('caporedattore', 'docente'))
+    );
+
+CREATE POLICY "Admins can delete reports" ON content_reports
+    FOR DELETE USING (
+        EXISTS (SELECT 1 FROM profili_utenti WHERE id = auth.uid() AND ruolo IN ('caporedattore', 'docente'))
+    );
 
 -- Reporter candidatures policies
 CREATE POLICY "Users can view own candidatures" ON reporter_candidatures
