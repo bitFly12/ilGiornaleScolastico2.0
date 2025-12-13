@@ -1101,6 +1101,26 @@ CREATE POLICY "Users can update own profile" ON profili_utenti
 CREATE POLICY "Users can insert own profile" ON profili_utenti
     FOR INSERT WITH CHECK (auth.uid() = id);
 
+-- Admin policies for user management
+CREATE POLICY "Admins can update all profiles" ON profili_utenti
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM profili_utenti 
+            WHERE id = auth.uid() 
+            AND ruolo IN ('caporedattore', 'docente')
+        )
+    );
+
+CREATE POLICY "Admins can delete profiles" ON profili_utenti
+    FOR DELETE USING (
+        id != auth.uid() AND
+        EXISTS (
+            SELECT 1 FROM profili_utenti 
+            WHERE id = auth.uid() 
+            AND ruolo IN ('caporedattore', 'docente')
+        )
+    );
+
 -- Preferenze utente policies
 CREATE POLICY "Users can view own preferences" ON preferenze_utente
     FOR SELECT USING (auth.uid() = user_id);
