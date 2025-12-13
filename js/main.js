@@ -1914,7 +1914,11 @@ function initPageTransitions() {
         
         link.addEventListener('click', (e) => {
             const href = link.getAttribute('href');
-            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+            // Skip dangerous or special URLs (including data: and vbscript:)
+            if (!href || href.startsWith('#') || 
+                href.startsWith('javascript:') || 
+                href.startsWith('data:') || 
+                href.startsWith('vbscript:')) return;
             
             e.preventDefault();
             document.body.classList.add('page-transitioning');
