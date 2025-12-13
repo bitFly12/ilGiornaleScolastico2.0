@@ -620,7 +620,7 @@
                     ${article.sommario ? `<p class="article-summary">${escapeHTML(article.sommario)}</p>` : ''}
                     
                     <div class="article-meta">
-                        <span class="meta-item">👤 ${escapeHTML(authorName)}</span>
+                        <span class="meta-item">👤 <a href="profilo.html?userId=${article.autore_id}" style="color: inherit; text-decoration: none; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHTML(authorName)}</a></span>
                         <span class="meta-item">📅 ${formattedDate}</span>
                         <span class="meta-item">⏱️ ${readingTime} min di lettura</span>
                         <span class="meta-item">👁️ ${(article.visualizzazioni || 0) + 1} visualizzazioni</span>
@@ -642,7 +642,7 @@
                     ${tagsHTML ? `<div class="article-tags">${tagsHTML}</div>` : ''}
                 </div>
                 
-                <div class="author-card">
+                <div class="author-card" onclick="window.location.href='profilo.html?userId=${article.autore_id}'" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                     <div class="author-avatar">${authorInitial}</div>
                     <div class="author-info">
                         <h3>✍️ Scritto da ${escapeHTML(authorName)}</h3>
@@ -738,7 +738,7 @@
                             <div class="comment-header">
                                 <span class="comment-author">
                                     <span class="comment-author-avatar">${initial}</span>
-                                    ${escapeHTML(authorName)}
+                                    <a href="profilo.html?userId=${comment.user_id}" style="color: inherit; text-decoration: none; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHTML(authorName)}</a>
                                 </span>
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <span class="comment-time">${formatTimeAgo(new Date(comment.created_at))}</span>
