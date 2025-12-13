@@ -189,6 +189,7 @@ async function loadAllUsers() {
 // ================================================
 async function loadMessages() {
     try {
+        // Filter by current room
         const { data: messages, error } = await window.supabaseClient
             .from('chat_messages')
             .select(`
@@ -196,6 +197,7 @@ async function loadMessages() {
                 user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .eq('is_deleted', false)
+            .eq('room', ChatState.currentRoom) // Filter by current room
             .order('created_at', { ascending: true })
             .limit(100);
         
@@ -290,6 +292,11 @@ function createMessageBubble(msg) {
     // Edited indicator
     const editedHtml = msg.edited_at ? '<span style="font-size: 0.6rem; opacity: 0.6;"> (modificato)</span>' : '';
     
+    // Delete button - only visible for own messages
+    const deleteButtonHtml = isOwn ? `
+        <button class="bubble-delete-btn" onclick="event.stopPropagation(); ChatState.selectedMessageId='${msg.id}'; deleteCurrentMessage();" title="Elimina" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🗑️</button>
+    ` : '';
+    
     return `
         <div class="message-bubble ${isOwn ? 'own' : ''} ${mentionedClass}" 
              data-message-id="${msg.id}"
@@ -304,6 +311,7 @@ function createMessageBubble(msg) {
                 <div class="bubble-footer">
                     <span class="bubble-time">${time}</span>
                     ${isOwn ? '<span class="bubble-status">✓✓</span>' : ''}
+                    ${deleteButtonHtml}
                 </div>
                 ${reactionsHtml}
             </div>
@@ -334,7 +342,8 @@ async function sendMessage() {
             user_id: ChatState.currentUser.id,
             author_name: authorName,
             content: message,
-            message_type: 'text'
+            message_type: 'text',
+            room: ChatState.currentRoom // Include current room
         };
         
         // Add reply reference if replying
@@ -787,14 +796,63 @@ function toggleSidebar() {
 }
 
 function selectRoom(roomId) {
+    // Validate roomId
+    const validRooms = ['generale', 'sport', 'musica', 'gaming', 'meme', 'anime', 'studio', 'tech'];
+    if (!validRooms.includes(roomId)) {
+        console.error('Invalid room ID:', roomId);
+        return;
+    }
+    
     ChatState.currentRoom = roomId;
+    ChatState.lastMessageTimestamp = null; // Reset for new room
+    
+    // Update active state
     document.querySelectorAll('.room-item').forEach(item => {
         item.classList.remove('active');
     });
-    event.currentTarget.classList.add('active');
+    
+    const activeRoom = document.querySelector(`.room-item[data-room="${roomId}"]`);
+    if (activeRoom) {
+        activeRoom.classList.add('active');
+    }
+    
+    // Update header
+    const roomNames = {
+        'generale': 'Chat Globale',
+        'sport': 'Sport',
+        'musica': 'Musica',
+        'gaming': 'Gaming',
+        'meme': 'Meme',
+        'anime': 'Anime',
+        'studio': 'Studio',
+        'tech': 'Tech'
+    };
+    
+    const roomIcons = {
+        'generale': '💬',
+        'sport': '⚽',
+        'musica': '🎵',
+        'gaming': '🎮',
+        'meme': '😂',
+        'anime': '🎌',
+        'studio': '📚',
+        'tech': '💻'
+    };
+    
+    const headerTitle = document.querySelector('.chat-header-info h1');
+    if (headerTitle) {
+        headerTitle.textContent = roomNames[roomId] || 'Chat';
+    }
+    
+    const headerIcon = document.querySelector('.chat-avatar-group');
+    if (headerIcon) {
+        headerIcon.textContent = roomIcons[roomId] || '💬';
+    }
+    
     toggleSidebar();
-    showToast(`Stanza: ${roomId}`, '💬');
-    // In a full implementation, would load messages for the selected room
+    
+    // Reload messages for the selected room
+    loadMessages();
 }
 
 function openSearch() {
@@ -886,6 +944,7 @@ async function checkForNewMessages() {
     if (!ChatState.lastMessageTimestamp) return;
     
     try {
+        // Filter by current room
         const { data: newMessages } = await window.supabaseClient
             .from('chat_messages')
             .select(`
@@ -893,6 +952,7 @@ async function checkForNewMessages() {
                 user:profili_utenti!fk_chat_messages_user(username, nome_visualizzato)
             `)
             .eq('is_deleted', false)
+            .eq('room', ChatState.currentRoom) // Filter by current room
             .gt('created_at', ChatState.lastMessageTimestamp)
             .order('created_at', { ascending: true });
         

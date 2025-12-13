@@ -61,7 +61,7 @@ async function checkMaintenanceMode() {
         const userRole = localStorage.getItem('userRole');
         
         // If clearly admin, allow access
-        if (userRole === 'caporedattore' || userRole === 'admin') {
+        if (userRole === 'caporedattore' || userRole === 'admin' || userRole === 'docente') {
             console.log('Admin detected, skipping maintenance redirect');
             return;
         }
@@ -77,16 +77,30 @@ async function checkMaintenanceMode() {
                         .eq('id', user.id)
                         .single();
                     
-                    if (profile && (profile.ruolo === 'caporedattore' || profile.ruolo === 'admin')) {
+                    if (profile && (profile.ruolo === 'caporedattore' || profile.ruolo === 'admin' || profile.ruolo === 'docente')) {
                         localStorage.setItem('userRole', profile.ruolo);
                         console.log('Admin confirmed via Supabase, skipping maintenance redirect');
                         return;
                     }
+                    
+                    // User is logged in but NOT admin - destroy their session
+                    console.log('Maintenance mode: Destroying non-admin user session');
+                    await supabase.auth.signOut();
                 }
             }
         } catch (e) {
             console.log('Supabase check failed, using localStorage');
         }
+        
+        // Clear all user session data for non-admins
+        console.log('Maintenance mode: Clearing session data');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userSession');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userProfile');
         
         // Redirect non-admin users to maintenance page
         console.log('Maintenance mode active, redirecting to maintenance page');

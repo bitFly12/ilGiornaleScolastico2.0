@@ -327,6 +327,24 @@
     font-size: 0.65rem;
 }
 
+/* Delete button for own messages */
+.bubble-delete-btn {
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+}
+
+.bubble-delete-btn:hover {
+    opacity: 1;
+}
+
+.message-bubble.own .bubble-delete-btn {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.message-bubble.own .bubble-delete-btn:hover {
+    color: white;
+}
+
 .message-bubble.own .bubble-time {
     color: rgba(255, 255, 255, 0.7);
 }
