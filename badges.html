@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badge e Traguardi - Giornale Cesaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .badges-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .badges-header {
+            background: linear-gradient(135deg, var(--primary), #00f0ff);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .badges-header h1 {
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        
+        .badges-header p {
+            opacity: 0.9;
+        }
+        
+        .badges-section {
+            margin-bottom: 2rem;
+        }
+        
+        .badges-section h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .badge-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .badge-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .badge-card.unlocked {
+            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+            border: 2px solid var(--success);
+        }
+        
+        .badge-card.locked {
+            opacity: 0.6;
+        }
+        
+        .badge-card.locked .badge-icon {
+            filter: grayscale(100%);
+        }
+        
+        .badge-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 51, 160, 0.3);
+        }
+        
+        .badge-card.unlocked .badge-icon {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            animation: badgeGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 4px 25px rgba(255, 215, 0, 0.5); }
+        }
+        
+        .badge-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge-description {
+            color: var(--neutral);
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .badge-progress {
+            background: #e5e7eb;
+            border-radius: 9999px;
+            height: 10px;
+            overflow: hidden;
+        }
+        
+        .badge-progress-bar {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+        
+        .badge-progress-text {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--neutral);
+            margin-top: 0.5rem;
+        }
+        
+        .badge-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        
+        .badge-card.unlocked .badge-status {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge-card.locked .badge-status {
+            background: #e5e7eb;
+            color: var(--neutral);
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        
+        .summary-stat {
+            text-align: center;
+        }
+        
+        .summary-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .summary-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .badges-container {
+                padding: 0 1rem;
+            }
+            
+            .badges-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-stats {
+                gap: 1rem;
+            }
+            
+            .summary-stat-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">📰</span>
+                    <span>Giornale Cesaris</span>
+                </a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="articoli.html" class="nav-link">Articoli</a></li>
+                        <li class="nav-item"><a href="profilo.html" class="nav-link">Profilo</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="badges-container">
+        <div id="badgesContent">
+            <div style="text-align: center; padding: 4rem 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+                <h2>Caricamento badge...</h2>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 Giornale Scolastico Cesaris. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-api.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // All available badges in the system
+        const allBadges = [
+            // Writing badges
+            {
+                id: 'first_article',
+                name: 'Primo Articolo',
+                description: 'Pubblica il tuo primo articolo',
+                icon: '🎯',
+                category: 'writing',
+                requirement: { type: 'articles', value: 1 }
+            },
+            {
+                id: 'active_writer',
+                name: 'Scrittore Attivo',
+                description: 'Pubblica 5 articoli',
+                icon: '⭐',
+                category: 'writing',
+                requirement: { type: 'articles', value: 5 }
+            },
+            {
+                id: 'expert_reporter',
+                name: 'Reporter Esperto',
+                description: 'Pubblica 10 articoli',
+                icon: '🏆',
+                category: 'writing',
+                requirement: { type: 'articles', value: 10 }
+            },
+            {
+                id: 'prolific_writer',
+                name: 'Scrittore Prolifico',
+                description: 'Pubblica 25 articoli',
+                icon: '📚',
+                category: 'writing',
+                requirement: { type: 'articles', value: 25 }
+            },
+            {
+                id: 'master_journalist',
+                name: 'Giornalista Maestro',
+                description: 'Pubblica 50 articoli',
+                icon: '👑',
+                category: 'writing',
+                requirement: { type: 'articles', value: 50 }
+            },
+            // Popularity badges
+            {
+                id: 'popular',
+                name: 'Popolare',
+                description: 'Raggiungi 100 visualizzazioni totali',
+                icon: '👥',
+                category: 'popularity',
+                requirement: { type: 'views', value: 100 }
+            },
+            {
+                id: 'viral',
+                name: 'Virale',
+                description: 'Raggiungi 500 visualizzazioni totali',
+                icon: '🔥',
+                category: 'popularity',
+                requirement: { type: 'views', value: 500 }
+            },
+            {
+                id: 'trending',
+                name: 'Trending',
+                description: 'Raggiungi 1000 visualizzazioni totali',
+                icon: '📈',
+                category: 'popularity',
+                requirement: { type: 'views', value: 1000 }
+            },
+            {
+                id: 'influencer',
+                name: 'Influencer',
+                description: 'Raggiungi 5000 visualizzazioni totali',
+                icon: '🌟',
+                category: 'popularity',
+                requirement: { type: 'views', value: 5000 }
+            },
+            // Category badges
+            {
+                id: 'tech_guru',
+                name: 'Tech Guru',
+                description: 'Pubblica 5 articoli nella categoria Tecnologia',
+                icon: '💻',
+                category: 'special',
+                requirement: { type: 'category', category: 'Tecnologia', value: 5 }
+            },
+            {
+                id: 'sports_fan',
+                name: 'Sportivo',
+                description: 'Pubblica 5 articoli nella categoria Sport',
+                icon: '⚽',
+                category: 'special',
+                requirement: { type: 'category', category: 'Sport', value: 5 }
+            },
+            {
+                id: 'culture_lover',
+                name: 'Amante della Cultura',
+                description: 'Pubblica 5 articoli nella categoria Cultura',
+                icon: '🎭',
+                category: 'special',
+                requirement: { type: 'category', category: 'Cultura', value: 5 }
+            },
+            // Community badges
+            {
+                id: 'early_adopter',
+                name: 'Early Adopter',
+                description: 'Tra i primi 50 utenti registrati',
+                icon: '🚀',
+                category: 'community',
+                requirement: { type: 'special', value: 'early_adopter' }
+            },
+            {
+                id: 'community_member',
+                name: 'Membro della Community',
+                description: 'Partecipa alla chat',
+                icon: '💬',
+                category: 'community',
+                requirement: { type: 'chat_messages', value: 1 }
+            },
+            {
+                id: 'chatter',
+                name: 'Chiacchierone',
+                description: 'Invia 50 messaggi in chat',
+                icon: '🗣️',
+                category: 'community',
+                requirement: { type: 'chat_messages', value: 50 }
+            }
+        ];
+        
+        async function loadBadges() {
+            try {
+                // Wait for Supabase
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check authentication
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    window.location.href = 'login.html?redirect=badges.html';
+                    return;
+                }
+                
+                // Get user's articles
+                const articlesResult = await SupabaseAPI.getArticles({ limit: 100 });
+                const myArticles = articlesResult.success ? 
+                    articlesResult.data.filter(a => a.autore_id === user.id && a.stato === 'pubblicato') : [];
+                
+                const totalViews = myArticles.reduce((sum, a) => sum + (a.visualizzazioni || 0), 0);
+                
+                // Calculate category counts
+                const categoryCounts = {};
+                myArticles.forEach(a => {
+                    categoryCounts[a.categoria] = (categoryCounts[a.categoria] || 0) + 1;
+                });
+                
+                // Check each badge
+                const badgesWithProgress = allBadges.map(badge => {
+                    let current = 0;
+                    let target = badge.requirement.value;
+                    let unlocked = false;
+                    
+                    switch (badge.requirement.type) {
+                        case 'articles':
+                            current = myArticles.length;
+                            target = badge.requirement.value;
+                            unlocked = current >= target;
+                            break;
+                        case 'views':
+                            current = totalViews;
+                            target = badge.requirement.value;
+                            unlocked = current >= target;
+                            break;
+                        case 'category':
+                            current = categoryCounts[badge.requirement.category] || 0;
+                            target = badge.requirement.value;
+                            unlocked = current >= target;
+                            break;
+                        case 'chat_messages':
+                            // Would need to query chat_messages table
+                            current = 0;
+                            target = badge.requirement.value;
+                            unlocked = false;
+                            break;
+                        case 'special':
+                            // Special badges would have custom logic
+                            current = 0;
+                            target = 1;
+                            unlocked = false;
+                            break;
+                    }
+                    
+                    return {
+                        ...badge,
+                        current: Math.min(current, target),
+                        target,
+                        unlocked,
+                        progress: Math.min((current / target) * 100, 100)
+                    };
+                });
+                
+                renderBadges(badgesWithProgress, myArticles.length, totalViews);
+                
+            } catch (error) {
+                console.error('Error loading badges:', error);
+                document.getElementById('badgesContent').innerHTML = `
+                    <div style="text-align: center; padding: 4rem 2rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+                        <h2 style="color: var(--error);">Errore</h2>
+                        <p>Impossibile caricare i badge. Riprova più tardi.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderBadges(badges, totalArticles, totalViews) {
+            const unlockedCount = badges.filter(b => b.unlocked).length;
+            const container = document.getElementById('badgesContent');
+            
+            // Group badges by category
+            const categories = {
+                writing: { name: '✍️ Scrittura', badges: [] },
+                popularity: { name: '📊 Popolarità', badges: [] },
+                special: { name: '🎖️ Specialità', badges: [] },
+                community: { name: '👥 Community', badges: [] }
+            };
+            
+            badges.forEach(badge => {
+                if (categories[badge.category]) {
+                    categories[badge.category].badges.push(badge);
+                }
+            });
+            
+            let html = `
+                <div class="badges-header">
+                    <h1>🏆 Badge e Traguardi</h1>
+                    <p>Sblocca badge completando obiettivi!</p>
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${unlockedCount}</div>
+                            <div class="summary-stat-label">Badge Sbloccati</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${badges.length}</div>
+                            <div class="summary-stat-label">Badge Totali</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${totalArticles}</div>
+                            <div class="summary-stat-label">Articoli</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${totalViews}</div>
+                            <div class="summary-stat-label">Visualizzazioni</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Render each category
+            for (const [key, category] of Object.entries(categories)) {
+                if (category.badges.length === 0) continue;
+                
+                html += `
+                    <div class="badges-section">
+                        <h2>${category.name}</h2>
+                        <div class="badges-grid">
+                            ${category.badges.map(badge => renderBadgeCard(badge)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function renderBadgeCard(badge) {
+            const progressColor = badge.unlocked 
+                ? 'var(--success)' 
+                : 'linear-gradient(90deg, var(--primary), var(--secondary))';
+            
+            return `
+                <div class="badge-card ${badge.unlocked ? 'unlocked' : 'locked'}">
+                    <div class="badge-status">${badge.unlocked ? '✓' : '🔒'}</div>
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div class="badge-description">${badge.description}</div>
+                    <div class="badge-progress">
+                        <div class="badge-progress-bar" style="width: ${badge.progress}%; background: ${progressColor};"></div>
+                    </div>
+                    <div class="badge-progress-text">${badge.current}/${badge.target}</div>
+                </div>
+            `;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadBadges);
+    </script>
+</body>
+</html>

@@ -86,6 +86,16 @@
                 <!-- Trending articles will be loaded here -->
             </div>
         </section>
+        
+        <!-- Top Writers Widget -->
+        <section class="top-writers-section" style="margin: 3rem 0;">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">🏆 Top 3 Scrittori</h2>
+            <div id="topWritersWidget" class="top-writers-widget">
+                <div style="text-align: center; padding: 2rem; color: var(--neutral);">
+                    <p>Caricamento classifica...</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Chat Bubble -->
@@ -242,6 +252,111 @@
         
         // Run on page load
         document.addEventListener('DOMContentLoaded', updateNavigation);
+    </script>
+    
+    <!-- Top Writers Widget Script -->
+    <script>
+        async function loadTopWriters() {
+            const widget = document.getElementById('topWritersWidget');
+            if (!widget) return;
+            
+            try {
+                // Wait for Supabase
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                if (!window.supabaseClient) {
+                    widget.innerHTML = '<p style="text-align: center; color: var(--neutral);">Impossibile caricare la classifica</p>';
+                    return;
+                }
+                
+                // Get all published articles with author info
+                const { data: articles, error } = await window.supabaseClient
+                    .from('articoli')
+                    .select(`
+                        autore_id,
+                        visualizzazioni,
+                        autore:profili_utenti!fk_articoli_autore(id, username, nome_visualizzato)
+                    `)
+                    .eq('stato', 'pubblicato');
+                
+                if (error) throw error;
+                
+                if (!articles || articles.length === 0) {
+                    widget.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: var(--neutral);">
+                            <p>Nessun articolo pubblicato ancora. Sii il primo!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Aggregate views by author
+                const authorStats = {};
+                articles.forEach(article => {
+                    const authorId = article.autore_id;
+                    const authorName = article.autore?.nome_visualizzato || article.autore?.username || 'Anonimo';
+                    const views = article.visualizzazioni || 0;
+                    
+                    if (!authorStats[authorId]) {
+                        authorStats[authorId] = {
+                            id: authorId,
+                            name: authorName,
+                            username: article.autore?.username || 'anonimo',
+                            totalViews: 0,
+                            articleCount: 0
+                        };
+                    }
+                    
+                    authorStats[authorId].totalViews += views;
+                    authorStats[authorId].articleCount++;
+                });
+                
+                // Sort by total views and get top 3
+                const topWriters = Object.values(authorStats)
+                    .sort((a, b) => b.totalViews - a.totalViews)
+                    .slice(0, 3);
+                
+                if (topWriters.length === 0) {
+                    widget.innerHTML = '<p style="text-align: center; color: var(--neutral);">Nessun dato disponibile</p>';
+                    return;
+                }
+                
+                // Render podium
+                const medals = ['🥇', '🥈', '🥉'];
+                const positions = ['gold', 'silver', 'bronze'];
+                
+                widget.innerHTML = topWriters.map((writer, index) => {
+                    const initial = writer.name.charAt(0).toUpperCase();
+                    const position = positions[index] || 'bronze';
+                    const medal = medals[index] || '🏅';
+                    const rank = index + 1;
+                    
+                    return `
+                        <div class="writer-podium ${position}">
+                            <div class="writer-avatar">
+                                ${initial}
+                                <span class="writer-medal">${medal}</span>
+                            </div>
+                            <div class="writer-name" title="${writer.name}">${writer.name}</div>
+                            <div class="writer-stats">
+                                <span>👁️ ${writer.totalViews.toLocaleString()}</span>
+                                <span>📝 ${writer.articleCount} articoli</span>
+                            </div>
+                            <div class="writer-podium-base">${rank}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading top writers:', error);
+                widget.innerHTML = '<p style="text-align: center; color: var(--neutral);">Errore nel caricamento</p>';
+            }
+        }
+        
+        // Load top writers on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadTopWriters, 500);
+        });
     </script>
     
     <!-- Page Loader Script -->
