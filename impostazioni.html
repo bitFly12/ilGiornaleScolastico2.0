@@ -620,11 +620,11 @@
                 }
                 
                 const { error } = await window.supabaseClient.auth.resetPasswordForEmail(user.email, {
-                    redirectTo: window.location.origin + '/profilo.html'
+                    redirectTo: window.location.origin + '/reset-password.html'
                 });
                 
                 if (error) throw error;
-                showAlert('📧 Email per il reset password inviata!', 'success');
+                showAlert('📧 Email per il reset password inviata! Controlla la tua casella (incluso lo SPAM).', 'success');
             } catch (error) {
                 console.error('Error sending password reset:', error);
                 showAlert('❌ Errore: ' + error.message, 'error');

@@ -224,10 +224,10 @@
             
             try {
                 const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/profilo.html'
+                    redirectTo: window.location.origin + '/reset-password.html'
                 });
                 if (error) throw error;
-                showAlert('📧 Email per il reset password inviata! Controlla la tua casella.', 'success');
+                showAlert('📧 Email per il reset password inviata! Controlla la tua casella (incluso lo SPAM).', 'success');
             } catch (error) {
                 showAlert('❌ Errore: ' + error.message, 'error');
             }
