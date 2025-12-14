@@ -252,10 +252,12 @@
                     return false;
                 }
                 
+                // Parse URL parameters once
+                const urlParams = new URLSearchParams(window.location.search);
+                
                 // Only redirect if session is valid AND email is confirmed
                 if (session && session.user && session.user.email_confirmed_at) {
                     isRedirecting = true;
-                    const urlParams = new URLSearchParams(window.location.search);
                     const requestedRedirect = urlParams.get('redirect');
                     
                     // Prevent redirect loop - don't redirect to login page
@@ -272,7 +274,6 @@
                 }
                 
                 // Check if coming from registration page
-                const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('registered') === 'true') {
                     showAlert('📧 <strong>Registrazione completata!</strong><br><br>Prima di effettuare il login, <strong>CONFERMA LA TUA EMAIL</strong> cliccando sul link che ti abbiamo inviato.<br><br>⚠️ Controlla la cartella <strong>SPAM</strong>!', 'info');
                 }
