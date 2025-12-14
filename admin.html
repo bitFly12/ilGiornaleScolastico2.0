@@ -1438,34 +1438,116 @@
             bannedWords: ''
         };
         
-        function loadSettings() {
-            // Load from localStorage (in production, this would be from database)
-            const saved = localStorage.getItem('siteSettings');
-            if (saved) {
-                Object.assign(siteSettings, JSON.parse(saved));
-            }
-            
-            // Update UI
-            Object.keys(siteSettings).forEach(key => {
-                const el = document.getElementById(key);
-                if (el) {
-                    if (el.type === 'checkbox') {
-                        el.checked = siteSettings[key];
-                    } else {
-                        el.value = siteSettings[key];
+        async function loadSettings() {
+            try {
+                // Load settings from Supabase
+                const { data: settings, error } = await supabase
+                    .from('site_settings')
+                    .select('setting_key, setting_value');
+                
+                if (error) {
+                    console.error('Error loading settings from Supabase:', error);
+                    // Fallback to localStorage
+                    const saved = localStorage.getItem('siteSettings');
+                    if (saved) {
+                        Object.assign(siteSettings, JSON.parse(saved));
                     }
+                } else {
+                    // Map Supabase settings to UI
+                    const keyMap = {
+                        'maintenance_mode': 'maintenanceMode',
+                        'registrations_enabled': 'allowRegistrations',
+                        'ai_detection': 'aiDetection',
+                        'auto_suspension': 'autoSuspension'
+                    };
+                    
+                    settings.forEach(setting => {
+                        const uiKey = keyMap[setting.setting_key];
+                        if (uiKey) {
+                            siteSettings[uiKey] = setting.setting_value?.enabled || false;
+                        }
+                    });
                 }
-            });
+                
+                // Update UI
+                Object.keys(siteSettings).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        if (el.type === 'checkbox') {
+                            el.checked = siteSettings[key];
+                        } else {
+                            el.value = siteSettings[key];
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error in loadSettings:', error);
+            }
         }
         
-        function toggleSiteSetting(key, value) {
-            siteSettings[key] = value;
-            saveAllSettings();
-            // Use window.showToast which is exported from main.js, with fallback to alert
-            if (typeof window.showToast === 'function') {
-                window.showToast(`Impostazione ${key} aggiornata`, 'success');
-            } else {
-                console.log(`Impostazione ${key} aggiornata`);
+        async function toggleSiteSetting(key, value) {
+            try {
+                // Map UI keys to database keys
+                const settingKeyMap = {
+                    'maintenanceMode': 'maintenance_mode',
+                    'allowRegistrations': 'registrations_enabled',
+                    'chatEnabled': 'chat_enabled',
+                    'commentsEnabled': 'comments_enabled',
+                    'autoSuspension': 'auto_suspension'
+                };
+                
+                const dbKey = settingKeyMap[key];
+                
+                if (!dbKey) {
+                    console.error('Setting key not mapped:', key);
+                    // Fallback to localStorage
+                    siteSettings[key] = value;
+                    saveAllSettings();
+                    return;
+                }
+                
+                // Update on Supabase
+                const { error } = await supabase
+                    .from('site_settings')
+                    .update({
+                        setting_value: { enabled: value },
+                        updated_by: currentUser?.profile?.id
+                    })
+                    .eq('setting_key', dbKey);
+                
+                if (error) {
+                    console.error('Error updating setting on Supabase:', error);
+                    // Show error message
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('❌ Errore nel salvataggio dell\'impostazione', 'error');
+                    }
+                    return;
+                }
+                
+                // Update localStorage for backward compatibility
+                siteSettings[key] = value;
+                saveAllSettings();
+                
+                // Show success message
+                const settingNames = {
+                    'maintenanceMode': 'Modalità manutenzione',
+                    'allowRegistrations': 'Registrazioni',
+                    'chatEnabled': 'Chat pubblica',
+                    'commentsEnabled': 'Commenti articoli',
+                    'autoSuspension': 'Sospensione automatica'
+                };
+                
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`✅ ${settingNames[key]}: ${value ? 'Attiva' : 'Disattivata'}`, 'success');
+                } else {
+                    console.log(`${settingNames[key]}: ${value ? 'Attiva' : 'Disattivata'}`);
+                }
+                
+            } catch (error) {
+                console.error('Error in toggleSiteSetting:', error);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('❌ Errore nel salvataggio', 'error');
+                }
             }
         }
         
