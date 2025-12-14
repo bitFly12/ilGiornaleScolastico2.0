@@ -382,12 +382,37 @@
                     return;
                 }
                 
-                // Get user's articles
+                // Get user profile with stats from database
+                const { data: userProfile, error: profileError } = await window.supabaseClient
+                    .from('profili_utenti')
+                    .select('articoli_pubblicati, visualizzazioni_totali, punti_totali')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profileError) {
+                    console.error('Error fetching user profile:', profileError);
+                    throw profileError;
+                }
+                
+                const totalArticles = userProfile?.articoli_pubblicati || 0;
+                const totalViews = userProfile?.visualizzazioni_totali || 0;
+                
+                // Also get user's articles for category-specific badges
                 const articlesResult = await SupabaseAPI.getArticles({ limit: 100 });
                 const myArticles = articlesResult.success ? 
                     articlesResult.data.filter(a => a.autore_id === user.id && a.stato === 'pubblicato') : [];
                 
-                const totalViews = myArticles.reduce((sum, a) => sum + (a.visualizzazioni || 0), 0);
+                // Fetch earned badges from database
+                const { data: earnedBadges, error: badgesError } = await window.supabaseClient
+                    .from('user_badges')
+                    .select('badge_type, badge_name, badge_icon, earned_at')
+                    .eq('user_id', user.id);
+                
+                if (badgesError) {
+                    console.error('Error fetching badges:', badgesError);
+                }
+                
+                const earnedBadgeTypes = new Set((earnedBadges || []).map(b => b.badge_type));
                 
                 // Calculate category counts
                 const categoryCounts = {};
@@ -403,12 +428,12 @@
                     
                     switch (badge.requirement.type) {
                         case 'articles':
-                            current = myArticles.length;
+                            current = totalArticles; // Use database value
                             target = badge.requirement.value;
                             unlocked = current >= target;
                             break;
                         case 'views':
-                            current = totalViews;
+                            current = totalViews; // Use database value
                             target = badge.requirement.value;
                             unlocked = current >= target;
                             break;
@@ -431,16 +456,19 @@
                             break;
                     }
                     
+                    // Check if badge is earned in database (override calculation)
+                    const isEarnedInDB = earnedBadgeTypes.has(badge.id);
+                    
                     return {
                         ...badge,
                         current: Math.min(current, target),
                         target,
-                        unlocked,
+                        unlocked: isEarnedInDB || unlocked, // Use DB as source of truth
                         progress: Math.min((current / target) * 100, 100)
                     };
                 });
                 
-                renderBadges(badgesWithProgress, myArticles.length, totalViews);
+                renderBadges(badgesWithProgress, totalArticles, totalViews);
                 
             } catch (error) {
                 console.error('Error loading badges:', error);

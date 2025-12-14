@@ -195,6 +195,12 @@
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label">Perché vuoi diventare reporter? *</label>
+                    <textarea id="motivation" class="form-textarea" rows="4" 
+                              placeholder="Spiega le tue motivazioni per candidarti come reporter" required></textarea>
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">Hai esperienze precedenti di scrittura?</label>
                     <textarea id="experience" class="form-textarea" rows="4" 
                               placeholder="Descrivi eventuali esperienze (opzionale)"></textarea>
@@ -275,6 +281,7 @@
             const email = document.getElementById('email').value.trim().toLowerCase();
             const fullName = document.getElementById('fullName').value.trim();
             const studentClass = document.getElementById('class').value.trim();
+            const motivation = document.getElementById('motivation').value.trim();
             const experience = document.getElementById('experience').value.trim();
             const termsAccept = document.getElementById('termsAccept').checked;
             
@@ -309,6 +316,7 @@
                             full_name: fullName,
                             username: username,
                             class: studentClass,
+                            motivation: motivation,
                             experience: experience,
                             status: 'pending',
                             submitted_at: new Date().toISOString()
@@ -321,19 +329,30 @@
                     throw error;
                 }
 
-                // After successfully inserting candidature to database
-const { error: emailError } = await supabaseClient.functions.invoke('send-candidacy-email', {
-  body: {
-    candidatureId: data.id,
-    email: email,
-    fullName: fullName,
-    experience: experience
-  }
-})
-
-if (emailError) {
-  console.error('Email sending error:', emailError);
-}
+                // Send email notification to caporedattore
+                try {
+                    const { error: emailError } = await supabaseClient.functions.invoke('send-candidacy-email', {
+                        body: {
+                            candidatureId: data.id,
+                            email: email,
+                            fullName: fullName,
+                            studentClass: studentClass,
+                            motivation: motivation,
+                            experience: experience || 'Nessuna esperienza specificata',
+                            toEmail: 'mohamed.mashaal@cesaris.edu.it'
+                        }
+                    });
+                    
+                    if (emailError) {
+                        console.error('Email sending error:', emailError);
+                        // Don't fail the whole process if email fails
+                    } else {
+                        console.log('Email notification sent successfully');
+                    }
+                } catch (emailErr) {
+                    console.error('Email sending failed:', emailErr);
+                    // Continue anyway - candidature is saved
+                }
                 
                 // Email notification handled via Supabase Edge Function
                 console.log('Candidature submitted successfully:', data);
