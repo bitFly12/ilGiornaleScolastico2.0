@@ -3011,4 +3011,6 @@ window.showReadingCompanion = showReadingCompanion;
 window.acceptCookies = acceptCookies;
 window.declineCookies = declineCookies;
 
+}
+
 // Main.js loaded with 100+ QoL features

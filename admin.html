@@ -1173,7 +1173,7 @@
                                     <button class="btn btn-sm btn-danger" onclick="resolveReport('${report.id}', 'dismissed')">❌ Respingi</button>
                                     <button class="btn btn-sm btn-warning" onclick="viewReportContent('${report.content_type}', '${report.content_id}')">👁️ Vedi</button>
                                     <button class="btn btn-sm btn-primary" onclick="suspendUserFromReport('${report.content_id}', '${report.content_type}')">🔨 Sospendi</button>
-                                    ${report.content_type === 'comment' || report.content_type === 'message' ? `
+                                    ${report.content_type === 'comment' || report.content_type === 'message' || report.content_type === 'article' ? `
                                         <button class="btn btn-sm btn-danger" onclick="deleteReportedContent('${report.content_type}', '${report.content_id}', '${report.id}')">🗑️ Elimina</button>
                                     ` : ''}
                                 ` : `
@@ -1326,11 +1326,21 @@
         
         // Delete reported content (comment or message)
         async function deleteReportedContent(contentType, contentId, reportId) {
-            const confirmMsg = contentType === 'comment' 
-                ? '⚠️ Vuoi eliminare questo commento?' 
-                : '⚠️ Vuoi eliminare questo messaggio?';
+            let confirmMsg = '⚠️ Vuoi eliminare questo contenuto?';
+            if (contentType === 'comment') {
+                confirmMsg = '⚠️ Vuoi eliminare questo commento?';
+            } else if (contentType === 'message') {
+                confirmMsg = '⚠️ Vuoi eliminare questo messaggio?';
+            } else if (contentType === 'article') {
+                confirmMsg = '⚠️ Vuoi eliminare questo articolo?';
+            }
                 
             if (!confirm(confirmMsg)) return;
+            
+            // Additional confirmation for articles
+            if (contentType === 'article' && !confirm('🔴 Questa azione è irreversibile. Confermi l\'eliminazione dell\'articolo?')) {
+                return;
+            }
             
             try {
                 let error = null;
@@ -1348,6 +1358,32 @@
                         .update({ is_deleted: true, content: '[Messaggio rimosso per violazione delle regole]' })
                         .eq('id', contentId);
                     error = result.error;
+                } else if (contentType === 'article') {
+                    // For articles, delete all related data first with error checking
+                    const commentsResult = await supabase.from('article_comments').delete().eq('article_id', contentId);
+                    if (commentsResult.error) {
+                        console.warn('Error deleting article comments:', commentsResult.error);
+                        // Continue anyway as comments might not exist
+                    }
+                    
+                    const reactionsResult = await supabase.from('article_reactions').delete().eq('article_id', contentId);
+                    if (reactionsResult.error) {
+                        console.warn('Error deleting article reactions:', reactionsResult.error);
+                        // Continue anyway as reactions might not exist
+                    }
+                    
+                    const reportsResult = await supabase.from('content_reports').delete().eq('content_id', contentId).eq('content_type', 'article');
+                    if (reportsResult.error) {
+                        console.warn('Error deleting article reports:', reportsResult.error);
+                        // Continue anyway as other reports might not exist
+                    }
+                    
+                    // Then delete the article - this is the critical operation
+                    const result = await supabase
+                        .from('articoli')
+                        .delete()
+                        .eq('id', contentId);
+                    error = result.error;
                 }
                 
                 if (error) throw error;
@@ -1363,6 +1399,11 @@
                 
                 alert('✅ Contenuto eliminato e segnalazione risolta');
                 loadReports();
+                
+                // If it was an article, also reload articles list
+                if (contentType === 'article') {
+                    loadAllArticles();
+                }
             } catch (error) {
                 console.error('Error deleting content:', error);
                 alert('❌ Errore: ' + error.message);

@@ -148,16 +148,37 @@
                 // Wait for Supabase to be ready
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
+                // Check if viewing another user's profile via URL parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const viewUserId = urlParams.get('userId') || urlParams.get('id');
+                
                 // Check authentication
                 const { data: { user } } = await window.supabaseClient.auth.getUser();
                 
-                if (!user) {
+                // Determine which profile to load
+                let profileId = user ? user.id : null;
+                let isOwnProfile = true;
+                
+                if (viewUserId && viewUserId !== profileId) {
+                    // Validate UUID format to prevent injection
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    if (!uuidRegex.test(viewUserId)) {
+                        console.error('Invalid user ID format');
+                        showError();
+                        return;
+                    }
+                    
+                    // Viewing another user's profile
+                    profileId = viewUserId;
+                    isOwnProfile = false;
+                } else if (!user && !viewUserId) {
+                    // Not logged in and no user specified
                     window.location.href = 'login.html?redirect=profilo.html';
                     return;
                 }
                 
                 // Get full profile
-                const profile = await SupabaseAPI.getUserProfile(user.id);
+                const profile = await SupabaseAPI.getUserProfile(profileId);
                 if (!profile.success) {
                     showError();
                     return;
@@ -167,8 +188,8 @@
                 const role = userData.ruolo;
                 
                 // Render profile based on role
-                renderProfileHeader(userData);
-                renderProfileContent(userData, role);
+                renderProfileHeader(userData, isOwnProfile);
+                renderProfileContent(userData, role, isOwnProfile);
                 
             } catch (error) {
                 console.error('Error loading enhanced profile:', error);
@@ -176,7 +197,7 @@
             }
         }
         
-        function renderProfileHeader(userData) {
+        function renderProfileHeader(userData, isOwnProfile = true) {
             const roleEmojis = {
                 'utente': '👤',
                 'reporter': '✍️',
@@ -198,30 +219,33 @@
                 <div class="profile-header">
                     <div class="profile-avatar">${emoji}</div>
                     <h1>${userData.nome_visualizzato || userData.username}</h1>
-                    <p style="opacity: 0.9; margin: 0.5rem 0;">${userData.email}</p>
+                    ${isOwnProfile ? `<p style="opacity: 0.9; margin: 0.5rem 0;">${userData.email}</p>` : ''}
                     <div class="badge badge-primary" style="display: inline-block; margin-top: 1rem;">
                         ${roleName}
                     </div>
+                    ${!isOwnProfile ? `<p style="opacity: 0.8; margin-top: 0.5rem; font-size: 0.9rem;">Stai visualizzando il profilo di un altro utente</p>` : ''}
                 </div>
             `;
         }
         
-        async function renderProfileContent(userData, role) {
+        async function renderProfileContent(userData, role, isOwnProfile = true) {
             const container = document.getElementById('profileContent');
             
-            let html = renderProfileHeader(userData);
+            let html = renderProfileHeader(userData, isOwnProfile);
             
             html += `<div class="profile-grid">`;
             
             // Sidebar
             html += `
                 <div class="profile-sidebar">
-                    <h3>Informazioni Personali</h3>
+                    <h3>Informazioni ${isOwnProfile ? 'Personali' : 'Utente'}</h3>
                     <div style="margin-top: 1.5rem;">
-                        <p style="margin-bottom: 1rem;">
-                            <strong>Email:</strong><br>
-                            ${userData.email}
-                        </p>
+                        ${isOwnProfile ? `
+                            <p style="margin-bottom: 1rem;">
+                                <strong>Email:</strong><br>
+                                ${userData.email}
+                            </p>
+                        ` : ''}
                         <p style="margin-bottom: 1rem;">
                             <strong>Username:</strong><br>
                             ${userData.username}
@@ -240,10 +264,12 @@
                         </p>
                     </div>
                     
-                    <div style="margin-top: 2rem;">
-                        <a href="impostazioni.html" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">⚙️ Impostazioni</a>
-                        <button onclick="handleLogout()" class="btn btn-error" style="width: 100%;">🚪 Logout</button>
-                    </div>
+                    ${isOwnProfile ? `
+                        <div style="margin-top: 2rem;">
+                            <a href="impostazioni.html" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">⚙️ Impostazioni</a>
+                            <button onclick="handleLogout()" class="btn btn-error" style="width: 100%;">🚪 Logout</button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             
@@ -251,9 +277,9 @@
             html += `<div class="profile-main">`;
             
             if (role === 'reporter' || role === 'docente' || role === 'caporedattore') {
-                html += await renderReporterContent(userData);
+                html += await renderReporterContent(userData, isOwnProfile);
             } else if (role === 'utente') {
-                html += await renderUserContent(userData);
+                html += await renderUserContent(userData, isOwnProfile);
             }
             
             html += `</div></div>`;
@@ -261,7 +287,7 @@
             container.innerHTML = html;
         }
         
-        async function renderReporterContent(userData) {
+        async function renderReporterContent(userData, isOwnProfile = true) {
             // Get reporter statistics
             const articlesResult = await SupabaseAPI.getArticles({ limit: 100 });
             const myArticles = articlesResult.success ? 
@@ -272,7 +298,7 @@
             const totalViews = myArticles.reduce((sum, a) => sum + (a.visualizzazioni || 0), 0);
             
             return `
-                <h2 style="margin-bottom: 1.5rem;">📊 Le Tue Statistiche</h2>
+                <h2 style="margin-bottom: 1.5rem;">📊 ${isOwnProfile ? 'Le Tue' : 'Le'} Statistiche</h2>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -283,27 +309,36 @@
                         <div class="stat-number">${publishedArticles}</div>
                         <div class="stat-label">Pubblicati</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${draftArticles}</div>
-                        <div class="stat-label">Bozze</div>
-                    </div>
+                    ${isOwnProfile ? `
+                        <div class="stat-card">
+                            <div class="stat-number">${draftArticles}</div>
+                            <div class="stat-label">Bozze</div>
+                        </div>
+                    ` : ''}
                     <div class="stat-card">
                         <div class="stat-number">${totalViews}</div>
                         <div class="stat-label">Visualizzazioni</div>
                     </div>
                 </div>
                 
-                <div style="margin-top: 2rem;">
-                    <a href="dashboard.html" class="btn btn-primary" style="width: 100%;">
-                        ✍️ Scrivi un Nuovo Articolo
-                    </a>
-                </div>
+                ${isOwnProfile ? `
+                    <div style="margin-top: 2rem;">
+                        <a href="dashboard.html" class="btn btn-primary" style="width: 100%;">
+                            ✍️ Scrivi un Nuovo Articolo
+                        </a>
+                    </div>
+                ` : ''}
                 
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">📝 Ultimi Articoli</h3>
-                ${renderRecentArticles(myArticles.slice(0, 5))}
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">📝 ${isOwnProfile ? 'Ultimi Articoli' : 'Articoli Pubblicati'}</h3>
+                ${renderRecentArticles(isOwnProfile ? myArticles.slice(0, 5) : myArticles.filter(a => a.stato === 'pubblicato').slice(0, 5))}
                 
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">🎯 Obiettivi</h3>
-                ${renderObjectivesWithProgress(myArticles.length, totalViews)}
+                ${isOwnProfile ? `
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">🎯 Obiettivi</h3>
+                    ${renderObjectivesWithProgress(myArticles.length, totalViews)}
+                ` : `
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">🏆 Badge e Achievements</h3>
+                    ${renderUserBadges(myArticles.length, totalViews)}
+                `}
                 
                 <div style="margin-top: 2rem; text-align: center;">
                     <a href="badges.html" class="btn btn-secondary">🏆 Vedi Tutti i Badge</a>
@@ -394,29 +429,38 @@
         }
         
         
-        async function renderUserContent(userData) {
+        async function renderUserContent(userData, isOwnProfile = true) {
             return `
-                <h2 style="margin-bottom: 1.5rem;">👤 Benvenuto!</h2>
+                <h2 style="margin-bottom: 1.5rem;">👤 ${isOwnProfile ? 'Benvenuto!' : 'Profilo Utente'}</h2>
                 
-                <div style="background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">Diventa un Reporter!</h3>
-                    <p style="margin-bottom: 1.5rem;">
-                        Vuoi scrivere articoli per il giornale scolastico? Candidati per diventare un reporter!
+                ${isOwnProfile ? `
+                    <div style="background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Diventa un Reporter!</h3>
+                        <p style="margin-bottom: 1.5rem;">
+                            Vuoi scrivere articoli per il giornale scolastico? Candidati per diventare un reporter!
+                        </p>
+                        <a href="candidatura.html" class="btn btn-primary">📝 Candidati Ora</a>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 1rem;">📚 Le Tue Letture</h3>
+                    <p style="color: var(--neutral); margin-bottom: 1rem;">
+                        Esplora gli articoli scritti dai nostri reporter!
                     </p>
-                    <a href="candidatura.html" class="btn btn-primary">📝 Candidati Ora</a>
-                </div>
-                
-                <h3 style="margin-bottom: 1rem;">📚 Le Tue Letture</h3>
-                <p style="color: var(--neutral); margin-bottom: 1rem;">
-                    Esplora gli articoli scritti dai nostri reporter!
-                </p>
-                <a href="articoli.html" class="btn btn-secondary">Vai agli Articoli</a>
-                
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">💬 Chat Comunitaria</h3>
-                <p style="color: var(--neutral); margin-bottom: 1rem;">
-                    Partecipa alle discussioni con altri studenti!
-                </p>
-                <a href="chat.html" class="btn btn-secondary">Apri Chat</a>
+                    <a href="articoli.html" class="btn btn-secondary">Vai agli Articoli</a>
+                    
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">💬 Chat Comunitaria</h3>
+                    <p style="color: var(--neutral); margin-bottom: 1rem;">
+                        Partecipa alle discussioni con altri studenti!
+                    </p>
+                    <a href="chat.html" class="btn btn-secondary">Apri Chat</a>
+                ` : `
+                    <div style="background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Informazioni</h3>
+                        <p style="color: var(--neutral);">
+                            Questo è un utente della community. Gli utenti possono leggere articoli, partecipare alle chat e candidarsi per diventare reporter.
+                        </p>
+                    </div>
+                `}
             `;
         }
         
@@ -475,6 +519,50 @@
                             <div>
                                 <div style="font-weight: bold;">${a.name}</div>
                                 <div style="font-size: 0.75rem; opacity: 0.9;">${a.desc}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderUserBadges(articleCount, totalViews) {
+            const badges = [];
+            
+            if (articleCount >= 1) {
+                badges.push({ icon: '🎯', name: 'Primo Articolo', desc: 'Ha pubblicato il primo articolo!' });
+            }
+            if (articleCount >= 5) {
+                badges.push({ icon: '⭐', name: 'Scrittore Attivo', desc: '5 articoli pubblicati' });
+            }
+            if (articleCount >= 10) {
+                badges.push({ icon: '🏆', name: 'Reporter Esperto', desc: '10 articoli pubblicati' });
+            }
+            if (articleCount >= 20) {
+                badges.push({ icon: '🌟', name: 'Stella del Giornale', desc: '20 articoli pubblicati' });
+            }
+            if (totalViews >= 100) {
+                badges.push({ icon: '👥', name: 'Popolare', desc: '100+ visualizzazioni totali' });
+            }
+            if (totalViews >= 500) {
+                badges.push({ icon: '🔥', name: 'Virale', desc: '500+ visualizzazioni totali' });
+            }
+            if (totalViews >= 1000) {
+                badges.push({ icon: '💎', name: 'Influencer', desc: '1000+ visualizzazioni totali' });
+            }
+            
+            if (badges.length === 0) {
+                return '<p style="color: var(--neutral);">Nessun badge ottenuto ancora.</p>';
+            }
+            
+            return `
+                <div class="badge-list">
+                    ${badges.map(b => `
+                        <div class="achievement-badge">
+                            <span>${b.icon}</span>
+                            <div>
+                                <strong>${b.name}</strong><br>
+                                <small style="opacity: 0.8;">${b.desc}</small>
                             </div>
                         </div>
                     `).join('')}
