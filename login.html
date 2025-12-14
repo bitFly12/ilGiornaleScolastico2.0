@@ -224,10 +224,10 @@
             
             try {
                 const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/profilo.html'
+                    redirectTo: window.location.origin + '/reset-password.html'
                 });
                 if (error) throw error;
-                showAlert('📧 Email per il reset password inviata! Controlla la tua casella.', 'success');
+                showAlert('📧 Email per il reset password inviata! Controlla la tua casella (incluso lo SPAM).', 'success');
             } catch (error) {
                 showAlert('❌ Errore: ' + error.message, 'error');
             }
@@ -243,17 +243,35 @@
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
+                // Check if user just confirmed email (Supabase adds hash parameters)
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const hasAuthToken = hashParams.has('access_token') || hashParams.has('refresh_token');
+                
                 const { data: { session }, error } = await supabaseClient.auth.getSession();
                 authCheckComplete = true;
                 
                 if (error) {
                     console.error('Session check error:', error);
+                    // Don't try to redirect on error - let user login normally
                     return false;
                 }
                 
-                if (session && session.user) {
+                // Parse URL parameters once
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                // If user just confirmed email via link, show success and don't auto-redirect
+                if (hasAuthToken && session && session.user && session.user.email_confirmed_at) {
+                    showAlert('✅ <strong>Email confermata con successo!</strong><br><br>Ora puoi effettuare il login con le tue credenziali.', 'success');
+                    // Clean URL hash to prevent re-processing
+                    if (window.history.replaceState) {
+                        window.history.replaceState(null, null, window.location.pathname + window.location.search);
+                    }
+                    return false; // Don't redirect, let user login manually
+                }
+                
+                // Only redirect if session is valid AND email is confirmed (and NOT just confirmed)
+                if (session && session.user && session.user.email_confirmed_at) {
                     isRedirecting = true;
-                    const urlParams = new URLSearchParams(window.location.search);
                     const requestedRedirect = urlParams.get('redirect');
                     
                     // Prevent redirect loop - don't redirect to login page
@@ -268,6 +286,12 @@
                     }, 500);
                     return true;
                 }
+                
+                // Check if coming from registration page
+                if (urlParams.get('registered') === 'true') {
+                    showAlert('📧 <strong>Registrazione completata!</strong><br><br>Prima di effettuare il login, <strong>CONFERMA LA TUA EMAIL</strong> cliccando sul link che ti abbiamo inviato.<br><br>⚠️ Controlla la cartella <strong>SPAM</strong>!', 'info');
+                }
+                
                 return false;
             } catch (error) {
                 console.error('Error checking auth status:', error);
@@ -309,6 +333,15 @@
                 });
                 
                 if (authError) {
+                    // CRITICAL: Handle email not confirmed case explicitly
+                    // Only check message content, not status code (400 is too broad)
+                    if (authError.message.includes('Email not confirmed') || 
+                        authError.message.includes('email_not_confirmed')) {
+                        showAlert('📧 <strong>Email non confermata!</strong><br><br>Devi prima confermare la tua email cliccando sul link che ti abbiamo inviato.<br><br>⚠️ Controlla la cartella <strong>SPAM/POSTA INDESIDERATA</strong>!<br><br>Se non trovi l\'email, contatta l\'amministratore.', 'error');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '🚀 Accedi';
+                        return; // Stop execution here
+                    }
                     throw new Error(authError.message);
                 }
                 
@@ -409,8 +442,8 @@
                 
                 if (error.message.includes('Invalid login credentials')) {
                     errorMessage = '❌ Email o password errati. Riprova.';
-                } else if (error.message.includes('Email not confirmed')) {
-                    errorMessage = '📧 Devi confermare la tua email prima di accedere. Controlla la tua casella di posta.';
+                } else if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
+                    errorMessage = '📧 <strong>Email non confermata!</strong><br><br>Controlla la tua casella di posta (incluso lo <strong>SPAM</strong>) e clicca sul link di conferma.<br><br>💡 L\'email di conferma arriva sempre nello spam!';
                 } else if (error.message.includes('Too many requests')) {
                     errorMessage = '⏰ Troppi tentativi. Attendi qualche minuto e riprova.';
                 } else if (error.message) {
