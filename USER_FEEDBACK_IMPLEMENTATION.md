@@ -122,77 +122,36 @@ Now the motivation is:
 
 **File**: `supabase/functions/send-candidacy-email/index.ts`
 
-This Edge Function:
-- Uses Resend API for email delivery
-- Sends beautiful HTML email to mohamed.mashaal@cesaris.edu.it
-- Includes all candidacy details (name, email, class, motivation, experience)
-- Provides direct link to admin panel for review
-- Has error handling and CORS support
-
-**Email Preview:**
-
-```
-Subject: 📝 Nuova Candidatura Reporter: Mario Rossi
-
-Contains:
-- Candidate name, email, class
-- Motivation text
-- Experience (if provided)
-- Direct "Review Candidature" button
-- Action reminder (7 days to review)
-```
+Implementata seguendo la guida in `SUPABASE_EMAIL_SETUP.md`:
+- Usa Resend API per email delivery
+- Invia email a mohamed.mashaal@cesaris.edu.it
+- Include tutti i dettagli della candidatura (nome, email, classe, motivazione, esperienza)
+- Fornisce link diretti per Approva/Rifiuta
+- Gestione errori e CORS support
 
 ### Setup Required
 
-#### Step 1: Get Resend API Key
+#### Setup Required
 
-1. Create account at https://resend.com (free)
-2. Go to **API Keys** section
-3. Create new key
-4. Copy the key (starts with `re_...`)
+**Vedi la guida completa in**: `SUPABASE_EMAIL_SETUP.md` (sezione "Candidacy Notifications")
 
-#### Step 2: Add API Key to Supabase
+**Quick Setup:**
 
-**Option A: Using Supabase CLI**
+1. Ottieni Resend API key da https://resend.com
+2. Aggiungi secrets in Supabase:
 ```bash
-supabase secrets set RESEND_API_KEY=re_your_key_here
+supabase secrets set RESEND_API_KEY=your_key
+supabase secrets set SITE_URL=https://your-domain.com
 ```
 
-**Option B: Using Dashboard**
-1. Go to Supabase Dashboard
-2. Settings > Edge Functions > Secrets
-3. Add: `RESEND_API_KEY` = your key
-4. Save
-
-#### Step 3: Deploy Edge Function
-
+3. Deploy la funzione:
 ```bash
-# Deploy the email function
 supabase functions deploy send-candidacy-email
-
-# Verify
-supabase functions list
 ```
 
-#### Step 4: Test
+4. Testa inviando una candidatura
 
-Submit a test candidacy at `yoursite.com/candidatura.html`
-
-Check:
-- ✅ Candidacy saved in `reporter_candidatures` table
-- ✅ Email received at mohamed.mashaal@cesaris.edu.it
-- ✅ No errors in console
-
-### Documentation
-
-Complete setup guide: **RESEND_EMAIL_SETUP.md**
-
-Includes:
-- Detailed Resend setup
-- Environment variable configuration
-- Testing procedures
-- Troubleshooting
-- Email template customization
+**Nota**: Il documento SUPABASE_EMAIL_SETUP.md contiene tutte le istruzioni dettagliate per configurare Resend API e testare l'invio email.
 
 ---
 
@@ -310,11 +269,12 @@ find . -name "*.html" -type f -exec sed -i "s|$OLD|$NEW|g" {} \;
 2. ✅ `candidatura.html` - Motivation field + email integration
 3. ✅ `badges.html` - Database-driven stats
 
-### New Files (4)
-1. ✅ `supabase-user-stats-sync.sql` - Database triggers
-2. ✅ `supabase/functions/send-candidacy-email/index.ts` - Email function
-3. ✅ `RESEND_EMAIL_SETUP.md` - Email setup guide
-4. ✅ `LOGO_SETUP_GUIDE.md` - Logo implementation guide
+### New Files (3)
+1. ✅ `supabase-user-stats-sync.sql` - Database triggers per auto-sync stats utenti
+2. ✅ `supabase/functions/send-candidacy-email/index.ts` - Edge Function (implementa SUPABASE_EMAIL_SETUP.md)
+3. ✅ `LOGO_SETUP_GUIDE.md` - Guida implementazione logo
+
+**Nota**: La funzione email segue le specifiche già documentate in `SUPABASE_EMAIL_SETUP.md` (esistente)
 
 ---
 

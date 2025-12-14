@@ -1,21 +1,32 @@
-// Supabase Edge Function to send candidacy notification emails
-// Uses Resend API for email delivery
+// Edge Function to send candidacy notification via Resend API
+// Based on SUPABASE_EMAIL_SETUP.md implementation guide
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://yoursite.com'
+const ADMIN_EMAIL = 'mohamed.mashaal@cesaris.edu.it'
 
-interface CandidacyRequest {
-  candidatureId: string
-  email: string
-  fullName: string
-  studentClass: string
-  motivation: string
-  experience: string
-  toEmail: string
+// HTML escape function to prevent XSS
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// Sanitize UUID to prevent injection in URLs
+function sanitizeUuid(uuid: string): string {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(uuid)) {
+    throw new Error('Invalid UUID format');
+  }
+  return uuid;
 }
 
 serve(async (req) => {
@@ -31,18 +42,10 @@ serve(async (req) => {
   }
 
   try {
-    const {
-      candidatureId,
-      email,
-      fullName,
-      studentClass,
-      motivation,
-      experience,
-      toEmail
-    }: CandidacyRequest = await req.json()
+    const { candidatureId, email, fullName, motivation, studentClass, experience } = await req.json()
 
     // Validate required fields
-    if (!candidatureId || !email || !fullName || !motivation || !toEmail) {
+    if (!candidatureId || !email || !fullName || !motivation) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         {
@@ -52,7 +55,15 @@ serve(async (req) => {
       )
     }
 
-    // Send email via Resend
+    // Sanitize UUID and escape HTML
+    const sanitizedId = sanitizeUuid(candidatureId);
+    const safeName = escapeHtml(fullName);
+    const safeEmail = escapeHtml(email);
+    const safeMotivation = escapeHtml(motivation);
+    const safeClass = studentClass ? escapeHtml(studentClass) : '';
+    const safeExperience = experience ? escapeHtml(experience) : '';
+
+    // Send email via Resend API
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -60,171 +71,57 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: 'Giornale Cesaris <noreply@giornalecesaris.it>',
-        to: [toEmail],
-        subject: `📝 Nuova Candidatura Reporter: ${fullName}`,
+        from: 'Giornale Cesaris <noreply@cesaris.edu.it>',
+        to: [ADMIN_EMAIL],
+        subject: `Nuova Candidatura Reporter: ${safeName}`,
         html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-              }
-              .header {
-                background: linear-gradient(135deg, #0033A0, #00f0ff);
-                color: white;
-                padding: 30px;
-                border-radius: 8px 8px 0 0;
-                text-align: center;
-              }
-              .content {
-                background: #f9fafb;
-                padding: 30px;
-                border-radius: 0 0 8px 8px;
-              }
-              .field {
-                margin: 20px 0;
-                padding: 15px;
-                background: white;
-                border-left: 4px solid #0033A0;
-                border-radius: 4px;
-              }
-              .field-label {
-                font-weight: 600;
-                color: #0033A0;
-                margin-bottom: 8px;
-              }
-              .field-value {
-                color: #4b5563;
-              }
-              .button {
-                display: inline-block;
-                padding: 12px 24px;
-                background: #0033A0;
-                color: white !important;
-                text-decoration: none;
-                border-radius: 6px;
-                margin: 20px 0;
-              }
-              .footer {
-                text-align: center;
-                margin-top: 30px;
-                padding-top: 20px;
-                border-top: 1px solid #e5e7eb;
-                color: #6b7280;
-                font-size: 14px;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1 style="margin: 0;">📰 Nuova Candidatura Reporter</h1>
-            </div>
-            <div class="content">
-              <p>Ciao! È stata ricevuta una nuova candidatura per diventare reporter del Giornale Cesaris.</p>
-              
-              <div class="field">
-                <div class="field-label">👤 Nome Completo</div>
-                <div class="field-value">${fullName}</div>
-              </div>
-              
-              <div class="field">
-                <div class="field-label">📧 Email</div>
-                <div class="field-value">${email}</div>
-              </div>
-              
-              <div class="field">
-                <div class="field-label">🎓 Classe</div>
-                <div class="field-value">${studentClass}</div>
-              </div>
-              
-              <div class="field">
-                <div class="field-label">💭 Motivazione</div>
-                <div class="field-value">${motivation}</div>
-              </div>
-              
-              ${experience ? `
-              <div class="field">
-                <div class="field-label">📝 Esperienza</div>
-                <div class="field-value">${experience}</div>
-              </div>
-              ` : ''}
-              
-              <div style="text-align: center;">
-                <a href="${SUPABASE_URL.replace('/rest/v1', '')}/admin.html?tab=candidatures&action=review&id=${candidatureId}" class="button">
-                  👁️ Visualizza e Revisiona Candidatura
-                </a>
-              </div>
-              
-              <p style="margin-top: 30px; padding: 15px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
-                <strong>⏰ Azione Richiesta:</strong><br>
-                Questa candidatura richiede una revisione entro 7 giorni. Accedi al pannello admin per approvare o rifiutare.
-              </p>
-            </div>
-            <div class="footer">
-              <p>Giornale Scolastico Cesaris • Istituto Cesaris<br>
-              Questa email è stata generata automaticamente. Non rispondere a questo messaggio.</p>
-            </div>
-          </body>
-          </html>
-        `,
-        text: `
-Nuova Candidatura Reporter - Giornale Cesaris
-
-Nome: ${fullName}
-Email: ${email}
-Classe: ${studentClass}
-
-Motivazione:
-${motivation}
-
-${experience ? `Esperienza:\n${experience}\n\n` : ''}
-
-Visualizza la candidatura completa nel pannello admin:
-${SUPABASE_URL.replace('/rest/v1', '')}/admin.html?tab=candidatures&action=review&id=${candidatureId}
-
-Azione richiesta entro 7 giorni.
+          <h2>Nuova Candidatura Reporter</h2>
+          <p><strong>Nome:</strong> ${safeName}</p>
+          <p><strong>Email:</strong> ${safeEmail}</p>
+          ${safeClass ? `<p><strong>Classe:</strong> ${safeClass}</p>` : ''}
+          <p><strong>Motivazione:</strong></p>
+          <p>${safeMotivation}</p>
+          ${safeExperience ? `<p><strong>Esperienza:</strong></p><p>${safeExperience}</p>` : ''}
+          
+          <hr>
+          
+          <p>
+            <a href="${SITE_URL}/admin.html?tab=candidatures&action=approve&id=${sanitizedId}" 
+               style="display: inline-block; padding: 12px 24px; background-color: #10B981; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">
+              ✅ Approva
+            </a>
+            
+            <a href="${SITE_URL}/admin.html?tab=candidatures&action=reject&id=${sanitizedId}" 
+               style="display: inline-block; padding: 12px 24px; background-color: #DC2626; color: white; text-decoration: none; border-radius: 6px;">
+              ❌ Rifiuta
+            </a>
+          </p>
+          
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">
+            Oppure vai alla <a href="${SITE_URL}/admin.html">dashboard admin</a> per revisionare.
+          </p>
         `
       })
     })
 
-    if (!res.ok) {
-      const error = await res.text()
-      console.error('Resend API error:', error)
-      throw new Error(`Resend API error: ${error}`)
-    }
-
     const data = await res.json()
-    console.log('Email sent successfully:', data)
-
-    return new Response(
-      JSON.stringify({ success: true, emailId: data.id }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    )
-
+    
+    return new Response(JSON.stringify({ success: true, data }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      status: 200
+    })
+    
   } catch (error) {
-    console.error('Error in send-candidacy-email:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    )
+    console.error('Error:', error)
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      status: 400
+    })
   }
 })

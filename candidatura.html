@@ -329,7 +329,7 @@
                     throw error;
                 }
 
-                // Send email notification to caporedattore
+                // Send email notification via Edge Function
                 try {
                     const { error: emailError } = await supabaseClient.functions.invoke('send-candidacy-email', {
                         body: {
@@ -338,8 +338,7 @@
                             fullName: fullName,
                             studentClass: studentClass,
                             motivation: motivation,
-                            experience: experience || 'Nessuna esperienza specificata',
-                            toEmail: 'mohamed.mashaal@cesaris.edu.it'
+                            experience: experience
                         }
                     });
                     
