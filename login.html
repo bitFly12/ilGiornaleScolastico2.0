@@ -243,6 +243,10 @@
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
+                // Check if user just confirmed email (Supabase adds hash parameters)
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const hasAuthToken = hashParams.has('access_token') || hashParams.has('refresh_token');
+                
                 const { data: { session }, error } = await supabaseClient.auth.getSession();
                 authCheckComplete = true;
                 
@@ -255,7 +259,17 @@
                 // Parse URL parameters once
                 const urlParams = new URLSearchParams(window.location.search);
                 
-                // Only redirect if session is valid AND email is confirmed
+                // If user just confirmed email via link, show success and don't auto-redirect
+                if (hasAuthToken && session && session.user && session.user.email_confirmed_at) {
+                    showAlert('✅ <strong>Email confermata con successo!</strong><br><br>Ora puoi effettuare il login con le tue credenziali.', 'success');
+                    // Clean URL hash to prevent re-processing
+                    if (window.history.replaceState) {
+                        window.history.replaceState(null, null, window.location.pathname + window.location.search);
+                    }
+                    return false; // Don't redirect, let user login manually
+                }
+                
+                // Only redirect if session is valid AND email is confirmed (and NOT just confirmed)
                 if (session && session.user && session.user.email_confirmed_at) {
                     isRedirecting = true;
                     const requestedRedirect = urlParams.get('redirect');
