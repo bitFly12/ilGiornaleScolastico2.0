@@ -130,7 +130,10 @@ CREATE POLICY "Users can view their own points history" ON user_points_history
     FOR SELECT USING (user_id = auth.uid());
 
 -- Run initial recalculation for all users (optional - comment out if not needed)
--- SELECT recalculate_user_stats();
+-- WARNING: This processes ALL users and can be slow on large datasets (1000+ users)
+-- Run during off-peak hours or for specific users only
+-- SELECT recalculate_user_stats();  -- For all users
+-- SELECT recalculate_user_stats('user-uuid');  -- For specific user
 
 -- ============================================
 -- USAGE INSTRUCTIONS

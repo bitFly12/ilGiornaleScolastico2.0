@@ -3,9 +3,14 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://yoursite.com'
 const ADMIN_EMAIL = 'mohamed.mashaal@cesaris.edu.it'
+
+// Validate environment variables
+if (!RESEND_API_KEY) {
+  console.error('RESEND_API_KEY environment variable is not set')
+}
 
 // HTML escape function to prevent XSS
 function escapeHtml(text: string): string {
@@ -42,6 +47,17 @@ serve(async (req) => {
   }
 
   try {
+    // Check API key is configured
+    if (!RESEND_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'Email service not configured. Please set RESEND_API_KEY environment variable.' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
     const { candidatureId, email, fullName, motivation, studentClass, experience } = await req.json()
 
     // Validate required fields
