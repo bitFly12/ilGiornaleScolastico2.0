@@ -334,9 +334,9 @@
                 
                 if (authError) {
                     // CRITICAL: Handle email not confirmed case explicitly
+                    // Only check message content, not status code (400 is too broad)
                     if (authError.message.includes('Email not confirmed') || 
-                        authError.message.includes('email_not_confirmed') ||
-                        authError.status === 400) {
+                        authError.message.includes('email_not_confirmed')) {
                         showAlert('📧 <strong>Email non confermata!</strong><br><br>Devi prima confermare la tua email cliccando sul link che ti abbiamo inviato.<br><br>⚠️ Controlla la cartella <strong>SPAM/POSTA INDESIDERATA</strong>!<br><br>Se non trovi l\'email, contatta l\'amministratore.', 'error');
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '🚀 Accedi';
