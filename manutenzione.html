@@ -532,7 +532,7 @@
         }
         
         // Check maintenance status immediately and then every 5 seconds
-        setTimeout(checkMaintenanceStatus, 1000);
+        checkMaintenanceStatus(); // Call immediately
         setInterval(checkMaintenanceStatus, 5000);
     </script>
 </body>

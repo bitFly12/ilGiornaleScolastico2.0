@@ -62,14 +62,16 @@ async function checkMaintenanceMode() {
                 .eq('setting_key', 'maintenance_mode')
                 .single();
             
+            let maintenanceMode = false;
+            
             if (error) {
                 console.error('Error checking maintenance mode:', error);
                 // Fallback to localStorage if Supabase check fails
                 const localSettings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
-                if (!localSettings.maintenanceMode) return;
+                maintenanceMode = localSettings.maintenanceMode || false;
+            } else {
+                maintenanceMode = settings?.setting_value?.enabled || false;
             }
-            
-            const maintenanceMode = settings?.setting_value?.enabled || false;
             
             if (maintenanceMode) {
                 // Check if user is admin

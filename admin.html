@@ -1457,6 +1457,8 @@
                     const keyMap = {
                         'maintenance_mode': 'maintenanceMode',
                         'registrations_enabled': 'allowRegistrations',
+                        'chat_enabled': 'chatEnabled',
+                        'comments_enabled': 'commentsEnabled',
                         'ai_detection': 'aiDetection',
                         'auto_suspension': 'autoSuspension'
                     };
@@ -1506,12 +1508,15 @@
                     return;
                 }
                 
+                // Get current user ID
+                const { data: { user } } = await supabase.auth.getUser();
+                
                 // Update on Supabase
                 const { error } = await supabase
                     .from('site_settings')
                     .update({
                         setting_value: { enabled: value },
-                        updated_by: currentUser?.profile?.id
+                        updated_by: user?.id
                     })
                     .eq('setting_key', dbKey);
                 

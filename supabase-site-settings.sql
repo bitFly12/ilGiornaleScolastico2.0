@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
 );
 
 -- Insert default settings
+-- Note: maintenance_mode includes a 'message' field for future use (custom maintenance messages)
 INSERT INTO site_settings (setting_key, setting_value) 
 VALUES 
     ('maintenance_mode', '{"enabled": false, "message": "Sito in manutenzione"}'),
