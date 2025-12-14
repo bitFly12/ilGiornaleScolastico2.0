@@ -497,18 +497,43 @@
         checkAdminAccess();
         
         // Check if maintenance mode is actually active, otherwise redirect to home
-        function checkMaintenanceStatus() {
-            const settings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
-            if (!settings.maintenanceMode) {
-                // Clear the maintenance end time and redirect to home
-                localStorage.removeItem('maintenanceEndTime');
-                window.location.replace('index.html');
+        async function checkMaintenanceStatus() {
+            try {
+                // Check Supabase for maintenance mode state
+                if (typeof supabase !== 'undefined') {
+                    const { data: settings, error } = await supabase
+                        .from('site_settings')
+                        .select('setting_value')
+                        .eq('setting_key', 'maintenance_mode')
+                        .single();
+                    
+                    if (error) {
+                        console.error('Error checking maintenance status:', error);
+                        // Fallback to localStorage
+                        const localSettings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
+                        if (!localSettings.maintenanceMode) {
+                            localStorage.removeItem('maintenanceEndTime');
+                            window.location.replace('index.html');
+                        }
+                        return;
+                    }
+                    
+                    const maintenanceMode = settings?.setting_value?.enabled || false;
+                    
+                    if (!maintenanceMode) {
+                        // Manutenzione disattivata, reindirizza alla home
+                        localStorage.removeItem('maintenanceEndTime');
+                        window.location.replace('index.html');
+                    }
+                }
+            } catch (error) {
+                console.error('Error in checkMaintenanceStatus:', error);
             }
         }
         
-        // Check maintenance status every 10 seconds
-        setTimeout(checkMaintenanceStatus, 1000);
-        setInterval(checkMaintenanceStatus, 10000);
+        // Check maintenance status immediately and then every 5 seconds
+        checkMaintenanceStatus(); // Call immediately
+        setInterval(checkMaintenanceStatus, 5000);
     </script>
 </body>
 </html>

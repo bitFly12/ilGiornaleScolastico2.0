@@ -124,7 +124,17 @@ Simply open `index.html` in a web browser to view the site locally.
 1. **Anonymous** - Read articles, no login required
 2. **Student** - Login required for chat and comments
 3. **Reporter** - Apply through candidacy form
-4. **Admin** - Special access (not implemented in frontend)
+4. **Admin** - Full site management (caporedattore, docente)
+
+### Admin Features
+- **Maintenance Mode** - Real-time site maintenance control
+  - Synchronized across all devices via Supabase
+  - Automatic redirect for non-admin users
+  - Admin bypass during maintenance
+  - See [MAINTENANCE_MODE_SETUP.md](./MAINTENANCE_MODE_SETUP.md) for details
+- **User Management** - Suspend, activate, change roles
+- **Content Moderation** - Review and manage reports
+- **Site Settings** - Control registrations, chat, comments
 
 ## 📱 Responsive Design
 
@@ -157,18 +167,21 @@ Simply open `index.html` in a web browser to view the site locally.
 ## ⚠️ Technical Notes
 
 **Current Implementation:**
-- Frontend only (HTML/CSS/JS)
-- LocalStorage for data persistence
-- Simulated authentication
-- No real-time backend
+- ✅ Supabase backend integration
+- ✅ Real authentication system
+- ✅ Database persistence for articles, users, settings
+- ✅ Real-time maintenance mode synchronization
+- ✅ Row Level Security (RLS) policies
+- 🔄 WebSocket for real-time chat (in progress)
+- 🔄 Email notifications (in progress)
 
-**For Production:**
-Would require:
-- Backend database (e.g., Supabase)
-- Real authentication system
-- Email sending capability
-- File upload service
-- WebSocket for real-time chat
+**Database Setup:**
+1. Execute SQL scripts in `/supabase` directory
+2. Set up environment variables
+3. Configure RLS policies
+4. See individual setup guides:
+   - [MAINTENANCE_MODE_SETUP.md](./MAINTENANCE_MODE_SETUP.md) - Maintenance mode
+   - [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) - Complete database setup
 
 ## 📊 Browser Support
 

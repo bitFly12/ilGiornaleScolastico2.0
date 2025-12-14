@@ -53,22 +53,37 @@ async function checkMaintenanceMode() {
         return;
     }
     
-    // Check local storage for maintenance mode
-    const settings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
-    
-    if (settings.maintenanceMode) {
-        // Check if user is admin - check both localStorage and async Supabase check
-        const userRole = localStorage.getItem('userRole');
-        
-        // If clearly admin, allow access
-        if (userRole === 'caporedattore' || userRole === 'admin' || userRole === 'docente') {
-            console.log('Admin detected, skipping maintenance redirect');
-            return;
-        }
-        
-        // Double-check with Supabase if available
-        try {
-            if (typeof supabase !== 'undefined') {
+    try {
+        // Check Supabase for maintenance mode state
+        if (typeof supabase !== 'undefined') {
+            const { data: settings, error } = await supabase
+                .from('site_settings')
+                .select('setting_value')
+                .eq('setting_key', 'maintenance_mode')
+                .single();
+            
+            let maintenanceMode = false;
+            
+            if (error) {
+                console.error('Error checking maintenance mode:', error);
+                // Fallback to localStorage if Supabase check fails
+                const localSettings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
+                maintenanceMode = localSettings.maintenanceMode || false;
+            } else {
+                maintenanceMode = settings?.setting_value?.enabled || false;
+            }
+            
+            if (maintenanceMode) {
+                // Check if user is admin
+                const userRole = localStorage.getItem('userRole');
+                
+                // If clearly admin, allow access
+                if (userRole === 'caporedattore' || userRole === 'admin' || userRole === 'docente') {
+                    console.log('Admin detected, skipping maintenance redirect');
+                    return;
+                }
+                
+                // Double-check with Supabase if available
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
                     const { data: profile } = await supabase
@@ -87,27 +102,30 @@ async function checkMaintenanceMode() {
                     console.log('Maintenance mode: Destroying non-admin user session');
                     await supabase.auth.signOut();
                 }
+                
+                // Clear all user session data for non-admins
+                console.log('Maintenance mode: Clearing session data');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userSession');
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('userProfile');
+                
+                // Redirect non-admin users to maintenance page
+                console.log('Maintenance mode active, redirecting to maintenance page');
+                window.location.replace('manutenzione.html');
+                return;
             }
-        } catch (e) {
-            console.log('Supabase check failed, using localStorage');
         }
-        
-        // Clear all user session data for non-admins
-        console.log('Maintenance mode: Clearing session data');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('username');
-        localStorage.removeItem('userSession');
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userProfile');
-        
-        // Redirect non-admin users to maintenance page
-        console.log('Maintenance mode active, redirecting to maintenance page');
-        window.location.replace('manutenzione.html');
-        return;
+    } catch (error) {
+        console.error('Error in checkMaintenanceMode:', error);
     }
 }
+
+// Poll maintenance mode status every 10 seconds
+setInterval(checkMaintenanceMode, 10000);
 
 // ================================================
 // MOBILE MENU - SIMPLIFIED ROBUST IMPLEMENTATION
