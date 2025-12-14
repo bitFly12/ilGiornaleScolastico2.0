@@ -398,11 +398,11 @@
                 }
                 
                 if (data.user) {
-                    showAlert('🎉 Registrazione completata! Controlla la casella SPAM della tua email per confermare l\'account.', 'success');
+                    showAlert('🎉 Registrazione completata!<br><br>📧 <strong>IMPORTANTE:</strong> Controlla la cartella <strong>SPAM/POSTA INDESIDERATA</strong> della tua email per confermare l\'account.<br><br>⚠️ L\'email di conferma finisce SEMPRE nello spam!', 'success');
                     
                     // Show additional info
                     setTimeout(() => {
-                        showAlert(`📧 Email inviata a <strong>${email}</strong>.<br>Clicca sul link nell'email per attivare il tuo account.<br>Il tuo username sarà: <strong>${username}</strong>`, 'info');
+                        showAlert(`📧 Email inviata a <strong>${email}</strong>.<br><br>✅ <strong>CONTROLLA LO SPAM!</strong><br><br>Clicca sul link nell'email per attivare il tuo account.<br>Il tuo username sarà: <strong>${username}</strong>.<br><br>💡 Se non trovi l'email, controlla anche la cartella "Promozioni" o "Social".`, 'info');
                     }, 2000);
                     
                     // Disable form
