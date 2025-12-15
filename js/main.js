@@ -229,7 +229,7 @@ function initDailyQuote() {
         "La penna è più potente della spada - Edward Bulwer-Lytton",
         "Scrivi ciò che non dovrebbe essere dimenticato - Isabel Allende",
         "Chi non legge, a 70 anni avrà vissuto una sola vita - Umberto Eco",
-        "Il futuro appartiene a coloro che credono nella bellezza dei propri sogni - Eleanor Roosevelt"
+        "Il futuro appartiene a coloro che credono nella bellezza dei propri sogni - Eleanor Roosevelt",
         "Vivi come se dovessi morire domani. Impara come se dovessi vivere per sempre - Mahatma Gandhi",
         "Non ho talenti particolari. Sono solo appassionatamente curioso - Albert Einstein",
         "L'unica vera saggezza è sapere di non sapere nulla - Socrate",
