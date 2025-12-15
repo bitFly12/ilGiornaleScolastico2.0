@@ -324,10 +324,17 @@ function renderMessages() {
 function createMessageBubble(msg) {
     
     const isOwn = msg.user_id === ChatState.currentUser?.id;
+    
+    const authorUsername = msg.user?.username;
+    const authorDisplayName = msg.user?.nome_visualizzato; 
+    const authorFallbackName = msg.author_name || (authorUsername ? authorUsername : 'Utente Sconosciuto');
+    
+   const displayName = isOwn 
+        ? (ChatState.currentProfile?.nome_visualizzato || authorFallbackName) // Se sei tu, usa il tuo profilo aggiornato
+        : (authorDisplayName || authorFallbackName);
 
-    const userEmailName = ChatState.currentUser.email ? ChatState.currentUser.email.split('@')[0] : 'Utente';
-    const username = msg.user?.author_name || userEmailName;
-    const displayName = msg.user?.nome_visualizzato || username;
+    const username = authorUsername || authorFallbackName; // Usato per colore/iniziale
+    
     const initial = displayName.charAt(0).toUpperCase();
     const avatarColor = stringToColor(username);
     const time = formatTime(new Date(msg.created_at));
