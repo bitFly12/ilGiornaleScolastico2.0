@@ -1,4 +1,4 @@
-// ================================================
+        // ================================================
 // Giornale Scolastico Cesaris 2.0
 // Main JavaScript File
 // ================================================
@@ -231,29 +231,28 @@ function initDailyQuote() {
         "Chi non legge, a 70 anni avrà vissuto una sola vita - Umberto Eco",
         "Il futuro appartiene a coloro che credono nella bellezza dei propri sogni - Eleanor Roosevelt"
         "Vivi come se dovessi morire domani. Impara come se dovessi vivere per sempre - Mahatma Gandhi",
-"Non ho talenti particolari. Sono solo appassionatamente curioso - Albert Einstein",
-"L'unica vera saggezza è sapere di non sapere nulla - Socrate",
-"Le radici dell'istruzione sono amare, ma i frutti sono dolci - Aristotele",
-"Non è mai troppo tardi per essere ciò che avresti potuto essere - George Eliot",
-"La mente non è un vaso da riempire, ma un fuoco da accendere - Plutarco",
-"L'esperienza è il nome che tutti danno ai propri errori - Oscar Wilde",
-"Il primo passo per acquisire la conoscenza è l'ammissione dell'ignoranza - Benjamin Disraeli",
-"La saggezza comincia con la meraviglia - Socrate",
-"Giudica un uomo dalle sue domande, piuttosto che dalle sue risposte - Voltaire",
-"Una stanza senza libri è come un corpo senz'anima - Cicerone",
-"La scrittura è un'architettura, non solo decorazione - Ernest Hemingway",
-"La fantasia è l'unica arma nella guerra contro la realtà - Jules de Gaultier",
-"I libri sono i vettori della civiltà - Oliver Wendell Holmes",
-"Scrivi per farti leggere. Non per farti sentire - José Saramago",
-"Non scrivere se non senti di dover scrivere - Rainer Maria Rilke",
-"Non c'è amico più leale di un libro - Ernest Hemingway",
-"Il giornalismo è la prima bozza della storia - Philip L. Graham",
-"La libertà di stampa, se significa qualcosa, significa la libertà di criticare e resistere - George Orwell",
-"Non cercare di fare il bravo giornalista. Cerca di fare il vero giornalista - John Steinbeck",
-"Se si dà alle persone la verità, il potere di cambiarla non può essere tolto - Thomas Paine",
-"Il dovere di un giornalista è fare informazione, non compiacere nessuno - Oriana Fallaci",
-"La stampa è il cannone più potente - Vladimir Lenin",
-"Il coraggio non è l'assenza di paura, ma la capacità di agire nonostante la paura - Nelson Mandela"
+        "Non ho talenti particolari. Sono solo appassionatamente curioso - Albert Einstein",
+        "L'unica vera saggezza è sapere di non sapere nulla - Socrate",
+        "Le radici dell'istruzione sono amare, ma i frutti sono dolci - Aristotele",
+        "Non è mai troppo tardi per essere ciò che avresti potuto essere - George Eliot",
+        "La mente non è un vaso da riempire, ma un fuoco da accendere - Plutarco",
+        "L'esperienza è il nome che tutti danno ai propri errori - Oscar Wilde",
+        "Il primo passo per acquisire la conoscenza è l'ammissione dell'ignoranza - Benjamin Disraeli",
+        "La saggezza comincia con la meraviglia - Socrate",
+        "Giudica un uomo dalle sue domande, piuttosto che dalle sue risposte - Voltaire",
+        "Una stanza senza libri è come un corpo senz'anima - Cicerone",
+        "La scrittura è un'architettura, non solo decorazione - Ernest Hemingway",
+        "La fantasia è l'unica arma nella guerra contro la realtà - Jules de Gaultier",
+        "I libri sono i vettori della civiltà - Oliver Wendell Holmes",
+        "Scrivi per farti leggere. Non per farti sentire - José Saramago",
+        "Non scrivere se non senti di dover scrivere - Rainer Maria Rilke",
+        "Non c'è amico più leale di un libro - Ernest Hemingway",
+        "Il giornalismo è la prima bozza della storia - Philip L. Graham",
+        "La libertà di stampa, se significa qualcosa, significa la libertà di criticare e resistere - George Orwell",
+        "Non cercare di fare il bravo giornalista. Cerca di fare il vero giornalista - John Steinbeck",
+        "Se si dà alle persone la verità, il potere di cambiarla non può essere tolto - Thomas Paine",
+        "Il dovere di un giornalista è fare informazione, non compiacere nessuno - Oriana Fallaci",
+        "Il coraggio non è l'assenza di paura, ma la capacità di agire nonostante la paura - Nelson Mandela"
     ];
     
     const quoteElement = document.getElementById('dailyQuote');
