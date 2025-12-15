@@ -325,7 +325,7 @@ function createMessageBubble(msg) {
     
     const isOwn = msg.user_id === ChatState.currentUser?.id;
 
-    const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
+    const userEmailName = ChatState.currentUser.email ? ChatState.currentUser.email.split('@')[0] : 'Utente';
     const username = msg.user?.author_name || userEmailName;
     const displayName = msg.user?.nome_visualizzato || username;
     const initial = displayName.charAt(0).toUpperCase();
@@ -423,7 +423,7 @@ async function sendMessage() {
     sendBtn.disabled = true;
     
     try {
-        const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
+        const userEmailName = ChatState.currentUser.email ? ChatState.currentUser.email.split('@')[0] : 'Utente';
         const authorName = ChatState.currentProfile?.nome_visualizzato || 
                           ChatState.currentProfile?.author_name || userEmailName;
         
