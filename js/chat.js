@@ -358,8 +358,8 @@ function createMessageElement(msg) {
     div.className = 'message fade-in';
     div.dataset.messageId = msg.id;
 
-    const username = msg.user?.username || 'anonimo';
-    const displayName = msg.user?.nome_visualizzato || username;
+    const username = msg.user?.username || msg.author_name || 'Utente';
+    const displayName = msg.user?.nome_visualizzato || msg.author_name || username;
     const initial = displayName.charAt(0).toUpperCase();
     const timeAgo = formatTimeAgo(new Date(msg.created_at));
 
@@ -626,7 +626,7 @@ async function sendMessage() {
             .eq('id', currentUser.id)
             .single();
         
-        const authorName = profile?.nome_visualizzato || profile?.username || 'Anonimo';
+       const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
         
         // Insert message into Supabase with current room
         const { data, error } = await supabase
