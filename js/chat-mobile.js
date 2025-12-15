@@ -322,28 +322,37 @@ function renderMessages() {
 }
 
 function createMessageBubble(msg) {
-    
     const isOwn = msg.user_id === ChatState.currentUser?.id;
-    
-    const authorUsername = msg.user?.username;
-    const authorDisplayName = msg.user?.nome_visualizzato; 
-    const authorFallbackName = msg.author_name || (authorUsername ? authorUsername : 'Utente Sconosciuto');
-    
-   const displayName = isOwn 
-        ? (ChatState.currentProfile?.nome_visualizzato || authorFallbackName) // Se sei tu, usa il tuo profilo aggiornato
-        : (authorDisplayName || authorFallbackName);
 
-    const username = authorUsername || authorFallbackName; // Usato per colore/iniziale
-    
+    // Calcolo sicuro del nome visualizzato dell’autore
+    let displayName;
+    if (isOwn) {
+        // Se il messaggio è Tuo: mostra nome aggiornato dal profilo, sennò quello salvato nel messaggio/dal join
+        displayName =
+            ChatState.currentProfile?.nome_visualizzato ||
+            msg.user?.nome_visualizzato ||
+            msg.author_name ||
+            msg.user?.username ||
+            'Tu';
+    } else {
+        // Se messaggio di altri: MAI usare ChatState.currentProfile!
+        displayName =
+            msg.user?.nome_visualizzato ||
+            msg.author_name ||
+            msg.user?.username ||
+            'Utente Sconosciuto';
+    }
+
+    // Serve per avatar e colori
+    const username = msg.user?.username || msg.author_name || 'Utente';
     const initial = displayName.charAt(0).toUpperCase();
     const avatarColor = stringToColor(username);
     const time = formatTime(new Date(msg.created_at));
     const text = formatMessageText(msg.content || msg.message || '');
-    
-    // Check if mentioned
+
     const isMentioned = checkIfMentioned(msg.content);
     const mentionedClass = isMentioned ? 'mentioned' : '';
-    
+
     // Build reactions
     let reactionsHtml = '';
     if (msg.reactions && Object.keys(msg.reactions).length > 0) {
@@ -353,13 +362,13 @@ function createMessageBubble(msg) {
         }
         reactionsHtml += '</div>';
     }
-    
+
     // Reply preview
     let replyHtml = '';
     if (msg.reply_to_id) {
         const replyMsg = ChatState.messages.find(m => m.id === msg.reply_to_id);
         if (replyMsg) {
-            const replyAuthor = replyMsg.user?.nome_visualizzato || 'Utente';
+            const replyAuthor = replyMsg.user?.nome_visualizzato || replyMsg.author_name || 'Utente';
             const replyText = truncateText(replyMsg.content || '', 50);
             replyHtml = `
                 <div class="reply-preview">
@@ -369,24 +378,23 @@ function createMessageBubble(msg) {
             `;
         }
     }
-    
+
     // Edited indicator
     const editedHtml = msg.edited_at ? '<span style="font-size: 0.6rem; opacity: 0.6;"> (modificato)</span>' : '';
-    
-    // Safely escape message ID for use in HTML attributes
+
     const safeMessageId = escapeHtml(String(msg.id));
     const safeUserId = escapeHtml(String(msg.user_id));
-    
-    // Delete button - only visible for own messages
+
+    // Delete button - solo per i propri messaggi
     const deleteButtonHtml = isOwn ? `
-        <button class="bubble-delete-btn" data-delete-id="${safeMessageId}" title="Elimina" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🗑️</button>
+        <button class="bubble-delete-btn" data-delete-id="${safeMessageId}" title="Elimina" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 5px;">🗑️</button>
     ` : '';
-    
-    // Report button - visible for other users' messages
+
+    // Report button - solo per messaggi di altri
     const reportButtonHtml = !isOwn ? `
-        <button class="bubble-report-btn" data-report-message-id="${safeMessageId}" data-report-user-id="${safeUserId}" title="Segnala" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px; margin-left: 4px;">🚩</button>
+        <button class="bubble-report-btn" data-report-message-id="${safeMessageId}" data-report-user-id="${safeUserId}" title="Segnala" style="background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 0.7rem; padding: 2px 4px;">🚩</button>
     ` : '';
-    
+
     return `
         <div class="message-bubble ${isOwn ? 'own' : ''} ${mentionedClass}" 
              data-message-id="${safeMessageId}"
