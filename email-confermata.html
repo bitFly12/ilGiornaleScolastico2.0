@@ -1,0 +1,51 @@
+<!-- email-confermata.html -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confermata - Giornale Cesaris</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .confirmation-container {
+            max-width: 480px;
+            margin: 8vh auto;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            text-align: center;
+        }
+        .confirmation-container h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .confirmation-container p {
+            color: var(--neutral);
+            margin-bottom: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 2rem;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+            border: none;
+        }
+        .btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-container">
+        <h1>✅ Email Confermata!</h1>
+        <p>Grazie, la tua email è stata verificata correttamente.<br>
+           Ora puoi tornare alla pagina precedente e accedere al portale con le tue credenziali.</p>
+        <a href="login.html" class="btn">Vai al Login</a>
+    </div>
+</body>
+</html>
