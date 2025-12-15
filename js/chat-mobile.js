@@ -322,8 +322,11 @@ function renderMessages() {
 }
 
 function createMessageBubble(msg) {
+    
     const isOwn = msg.user_id === ChatState.currentUser?.id;
-    const username = msg.user?.author_name || 'anonimo';
+
+    const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
+    const username = msg.user?.author_name || userEmailName;
     const displayName = msg.user?.nome_visualizzato || username;
     const initial = displayName.charAt(0).toUpperCase();
     const avatarColor = stringToColor(username);
@@ -420,8 +423,9 @@ async function sendMessage() {
     sendBtn.disabled = true;
     
     try {
+        const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
         const authorName = ChatState.currentProfile?.nome_visualizzato || 
-                          ChatState.currentProfile?.author_name || 'Anonimo';
+                          ChatState.currentProfile?.author_name || userEmailName;
         
         const messageData = {
             user_id: ChatState.currentUser.id,
@@ -1590,11 +1594,11 @@ async function reportMessage(messageId = null, reportedUserId = null) {
 function showMessageInfo() {
     const msg = ChatState.messages.find(m => m.id === ChatState.selectedMessageId);
     if (!msg) return;
-    
+    const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
     const info = `
         📝 Inviato: ${new Date(msg.created_at).toLocaleString('it-IT')}
         ${msg.edited_at ? `✏️ Modificato: ${new Date(msg.edited_at).toLocaleString('it-IT')}` : ''}
-        👤 Autore: ${msg.user?.author_name || 'Anonimo'}
+        👤 Autore: ${msg.user?.author_name || userEmailName}
     `.trim();
     
     showToast(info.replace(/\n/g, '<br>'), 'ℹ️', 5000, true);
