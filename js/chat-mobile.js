@@ -323,7 +323,7 @@ function renderMessages() {
 
 function createMessageBubble(msg) {
     const isOwn = msg.user_id === ChatState.currentUser?.id;
-    const username = msg.user?.username || 'anonimo';
+    const username = msg.user?.author_name || 'anonimo';
     const displayName = msg.user?.nome_visualizzato || username;
     const initial = displayName.charAt(0).toUpperCase();
     const avatarColor = stringToColor(username);
@@ -421,7 +421,7 @@ async function sendMessage() {
     
     try {
         const authorName = ChatState.currentProfile?.nome_visualizzato || 
-                          ChatState.currentProfile?.username || 'Anonimo';
+                          ChatState.currentProfile?.author_name || 'Anonimo';
         
         const messageData = {
             user_id: ChatState.currentUser.id,
@@ -1594,7 +1594,7 @@ function showMessageInfo() {
     const info = `
         📝 Inviato: ${new Date(msg.created_at).toLocaleString('it-IT')}
         ${msg.edited_at ? `✏️ Modificato: ${new Date(msg.edited_at).toLocaleString('it-IT')}` : ''}
-        👤 Autore: ${msg.user?.nome_visualizzato || 'Anonimo'}
+        👤 Autore: ${msg.user?.author_name || 'Anonimo'}
     `.trim();
     
     showToast(info.replace(/\n/g, '<br>'), 'ℹ️', 5000, true);
