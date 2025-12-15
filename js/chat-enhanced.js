@@ -329,7 +329,9 @@ function createMessageElement(msg) {
     div.dataset.messageId = msg.id;
     div.dataset.userId = msg.user_id;
 
-    const username = msg.user?.username || 'anonimo';
+    const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
+
+    const username = msg.user?.username || userEmailName;
     const displayName = msg.user?.nome_visualizzato || username;
     const initial = displayName.charAt(0).toUpperCase();
     const timeAgo = formatTimeAgo(new Date(msg.created_at));
@@ -920,8 +922,8 @@ async function sendMessage() {
     try {
         const supabaseClient = getSupabase();
         if (!supabaseClient) return;
-        
-        const authorName = currentUserProfile?.nome_visualizzato || currentUserProfile?.username || 'Anonimo';
+        const userEmailName = currentUser.email ? currentUser.email.split('@')[0] : 'Utente';
+        const authorName = currentUserProfile?.nome_visualizzato || currentUserProfile?.username || userEmailName;
         
         const { data, error } = await supabaseClient
             .from('chat_messages')
